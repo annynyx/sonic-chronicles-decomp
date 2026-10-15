@@ -368,6 +368,56 @@ O resultado está em [`COMPILADOR.md`](COMPILADOR.md): **mwccarm 2.0, `-O4,p`, T
   precisar de um modo ARM. O começo do ITCM (`0x01ff8000`-`0x01ffe89c`, ARM, sem nome)
   continua sem dono e fica contado como jogo.
 
+## 21. Procurando as bordas dos arquivos, e a opção `-ipa file`
+O passo seguinte da Fase 2.4 era estender os 175 núcleos às funções das pontas, que não
+usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de usá-la:
+
+- **O enchimento entre funções.** Se o linker enchesse com outro valor entre arquivos, a
+  borda apareceria. Não: os 2 bytes depois de uma função Thumb são sempre `0000`
+  (1.091 nos buracos, 43 dentro dos núcleos, 5 no fim de núcleos).
+- **Erro nº 12: a variável escondida do `__register_global_object`.** Num `.o` de teste,
+  cada objeto global com destrutor ganha uma variável de 12 bytes, só do arquivo, que
+  vai como 3º argumento para `__register_global_object`. Achei que isso amarraria cada
+  função à `.bss` do seu arquivo. No jogo são 3.119 chamadas, 3.076 delas em funções
+  comuns e não nos `__sinit`, e só 481 variáveis diferentes: `main` usa a mesma três
+  vezes. São `static` dentro de funções inline (o padrão `Singleton<T>`), copiadas em
+  cada lugar que as chama, e por isso compartilhadas entre arquivos. Não serve de prova.
+- **"Uma classe, um arquivo".** Falha em 9 classes: métodos do `GuiTextInterface` e do
+  `GuiAnimatedImage` estão dentro do núcleo do `GameModeCombat`, por exemplo (métodos
+  inline emitidos no arquivo que os usa).
+- **Quem chama e quem usa os dados.** Conferidas nas 604 funções dos núcleos, onde o
+  arquivo é conhecido: "só é chamada por funções do núcleo X" erra 51 de 249 vezes, e
+  "usa dados que só o núcleo X usa" erra 11 de 226. Pistas, não regras.
+- **A `.rodata`.** Em C++, uma constante `const` fora de função é local ao arquivo, e
+  achei que a `.rodata` funcionaria como as strings. Mas o começo dela são constantes
+  globais (`extern const`): a palavra `0xffffffff` em `0x020ef844` é lida por 150
+  funções do jogo todo, e `0x020ef814` é o ponteiro para a string vazia do `CStr`.
+- **O que deu certo: `-ipa file`.** Para entender a `.data`, compilei `.o` de teste e
+  comparei com o jogo. No jogo, o nome de uma classe (`"4Time"`) vem antes do typeinfo
+  dela e antes das strings do arquivo; com as nossas flags, ia para o fim. Testando
+  opções, só `-ipa file` reproduz a ordem. As três funções continuam idênticas com ela,
+  e ela entrou em `compilar.sh`. A conferência (`conferir_ipa.py`, em
+  [COMPILADOR.md](COMPILADOR.md#-ipa-file-a-ordem-dos-dados)) mede duas coisas que a
+  opção padrão não produziria: 51 nomes antes do typeinfo (49 de classes derivadas,
+  como a ordem prevê) e 266 de 270 typeinfo sem strings no meio. As 4 exceções são uma
+  string de função inline, que com `-ipa file` vai para o bloco das variáveis.
+- **Erro nº 13:** na primeira comparação usei `-ipa off` como se fosse o padrão. Não é:
+  ele até inverte a ordem das funções no `.o`. O padrão se comporta como
+  `-ipa function`.
+- **O que o `-ipa file` diz sobre um arquivo.** O `.text` tem as funções na ordem do
+  fonte e, no fim, as multidef (métodos inline e de template). A `.data` tem primeiro as
+  variáveis, vtables, typeinfo e nomes, e por último as strings do código. Então uma
+  passagem de "multidef" para "comum" no `.text`, ou de "string" para "variável" na
+  `.data`, é o começo de outro arquivo. A primeira só tem 8 funções reconhecíveis (as de
+  `Singleton<T>` e `ResourcePool<T>`, pelo nome). A segunda separa a `.data`, mas uma
+  variável pode ser lida de qualquer arquivo, então não diz onde fica uma função.
+- **A conclusão.** O binário não guarda o suficiente para provar em que arquivo cai cada
+  função sem strings. A borda de um arquivo se prova quando ele é decompilado inteiro: o
+  `.o` tem de reproduzir juntos o `.text`, as variáveis, as strings, a `.bss` e o
+  `__sinit`. Uma função a mais ou a menos na ponta, se usar strings ou variáveis do seu
+  arquivo, muda essa ordem e o build acusa. Se só usar dados globais, a borda errada não
+  muda nenhum byte: o erro fica só na organização do fonte, e não na ROM.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

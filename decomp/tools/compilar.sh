@@ -21,6 +21,8 @@ FLAGS=(
     -lang=c++
     -Cpp_exceptions off # o .exceptix do jogo só tem entradas da biblioteca (MSL)
     -RTTI on            # as classes do jogo têm typeinfo (rtti.py)
+    -ipa file           # só assim o nome de cada classe (_ZTS) vem antes das strings
+                        # do arquivo na .data, como no jogo (conferir_ipa.py)
     -w off
     -gccinc -i "$REPO/include"
 )

@@ -13,6 +13,7 @@ ser provada certa byte a byte.
 | Otimização | `-O4,p` | `-O4,s` (tamanho) erra 2 das 3; `-O3,p` também acerta |
 | Modo | `-thumb -interworking` | o código do jogo é Thumb (e as bibliotecas da Nintendo também, veja abaixo) |
 | C++ | `-lang=c++ -Cpp_exceptions off -RTTI on` | abaixo |
+| IPA | `-ipa file` | a ordem dos typeinfo e das strings na `.data`: [abaixo](#-ipa-file-a-ordem-dos-dados) |
 | Outras | `-proc arm946e -enum int -char signed` | padrão dos jogos de DS; ainda não testadas uma a uma |
 
 As flags estão num lugar só: [`decomp/tools/compilar.sh`](../decomp/tools/compilar.sh).
@@ -74,6 +75,46 @@ Algumas lições destas três, que devem valer para o resto do jogo:
 - **`ldrsb r5, [r3, r6]` com `r6 = 0`** é só um `*p`: em Thumb, o `ldrsb` (byte com
   sinal) não tem a forma com deslocamento fixo, então o compilador usa um registrador
   zerado.
+
+## `-ipa file`: a ordem dos dados
+
+As três funções batem com ou sem `-ipa file` (a "análise interprocedural por arquivo":
+o compilador lê o arquivo inteiro antes de gerar o código). Quem mostrou a opção foi a
+**ordem dos dados** na `.data`, que importa assim que um arquivo com variáveis e
+classes for decompilado inteiro.
+
+Cada classe com RTTI tem um typeinfo (`_ZTI`) e o nome dela (`_ZTS`, a string `"4Time"`).
+No padrão do compilador (`-ipa function`), os nomes vão para o fim do arquivo, depois
+das strings do código. Com `-ipa file`, eles ficam junto das variáveis e dos typeinfo, e
+as strings do código vêm por último. `decomp/tools/conferir_ipa.py` compila um exemplo
+com as duas opções e confere o jogo:
+
+```
+1. a previsão (o exemplo compilado):
+   padrão (-ipa function): string typeinfo nome
+   com -ipa file:          nome typeinfo nome string
+2a. no jogo: 51 de 270 nomes vêm antes do typeinfo (no padrão seriam 0)
+2b. 266 de 270 typeinfo sem nenhuma string no meio (o que -ipa file prevê)
+```
+
+As 4 exceções de 2b são a mesma string, `"ScrollBG01.tga"`, lida por uma função do
+`GameModeInventory`. É a string de uma função inline: o compilador lhe dá um nome
+(`_ZZ...Es`) e, com `-ipa file`, ela vai para o bloco das variáveis. Dos 51 nomes que
+vêm antes do typeinfo, 49 são de classes derivadas, como a ordem do `-ipa file` prevê
+(nome da derivada, typeinfo da base, typeinfo da derivada, nome da base).
+
+Cuidado: `-ipa off` não é o padrão. Ele até inverte a ordem das funções no `.o`.
+
+O que a opção diz sobre a organização de cada arquivo (e por isso sobre o mapa de
+arquivos da Fase 2.4), conferido em `.o` de teste:
+
+- **`.text`:** as funções na ordem do fonte, e depois as "multidef" (métodos inline e de
+  template, de que o linker guarda uma cópia só).
+- **`.data`:** primeiro as variáveis, as vtables, os typeinfo, os nomes deles e as
+  strings citadas só por dados (`static const char* nomes[] = {"a", ...}`); por
+  último, as strings citadas pelo código, cada uma antes da primeira função que a usa.
+- **`.rodata`:** as tabelas `const`. Os `float` e `double` ficam no `.text`, junto da
+  função (o "pool" de constantes).
 
 ## O service pack pelas bibliotecas
 
@@ -183,8 +224,8 @@ sobram (`0x020d6930`, `0x020e067c`, `0x020e096c`) ainda não sabemos de onde vê
   Se uma função futura só bater com outra versão, troca-se em `compilar.sh`.
 - **As outras bibliotecas** (o vídeo VX da Actimagine, a de backup): ainda não
   procuradas, e sem decompilação pública conhecida.
-- `-enum int`, `-char signed`, `-inline`, `-str`, `-ipa`: ainda sem uma função que
-  dependa delas.
+- `-enum int`, `-char signed`, `-inline`, `-str`: ainda sem uma função que dependa
+  delas. (`-ipa file` foi achada pelos dados, acima.)
 
 ## Como repetir
 

@@ -100,8 +100,10 @@ precisa ser reescrito do zero.
   **Pronto quando:** o build continua idêntico com o ARM9 dividido em TUs.
   🟡 175 pedaços que com certeza são de um arquivo só (38% dos bytes do código do jogo)
   já estão em `delinks.txt`, com a ROM idêntica (`decomp/tools/mapa_arquivos.py`, a
-  regra em [BUILD.md](BUILD.md#o-mapa-de-arquivos-do-jogo)). Falta achar onde cada um
-  começa e acaba de verdade e dividir o resto.
+  regra em [BUILD.md](BUILD.md#o-mapa-de-arquivos-do-jogo)). As pistas para as funções
+  das pontas foram testadas contra os núcleos e nenhuma vira prova (DIARIO 21); de
+  quebra, apareceu a opção `-ipa file` do compilador. A borda de cada arquivo passa a
+  ser confirmada quando ele é decompilado inteiro.
 
 **Métrica a partir daqui:** % de bytes de código que saem de fonte com match.
 ✅ `decomp/tools/progresso.py` (no lugar do relatório do `objdiff`, que o projeto trocou

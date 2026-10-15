@@ -33,6 +33,11 @@ jobs:
           python3 -m py_compile analise/tools/*.py decomp/tools/*.py
           bash -n analise/run_all.sh
           for f in decomp/tools/*.sh; do bash -n "$f"; done
+      - name: progresso da decompilação
+        # % dos bytes de código que saem de fonte, lida de config/YWSE/ (sem a ROM)
+        run: |
+          python3 decomp/tools/progresso.py
+          { echo '```'; python3 decomp/tools/progresso.py; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
   decomp-matching:
     # Confere, sem a ROM, que o C++ de src/ continua compilando para os mesmos
     # bytes do jogo (decomp/compilador/esperado.txt guarda só o SHA-1 deles).

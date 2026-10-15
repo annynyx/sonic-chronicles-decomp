@@ -49,8 +49,9 @@ desmontadas** e sair idêntica. É a rede de segurança de todo o resto.
   progresso. A ROM não pode ir para o repositório: o CI só roda com a ROM num
   segredo, ou em uma máquina própria. **Pronto quando:** o build quebrado deixa o PR vermelho.
   🟡 parcial: sem a ROM, o CI confere o SHA-1 de cada função decompilada
-  (`conferir_sem_rom.py`). O build completo no CI segue em aberto: um segredo do GitHub
-  tem no máximo 48 KB e a ROM tem 128 MB.
+  (`conferir_sem_rom.py`) e publica o progresso (`progresso.py`, abaixo). O build
+  completo no CI segue em aberto: um segredo do GitHub tem no máximo 48 KB e a ROM tem
+  128 MB.
 
 ## Fase 1: identificar o compilador e as flags (semana 2) ✅ 1.1 e 1.2
 
@@ -102,7 +103,11 @@ precisa ser reescrito do zero.
   regra em [BUILD.md](BUILD.md#o-mapa-de-arquivos-do-jogo)). Falta achar onde cada um
   começa e acaba de verdade e dividir o resto.
 
-**Métrica a partir daqui:** % de bytes de código em C com match (relatório do `objdiff`).
+**Métrica a partir daqui:** % de bytes de código que saem de fonte com match.
+✅ `decomp/tools/progresso.py` (no lugar do relatório do `objdiff`, que o projeto trocou
+pelo `comparar.py`): lê `config/YWSE/` e, se houver, o mapa do linker; separa
+bibliotecas e jogo. Conta explicada em [BUILD.md](BUILD.md#a-métrica-de-progresso).
+Hoje: **13,48%** (bibliotecas 87,71%, jogo 0,01%).
 
 ## Fase 3: núcleo do motor Aurora (semanas 5 a 8)
 
@@ -141,7 +146,7 @@ Deixá-lo para depois do Explore, que é menor.
 
 Renderização de cenários (o formato `.cbgt` já está decifrado), `ModelManager`
 (modelos `.nsbmd`), `VisualEffect`, `CMoviePlayer` (vídeos VX), som. Termina quando
-o `objdiff` marcar 100%.
+o `progresso.py` marcar 100%.
 
 ## Fase 7: port para PC (em paralelo, a partir da Fase 4)
 

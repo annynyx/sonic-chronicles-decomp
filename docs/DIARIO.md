@@ -345,6 +345,29 @@ O resultado está em [`COMPILADOR.md`](COMPILADOR.md): **mwccarm 2.0, `-O4,p`, T
   isso são as variáveis `.bss`/`.data` que cada função usa, quem chama quem e as
   sequências de métodos da mesma classe.
 
+## 20. A métrica de progresso
+- **Um número que alguém possa cobrar.** Os "13,6%" eram uma conta feita à mão. Agora
+  `decomp/tools/progresso.py` lê `config/YWSE/` e diz quantos bytes de código o build
+  tira de um `.o` compilado de fonte: **13,48%** (135.556 de 1.005.780 bytes), 87,71% das
+  bibliotecas e 0,01% do jogo. A conta está em [BUILD.md](BUILD.md#a-métrica-de-progresso).
+- **Por que o número caiu 0,1 ponto.** Refazendo a conta antiga, só a `.text` do ARM9 e do
+  ITCM dava os mesmos 13,58%. Ficava de fora a `.init`: 7.760 bytes de `__sinit_*`, as
+  funções que o compilador gera em cada `.cpp` que tem variáveis globais com construtor.
+  São código do jogo e vão ter de sair do fonte junto com o arquivo delas, então entram.
+- **Uma conferência que pode falhar.** O script lê o mapa do linker e confere que tudo o
+  que caiu dentro de um arquivo `complete` veio do `.o` dele. O mapa só mostra o nome do
+  `.o` sem a pasta, e o pedaço cortado de `jogo/X.cpp` também se chama `X.o`; então a
+  lista de `.o` que o linker recebeu entra na conta. Testado ao contrário: um núcleo
+  marcado `complete` sem compilar e um arquivo com o fim esticado sobre o vizinho foram
+  os dois recusados.
+- **Código ARM no meio do jogo.** Procurando o que separa biblioteca de jogo, achei dois
+  blocos de funções ARM (o jogo é Thumb) dentro da região do jogo. Não são outra
+  biblioteca: são métodos do próprio jogo, do `CMoviePlayer` (`0x0208ab44`, 24 funções) e
+  do `Timer` (`0x020c70e4`, 46 funções). A BioWare compilou alguns arquivos em ARM,
+  provavelmente os que precisam de velocidade. Para decompilá-los, `compilar.sh` vai
+  precisar de um modo ARM. O começo do ITCM (`0x01ff8000`-`0x01ffe89c`, ARM, sem nome)
+  continua sem dono e fica contado como jogo.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

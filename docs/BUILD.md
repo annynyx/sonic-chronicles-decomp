@@ -119,7 +119,8 @@ arquivos do NitroSDK e 62 dos 68 arquivos do MSL (a biblioteca C/C++ da Metrower
 o jogo usa não vêm mais do assembly cortado. O build compila os `.c` do fonte público do
 SDK e da NitroSystem (veja [COMPILADOR.md](COMPILADOR.md#a-nitrosystem-100-da-região-reconhecida)),
 tira os `.o` do MSL de dentro dos `.a` do CodeWarrior 2.0 sp2, liga tudo, e a ROM
-continua idêntica. São 132 KB, **13,6% do código do ARM9** (com o ITCM). Na primeira vez,
+continua idêntica. São 132 KB, **13,48% do código do ARM9** (com o ITCM; a conta está
+[abaixo](#a-métrica-de-progresso)). Na primeira vez,
 `montar_rom.sh` prepara as bibliotecas sozinho (`nitrosdk.sh`, `nitrosystem.sh` e
 `msl.sh`, para `work/bibliotecas/`).
 
@@ -257,6 +258,39 @@ as funções da ponta que não usam strings ficam de fora, nos `_dsd_gap`. Dois 
 que o `dsd` exige: o `.text` vai até o múltiplo de 4 (os 2 bytes de enchimento depois de
 uma função Thumb são do `.o` dela) e o `.data` acaba num começo de símbolo (o `dsd` dá a
 um dado sem tamanho os bytes até o próximo).
+
+## A métrica de progresso
+
+```
+python3 decomp/tools/progresso.py
+```
+
+Mede quantos bytes de **código** o build tira de um `.o` compilado de fonte. Código são
+as seções `kind:code` de `delinks.txt`: a `.text` do ARM9 e do ITCM (funções e as
+constantes que vêm junto delas) e a `.init` do ARM9 (os `__sinit_*`, que o compilador
+gera em cada `.cpp` com variáveis globais construídas). "De fonte" é o mesmo critério do
+`montar_rom.sh`: os arquivos marcados `complete`. A divisão entre bibliotecas e jogo usa
+as regiões provadas na Fase 2 (o crt0 e a área segura, NitroSystem, NitroSDK, MSL e o fim
+do ITCM); o resto é o jogo, onde ainda pode haver alguma biblioteca não identificada.
+
+```
+                                       de fonte       total
+     NitroSystem                         49.436      49.436  100,00%
+     NitroSDK                            49.084      55.132   89,03%
+     MSL                                 36.952      49.892   74,06%
+   bibliotecas (213 arquivos)           135.472     154.460   87,71%
+   jogo (2 arquivos)                         84     851.320    0,01%
+   TOTAL                                135.556   1.005.780   13,48%
+```
+
+Até a Fase 2.4, a conta era feita à mão e só com a `.text` (13,58%, os "13,6%" de antes).
+A `.init` entrou porque também é código do jogo que vai ter de sair de fonte: sem ela,
+seria possível chegar a "100%" com 7.760 bytes ainda vindos do assembly.
+
+Depois de um `montar_rom.sh`, o script também confere o link: cada símbolo que o mapa do
+linker (`work/build/arm9.o.xMAP`) mostra dentro de um arquivo `complete` tem de vir do
+`.o` dele, e esse `.o` tem de ser o compilado, não o cortado em `work/build/delinks/`.
+Sem a ROM (no CI), a conta sai só da configuração. O CI publica a tabela no resumo do job.
 
 ## As ferramentas e as versões
 

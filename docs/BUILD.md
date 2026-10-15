@@ -267,19 +267,27 @@ que dá para provar:
   (o `GameModeInventory` tem uma no fim do `.text`, que lê uma string do começo do
   `.data` do arquivo).
 - **A conferência:** funções que leem cópias diferentes da mesma string têm de cair em
-  pedaços diferentes. São 338 pares, e todos caem. Se um falhasse, o script pararia.
+  pedaços diferentes. São 337 pares, e todos caem. Se um falhasse, o script pararia.
 
-O resultado são **175 "núcleos"**, com 604 das 4.915 funções do jogo e 38% dos bytes do
-código dele. Cada um está em `delinks.txt` como `jogo/<Classe>_<endereço>.cpp` (a
-classe mais citada nos nomes das funções, quando há uma), com o `.text` e, em 171, as
-strings no `.data`. Não são `complete`: o build continua usando o código do jogo, só que
-cortado em um `.o` por arquivo, e a ROM sai idêntica.
+A segunda regra (DIARIO 25) é a das variáveis de 12 bytes que o compilador cria para o
+`__register_global_object`: são locais ao arquivo, mesmo quando vêm de uma função inline
+(o `Singleton<T>::Instance()`), então duas funções que passam a mesma variável estão no
+mesmo arquivo. A ordem dessas variáveis na `.bss` também junta pedaços, e duas
+conferências a mais param o script se falharem: nenhum marcador `2/π` no meio das strings
+de um pedaço, e nenhuma faixa de `.bss` de um pedaço sobre a de um arquivo já ligado.
+
+O resultado são **161 "núcleos"**, com 2.446 das 4.869 funções do jogo e 84% dos bytes do
+código dele (só com as strings eram 175 núcleos e 38%). Cada um está em `delinks.txt`
+como `jogo/<Classe>_<endereço>.cpp` (a classe mais citada nos nomes das funções, quando
+há uma), com o `.text` e, quando dá, as strings no `.data` (93) e as variáveis na `.bss`
+(125). Não são `complete`: o build continua usando o código do jogo, só que cortado em um
+`.o` por arquivo, e a ROM sai idêntica.
 
 Um núcleo é um pedaço **de um arquivo só**, mas pode ser menor que o arquivo de verdade:
-as funções da ponta que não usam strings ficam de fora, nos `_dsd_gap`. Dois detalhes
-que o `dsd` exige: o `.text` vai até o múltiplo de 4 (os 2 bytes de enchimento depois de
-uma função Thumb são do `.o` dela) e o `.data` acaba num começo de símbolo (o `dsd` dá a
-um dado sem tamanho os bytes até o próximo).
+as funções da ponta que não usam strings nem essas variáveis ficam de fora, nos
+`_dsd_gap`. Dois detalhes que o `dsd` exige: o `.text` vai até o múltiplo de 4 (os 2
+bytes de enchimento depois de uma função Thumb são do `.o` dela) e o `.data` e a `.bss`
+acabam num começo de símbolo (o `dsd` dá a um dado sem tamanho os bytes até o próximo).
 
 ## A métrica de progresso
 

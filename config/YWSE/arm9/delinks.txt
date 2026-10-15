@@ -7,9 +7,10 @@
     .data       start:0x020f5260 end:0x021090e0 kind:data align:32
     .bss        start:0x021090e0 end:0x021b9500 kind:bss align:32
 
-jogo/02002918.cpp:
-    .text       start:0x02002918 end:0x02002d0c
+jogo/02000bec.cpp:
+    .text       start:0x02000bec end:0x02002d0c
     .data       start:0x020f5404 end:0x020f5424
+    .bss        start:0x02109a2c end:0x02109ab0
 
 src/Aurora/Memory.cpp:
     complete
@@ -23,6 +24,10 @@ jogo/020034f4.cpp:
     .text       start:0x020034f4 end:0x02003610
     .data       start:0x020f542c end:0x020f5440
 
+jogo/02003e54.cpp:
+    .text       start:0x02003e54 end:0x02003e90
+    .bss        start:0x02110ff4 end:0x02111000
+
 jogo/0200450c.cpp:
     .text       start:0x0200450c end:0x0200455c
     .data       start:0x020f54e4 end:0x020f54e8
@@ -35,6 +40,18 @@ src/Aurora/CExoString.cpp:
     complete
     .text       start:0x02004e00 end:0x020055b8
     .data       start:0x020f5510 end:0x020f553c
+
+jogo/02005880.cpp:
+    .text       start:0x02005880 end:0x02005aa0
+    .bss        start:0x02160a08 end:0x02160a14
+
+jogo/CGameEffectCollection_02005fcc.cpp:
+    .text       start:0x02005fcc end:0x02007598
+    .bss        start:0x02160a30 end:0x02160a78
+
+jogo/020076f0.cpp:
+    .text       start:0x020076f0 end:0x02007818
+    .bss        start:0x02160c2c end:0x02160c38
 
 jogo/020084c8.cpp:
     .text       start:0x020084c8 end:0x0200854c
@@ -59,53 +76,67 @@ jogo/0200978c.cpp:
     .text       start:0x0200978c end:0x02009824
     .data       start:0x020f59cc end:0x020f5a14
 
+jogo/CErfTable_0200985c.cpp:
+    .text       start:0x0200985c end:0x02009b78
+    .bss        start:0x021a41f0 end:0x021a41fc
+
 src/Aurora/ResourceHash.cpp:
     complete
     .text       start:0x02009b78 end:0x02009bbc
+
+jogo/CErfTable_02009bbc.cpp:
+    .text       start:0x02009bbc end:0x02009ee4
 
 jogo/02009ee4.cpp:
     .text       start:0x02009ee4 end:0x02009f2c
     .data       start:0x020f5a14 end:0x020f5a1c
 
-jogo/02013740.cpp:
-    .text       start:0x02013740 end:0x02013874
+jogo/02009f2c.cpp:
+    .text       start:0x02009f2c end:0x0200a104
+    .bss        start:0x021a41fc end:0x021a4208
+
+jogo/CGameSquad_0200b77c.cpp:
+    .text       start:0x0200b77c end:0x0200b8c4
+    .bss        start:0x021a4208 end:0x021a4214
+
+jogo/CGameObject_0200beec.cpp:
+    .text       start:0x0200beec end:0x0200c8b0
+    .bss        start:0x021a4214 end:0x021a4238
+
+jogo/CGameCreature_0200d898.cpp:
+    .text       start:0x0200d898 end:0x02014424
     .data       start:0x020f5e34 end:0x020f5e3c
+    .bss        start:0x021a4288 end:0x021a42e8
 
 jogo/020148c8.cpp:
-    .text       start:0x020148c8 end:0x02014b88
-    .data       start:0x020f5ea0 end:0x020f5f08
+    .text       start:0x020148c8 end:0x02019348
+    .data       start:0x020f5ea0 end:0x020f60b4
 
-jogo/CGameGlobal_02014e14.cpp:
-    .text       start:0x02014e14 end:0x02015158
-    .data       start:0x020f5f08 end:0x020f5f68
+jogo/02019a84.cpp:
+    .text       start:0x02019a84 end:0x02019d64
 
-jogo/0201762c.cpp:
-    .text       start:0x0201762c end:0x02017738
-    .data       start:0x020f5f6c end:0x020f5f7c
-
-jogo/02017738.cpp:
-    .text       start:0x02017738 end:0x02017980
-    .data       start:0x020f5f7c end:0x020f5fcc
-
-jogo/02017e34.cpp:
-    .text       start:0x02017e34 end:0x02018078
-    .data       start:0x020f5fcc end:0x020f6058
-
-jogo/GameMode_02018500.cpp:
-    .text       start:0x02018500 end:0x02019348
-    .data       start:0x020f6058 end:0x020f60b4
+jogo/02019d64.cpp:
+    .text       start:0x02019d64 end:0x02019db4
+    .bss        start:0x021a445c end:0x021a4468
 
 jogo/02019f34.cpp:
-    .text       start:0x02019f34 end:0x0201a4e0
+    .text       start:0x02019f34 end:0x0201abb4
     .data       start:0x020f6224 end:0x020f622c
+    .bss        start:0x021a49a8 end:0x021a49c0
 
 jogo/CPlotEntry_0201bb84.cpp:
-    .text       start:0x0201bb84 end:0x0201c4b8
+    .text       start:0x0201bb84 end:0x0201c78c
     .data       start:0x020f63d4 end:0x020f63e0
+    .bss        start:0x021a49c0 end:0x021a49e4
+
+jogo/0201cae4.cpp:
+    .text       start:0x0201cae4 end:0x0201cb5c
+    .bss        start:0x021a49e4 end:0x021a49f0
 
 jogo/C2DManager_0201cf5c.cpp:
-    .text       start:0x0201cf5c end:0x0201e92c
+    .text       start:0x0201cf5c end:0x0201ec98
     .data       start:0x020f6464 end:0x020f6470
+    .bss        start:0x021a49f4 end:0x021a4a30
 
 jogo/0201ef68.cpp:
     .text       start:0x0201ef68 end:0x0201f128
@@ -114,54 +145,54 @@ jogo/0201ef68.cpp:
 jogo/0201f270.cpp:
     .text       start:0x0201f270 end:0x020206b4
     .data       start:0x020f652c end:0x020f6554
+    .bss        start:0x021a57f8 end:0x021a5804
 
-jogo/GuiWidget_02020fb8.cpp:
-    .text       start:0x02020fb8 end:0x020219bc
+jogo/GuiWidget_02020790.cpp:
+    .text       start:0x02020790 end:0x020219bc
     .data       start:0x020f65e8 end:0x020f6618
+    .bss        start:0x021a5804 end:0x021a5840
 
-jogo/GuiPanel_02021e5c.cpp:
-    .text       start:0x02021e5c end:0x02023d6c
-    .data       start:0x020f675c end:0x020f6964
+jogo/GuiPanel_02021b14.cpp:
+    .text       start:0x02021b14 end:0x02024120
+    .data       start:0x020f675c end:0x020f6990
+    .bss        start:0x021a5864 end:0x021a58ac
 
-jogo/02023d6c.cpp:
-    .text       start:0x02023d6c end:0x0202402c
-    .data       start:0x020f6964 end:0x020f6990
+jogo/020244b0.cpp:
+    .text       start:0x020244b0 end:0x02024564
 
-jogo/02025020.cpp:
-    .text       start:0x02025020 end:0x020252d4
-    .data       start:0x020f8c20 end:0x020f8c4c
+jogo/StreamingBackground_02024828.cpp:
+    .text       start:0x02024828 end:0x020266dc
+    .data       start:0x020f8c20 end:0x020f8c80
+    .bss        start:0x021a6a94 end:0x021a6aac
 
-jogo/020258d4.cpp:
-    .text       start:0x020258d4 end:0x02025f00
-    .data       start:0x020f8c4c end:0x020f8c80
+jogo/Model_02026980.cpp:
+    .text       start:0x02026980 end:0x0202730c
+    .bss        start:0x021a6ab0 end:0x021a6ae0
 
-jogo/CGameObjectAppearance3D_02027ee8.cpp:
-    .text       start:0x02027ee8 end:0x020284e8
-    .data       start:0x020f9140 end:0x020f9178
+jogo/020273b8.cpp:
+    .text       start:0x020273b8 end:0x0202787c
 
-jogo/CGameObjectAppearance3D_02028744.cpp:
-    .text       start:0x02028744 end:0x02028bb0
-    .data       start:0x020f9178 end:0x020f9180
+jogo/02027938.cpp:
+    .text       start:0x02027938 end:0x0202a044
+    .data       start:0x020f9140 end:0x020f91cc
+    .bss        start:0x021a6bb4 end:0x021a6c08
 
-jogo/CGameObjectAppearance3D_02028bdc.cpp:
-    .text       start:0x02028bdc end:0x02028c8c
-    .data       start:0x020f9180 end:0x020f91a8
+jogo/CGamePlayerCreature_0202a1a4.cpp:
+    .text       start:0x0202a1a4 end:0x0202ac2c
+    .data       start:0x020f9310 end:0x020f9320
+    .bss        start:0x021ac234 end:0x021ac264
 
-jogo/CGameObjectAppearanceMulti_020294b8.cpp:
-    .text       start:0x020294b8 end:0x020296a4
-    .data       start:0x020f91a8 end:0x020f91cc
-
-jogo/0202a968.cpp:
-    .text       start:0x0202a968 end:0x0202a9cc
-    .data       start:0x020f9310 end:0x020f9318
-
-jogo/0202a9cc.cpp:
-    .text       start:0x0202a9cc end:0x0202aa08
-    .data       start:0x020f9318 end:0x020f9320
+jogo/0202c1a8.cpp:
+    .text       start:0x0202c1a8 end:0x0202ce24
+    .bss        start:0x021ac264 end:0x021ac270
 
 jogo/0202cfd4.cpp:
     .text       start:0x0202cfd4 end:0x0202d0e4
     .data       start:0x020f9378 end:0x020f93a8
+
+jogo/CGameObjectInventory_0202dacc.cpp:
+    .text       start:0x0202dacc end:0x0202e284
+    .bss        start:0x021ac270 end:0x021ac288
 
 jogo/0202e404.cpp:
     .text       start:0x0202e404 end:0x0202e520
@@ -179,136 +210,71 @@ jogo/0202e724.cpp:
     .text       start:0x0202e724 end:0x0202e77c
     .data       start:0x020f9440 end:0x020f944c
 
+jogo/0202e804.cpp:
+    .text       start:0x0202e804 end:0x0202ea28
+    .bss        start:0x021ac290 end:0x021ac29c
+
+jogo/0202ea9c.cpp:
+    .text       start:0x0202ea9c end:0x0202ed44
+    .bss        start:0x021ac620 end:0x021ac62c
+
 jogo/0202eda0.cpp:
     .text       start:0x0202eda0 end:0x0202eec4
     .data       start:0x020f9524 end:0x020f9538
+    .bss        start:0x021ac62c end:0x021ac638
 
-jogo/CGameSquad_02032444.cpp:
-    .text       start:0x02032444 end:0x02032a8c
-    .data       start:0x020f9b88 end:0x020f9bb0
+jogo/0202f47c.cpp:
+    .text       start:0x0202f47c end:0x0202f980
+    .bss        start:0x021ac638 end:0x021ac644
 
-jogo/02033a98.cpp:
-    .text       start:0x02033a98 end:0x02033b20
-    .data       start:0x020f9bb0 end:0x020f9bc4
+jogo/VisualEffectManager_0202fa2c.cpp:
+    .text       start:0x0202fa2c end:0x0202fa70
+    .bss        start:0x021ac644 end:0x021ac650
 
-jogo/02033b3c.cpp:
-    .text       start:0x02033b3c end:0x02033bc4
-    .data       start:0x020f9bc4 end:0x020f9bd8
+jogo/GameMode_0202fbdc.cpp:
+    .text       start:0x0202fbdc end:0x02030280
+    .bss        start:0x021ac650 end:0x021ac674
 
-jogo/02035054.cpp:
-    .text       start:0x02035054 end:0x020350f8
-    .data       start:0x020f9d54 end:0x020f9d68
+jogo/RealTimeElementsManager_020305a4.cpp:
+    .text       start:0x020305a4 end:0x020313e0
+    .bss        start:0x021ac690 end:0x021ac780
 
-jogo/02038e64.cpp:
-    .text       start:0x02038e64 end:0x020391a4
-    .data       start:0x020f9d68 end:0x020f9d78
+jogo/CGameSquad_020315f8.cpp:
+    .text       start:0x020315f8 end:0x02034310
+    .data       start:0x020f9b88 end:0x020f9bd8
+    .bss        start:0x021ac79c end:0x021ac7f0
 
-jogo/02039304.cpp:
-    .text       start:0x02039304 end:0x02039538
-    .data       start:0x020f9d78 end:0x020f9d90
+jogo/CGamePlayerSquad_020345ec.cpp:
+    .text       start:0x020345ec end:0x02039538
+    .data       start:0x020f9d54 end:0x020f9d90
+    .bss        start:0x021ac7f4 end:0x021ac848
 
 jogo/GameModeCombat_02039af4.cpp:
-    .text       start:0x02039af4 end:0x0203aaac
-    .data       start:0x020f9e48 end:0x020f9e54
+    .text       start:0x02039af4 end:0x0204968c
+    .data       start:0x020f9e48 end:0x020fa150
+    .bss        start:0x021ac84c end:0x021ac924
 
-jogo/0203aab0.cpp:
-    .text       start:0x0203aab0 end:0x0203ac08
-    .data       start:0x020f9e54 end:0x020f9e68
-
-jogo/GameModeCombat_0203b058.cpp:
-    .text       start:0x0203b058 end:0x02042d08
-    .data       start:0x020f9e68 end:0x020fa060
-
-jogo/02045b9c.cpp:
-    .text       start:0x02045b9c end:0x02045cdc
-    .data       start:0x020fa064 end:0x020fa07c
-
-jogo/020463fc.cpp:
-    .text       start:0x020463fc end:0x02046518
-    .data       start:0x020fa07c end:0x020fa084
-
-jogo/GameModeCombat_02048110.cpp:
-    .text       start:0x02048110 end:0x02048438
-    .data       start:0x020fa084 end:0x020fa090
-
-jogo/02048df0.cpp:
-    .text       start:0x02048df0 end:0x02048e78
-    .data       start:0x020fa090 end:0x020fa0a4
-
-jogo/02048e78.cpp:
-    .text       start:0x02048e78 end:0x02048ed8
-    .data       start:0x020fa0a4 end:0x020fa0b8
-
-jogo/02048fb8.cpp:
-    .text       start:0x02048fb8 end:0x0204914c
-    .data       start:0x020fa0b8 end:0x020fa0c8
-
-jogo/020491b8.cpp:
-    .text       start:0x020491b8 end:0x020491f0
-    .data       start:0x020fa0c8 end:0x020fa0e8
-
-jogo/020492a0.cpp:
-    .text       start:0x020492a0 end:0x02049474
-    .data       start:0x020fa0e8 end:0x020fa150
-
-jogo/GameModeExplore_0204a1a4.cpp:
-    .text       start:0x0204a1a4 end:0x0204d9e4
-    .data       start:0x020fa6b8 end:0x020fa7ac
-
-jogo/0204d9e4.cpp:
-    .text       start:0x0204d9e4 end:0x0204dccc
-    .data       start:0x020fa7ac end:0x020fa7b8
-
-jogo/02051e40.cpp:
-    .text       start:0x02051e40 end:0x020523ac
-    .data       start:0x020fa7bc end:0x020fa8e8
-
-jogo/020523ac.cpp:
-    .text       start:0x020523ac end:0x02052470
-    .data       start:0x020fa8e8 end:0x020fa8fc
-
-jogo/0205292c.cpp:
-    .text       start:0x0205292c end:0x02052adc
-    .data       start:0x020fa8fc end:0x020fa938
-
-jogo/02052f90.cpp:
-    .text       start:0x02052f90 end:0x020532fc
-    .data       start:0x020fa938 end:0x020fa948
-
-jogo/02053814.cpp:
-    .text       start:0x02053814 end:0x02053c20
-    .data       start:0x020fa948 end:0x020fa980
-
-jogo/02054630.cpp:
-    .text       start:0x02054630 end:0x020547f8
-    .data       start:0x020fa980 end:0x020fa9a0
-
-jogo/02055198.cpp:
-    .text       start:0x02055198 end:0x0205528c
-    .data       start:0x020fa9a0 end:0x020fa9a8
+jogo/GameModeExplore_02049ba8.cpp:
+    .text       start:0x02049ba8 end:0x0205557c
+    .data       start:0x020fa6b8 end:0x020fa9a8
+    .bss        start:0x021ac928 end:0x021ac9dc
 
 jogo/GameModeConversation_02055884.cpp:
-    .text       start:0x02055884 end:0x02055c40
-    .data       start:0x020faa54 end:0x020faa60
-
-jogo/02055c4c.cpp:
-    .text       start:0x02055c4c end:0x0205605c
-    .data       start:0x020faa60 end:0x020faa70
+    .text       start:0x02055884 end:0x02056488
+    .data       start:0x020faa54 end:0x020faa70
+    .bss        start:0x021ac9dc end:0x021aca3c
 
 jogo/GameModeInventory_020564ac.cpp:
-    .text       start:0x020564ac end:0x02056e64
+    .text       start:0x020564ac end:0x02059400
+    .bss        start:0x021aca3c end:0x021acac0
 
-jogo/02057124.cpp:
-    .text       start:0x02057124 end:0x02057164
-    .data       start:0x020fae4c end:0x020fae68
+jogo/CGameObjectPathfind_020597e0.cpp:
+    .text       start:0x020597e0 end:0x02059ccc
+    .bss        start:0x021acacc end:0x021acad8
 
-jogo/02057164.cpp:
-    .text       start:0x02057164 end:0x020571d0
-    .data       start:0x020fae68 end:0x020fae84
-
-jogo/020571d0.cpp:
-    .text       start:0x020571d0 end:0x0205872c
-    .data       start:0x020fae84 end:0x020faf64
+jogo/Animation_0205a068.cpp:
+    .text       start:0x0205a068 end:0x0205a410
+    .bss        start:0x021acad8 end:0x021acae4
 
 jogo/AnimationDataSource_0205a488.cpp:
     .text       start:0x0205a488 end:0x0205a518
@@ -318,283 +284,312 @@ jogo/0205a7c4.cpp:
     .text       start:0x0205a7c4 end:0x0205a8dc
     .data       start:0x020fb0d0 end:0x020fb0e4
 
-jogo/0205c518.cpp:
-    .text       start:0x0205c518 end:0x0205e850
-    .data       start:0x020fb1c8 end:0x020fb3c4
+jogo/0205a8dc.cpp:
+    .text       start:0x0205a8dc end:0x0205aaa8
+    .bss        start:0x021acae4 end:0x021acaf0
 
-jogo/02060c5c.cpp:
-    .text       start:0x02060c5c end:0x02060e34
-    .data       start:0x020fb3c4 end:0x020fb3d4
+jogo/GuiFloaty_0205bad8.cpp:
+    .text       start:0x0205bad8 end:0x020619e4
+    .data       start:0x020fb1c8 end:0x020fb45c
+    .bss        start:0x021acb04 end:0x021acb4c
 
-jogo/02060fcc.cpp:
-    .text       start:0x02060fcc end:0x020611ac
-    .data       start:0x020fb3d4 end:0x020fb424
+jogo/GuiPanel_020620ac.cpp:
+    .text       start:0x020620ac end:0x02062908
+    .bss        start:0x021acb4c end:0x021acb64
 
-jogo/02061204.cpp:
-    .text       start:0x02061204 end:0x02061328
-    .data       start:0x020fb424 end:0x020fb458
+jogo/GuiPanel_020629fc.cpp:
+    .text       start:0x020629fc end:0x02062ad0
+    .bss        start:0x021acb64 end:0x021acb70
 
-jogo/020617b8.cpp:
-    .text       start:0x020617b8 end:0x020619e4
-    .data       start:0x020fb458 end:0x020fb45c
+jogo/02062b00.cpp:
+    .text       start:0x02062b00 end:0x02063168
+    .bss        start:0x021acbb8 end:0x021acbdc
+
+jogo/02063194.cpp:
+    .text       start:0x02063194 end:0x020631d0
+    .bss        start:0x021acbdc end:0x021acbe8
+
+jogo/02063238.cpp:
+    .text       start:0x02063238 end:0x02063274
+    .bss        start:0x021acbe8 end:0x021acbf4
+
+jogo/020632a0.cpp:
+    .text       start:0x020632a0 end:0x020632dc
+    .bss        start:0x021acbf4 end:0x021acc00
+
+jogo/CGUIConversation_020633cc.cpp:
+    .text       start:0x020633cc end:0x02063540
+    .bss        start:0x021acc00 end:0x021acc0c
+
+jogo/GuiPanel_02063798.cpp:
+    .text       start:0x02063798 end:0x02063938
+    .bss        start:0x021acc0c end:0x021acc24
+
+jogo/GuiButton_020639d4.cpp:
+    .text       start:0x020639d4 end:0x02063ac0
+    .bss        start:0x021acc24 end:0x021acc30
+
+jogo/GuiButton_02063ac0.cpp:
+    .text       start:0x02063ac0 end:0x02063d5c
+    .bss        start:0x021acc30 end:0x021acc3c
+
+jogo/GuiButton_02063fbc.cpp:
+    .text       start:0x02063fbc end:0x0206551c
+    .bss        start:0x021acc3c end:0x021acc60
 
 jogo/ExploreHUDGui_0206559c.cpp:
     .text       start:0x0206559c end:0x020658cc
     .data       start:0x020fbb5c end:0x020fbbcc
+    .bss        start:0x021acc60 end:0x021acc78
 
-jogo/020658cc.cpp:
-    .text       start:0x020658cc end:0x020659d8
+jogo/ExploreHUDGui_020658cc.cpp:
+    .text       start:0x020658cc end:0x02065ee0
     .data       start:0x020fbbcc end:0x020fbbdc
+    .bss        start:0x021acc78 end:0x021acc90
+
+jogo/02065eec.cpp:
+    .text       start:0x02065eec end:0x0206600c
+    .bss        start:0x021acc90 end:0x021acc9c
 
 jogo/020660c4.cpp:
     .text       start:0x020660c4 end:0x02066268
     .data       start:0x020fc514 end:0x020fc55c
 
+jogo/020662d4.cpp:
+    .text       start:0x020662d4 end:0x02066310
+    .bss        start:0x021acca0 end:0x021accac
+
 jogo/CombatActionGui_02066574.cpp:
     .text       start:0x02066574 end:0x02069ca8
+    .bss        start:0x021accb8 end:0x021acd0c
 
-jogo/0206a38c.cpp:
-    .text       start:0x0206a38c end:0x0206a5d4
-    .data       start:0x020fc9f8 end:0x020fca08
+jogo/PortraitGUI_02069fc0.cpp:
+    .text       start:0x02069fc0 end:0x0206b270
+    .data       start:0x020fc9f8 end:0x020fcac8
+    .bss        start:0x021acd0c end:0x021acd48
 
-jogo/PortraitGUI_0206a6ec.cpp:
-    .text       start:0x0206a6ec end:0x0206b270
-    .data       start:0x020fca08 end:0x020fcac8
+jogo/CGameTrigger_0206b484.cpp:
+    .text       start:0x0206b484 end:0x0206c6fc
+    .bss        start:0x021acd48 end:0x021acd6c
 
-jogo/GuiTextInterface_0206c760.cpp:
-    .text       start:0x0206c760 end:0x0206cb48
+jogo/GuiText_0206c760.cpp:
+    .text       start:0x0206c760 end:0x0206d150
     .data       start:0x020fcd1c end:0x020fcd20
+    .bss        start:0x021acd6c end:0x021acd84
 
-jogo/GameAction_ExploreTeleport_02077114.cpp:
-    .text       start:0x02077114 end:0x020772d4
+jogo/GuiRadioButtonGroup_0206d1f8.cpp:
+    .text       start:0x0206d1f8 end:0x0206d6f4
+    .bss        start:0x021acd84 end:0x021acd90
+
+jogo/CGameObjectAI_0206da44.cpp:
+    .text       start:0x0206da44 end:0x0206dc30
+    .bss        start:0x021acd90 end:0x021acd9c
+
+jogo/GuiWidget_0206dca0.cpp:
+    .text       start:0x0206dca0 end:0x0206e260
+    .bss        start:0x021acd9c end:0x021acdc0
+
+jogo/GameActionRealTime_0206e27c.cpp:
+    .text       start:0x0206e27c end:0x0206e3d4
+    .bss        start:0x021acdc0 end:0x021acdcc
+
+jogo/0206eec0.cpp:
+    .text       start:0x0206eec0 end:0x020772d4
     .data       start:0x020fd8d4 end:0x020fd928
+    .bss        start:0x021acddc end:0x021ace30
 
-jogo/ModelManager_02077f30.cpp:
-    .text       start:0x02077f30 end:0x02077f9c
+jogo/ModelManager_02077ad8.cpp:
+    .text       start:0x02077ad8 end:0x02078080
     .data       start:0x020fd9bc end:0x020fd9fc
 
-jogo/020788d8.cpp:
-    .text       start:0x020788d8 end:0x02078c18
-    .data       start:0x020fda2c end:0x020fda7c
+jogo/02078208.cpp:
+    .text       start:0x02078208 end:0x020783a0
+    .bss        start:0x021ace48 end:0x021ace54
 
-jogo/02078ce8.cpp:
-    .text       start:0x02078ce8 end:0x02078db0
+jogo/02078754.cpp:
+    .text       start:0x02078754 end:0x02078c18
+    .data       start:0x020fda2c end:0x020fda7c
+    .bss        start:0x021ace54 end:0x021ace84
+
+jogo/Texture_02078ce8.cpp:
+    .text       start:0x02078ce8 end:0x02078e88
     .data       start:0x020fdb00 end:0x020fdb20
+    .bss        start:0x021ace84 end:0x021ace90
 
 jogo/TextureManager_02078ee4.cpp:
     .text       start:0x02078ee4 end:0x02078f54
     .data       start:0x020fdb20 end:0x020fdb64
 
-jogo/CombatRealTimeGui_020793c8.cpp:
-    .text       start:0x020793c8 end:0x0207a974
+jogo/CombatRealTimeGui_020791f4.cpp:
+    .text       start:0x020791f4 end:0x0207b290
     .data       start:0x020fdd18 end:0x020fdd20
+    .bss        start:0x021ace90 end:0x021acee4
 
-jogo/GuiWidget_0207c9c4.cpp:
-    .text       start:0x0207c9c4 end:0x0207cacc
-    .data       start:0x020fdd28 end:0x020fdd34
+jogo/GuiWidget_0207b654.cpp:
+    .text       start:0x0207b654 end:0x0207e860
+    .data       start:0x020fdd28 end:0x020fdd64
+    .bss        start:0x021acee4 end:0x021acf50
 
-jogo/GuiWidget_0207d31c.cpp:
-    .text       start:0x0207d31c end:0x0207d53c
-    .data       start:0x020fdd34 end:0x020fdd44
+jogo/0207e92c.cpp:
+    .text       start:0x0207e92c end:0x0207eb0c
+    .bss        start:0x021acf50 end:0x021acf5c
 
-jogo/GuiWidget_0207da18.cpp:
-    .text       start:0x0207da18 end:0x0207db2c
-    .data       start:0x020fdd44 end:0x020fdd54
+jogo/0207ed38.cpp:
+    .text       start:0x0207ed38 end:0x0207fe48
+    .data       start:0x020fdf90 end:0x020fdff8
+    .bss        start:0x021acf5c end:0x021acf98
 
-jogo/GuiWidget_0207dc6c.cpp:
-    .text       start:0x0207dc6c end:0x0207de08
-    .data       start:0x020fdd54 end:0x020fdd64
+jogo/0207ffd8.cpp:
+    .text       start:0x0207ffd8 end:0x0208a118
+    .data       start:0x021031f0 end:0x02103320
+    .bss        start:0x021acf98 end:0x021acfec
 
-jogo/0207eeac.cpp:
-    .text       start:0x0207eeac end:0x0207f264
-    .data       start:0x020fdf90 end:0x020fdfb8
+jogo/0208a904.cpp:
+    .text       start:0x0208a904 end:0x0208ab20
+    .bss        start:0x021acfec end:0x021acff8
 
-jogo/0207f38c.cpp:
-    .text       start:0x0207f38c end:0x0207f3f8
-    .data       start:0x020fdfb8 end:0x020fdfd4
-
-jogo/0207f3f8.cpp:
-    .text       start:0x0207f3f8 end:0x0207f464
-    .data       start:0x020fdfd4 end:0x020fdff8
-
-jogo/02080794.cpp:
-    .text       start:0x02080794 end:0x02080d44
-    .data       start:0x021031f0 end:0x021031f4
-
-jogo/EventContainer_02082834.cpp:
-    .text       start:0x02082834 end:0x02082cf8
-    .data       start:0x021031f4 end:0x02103234
-
-jogo/CentralCityCrane_02084aa8.cpp:
-    .text       start:0x02084aa8 end:0x02084e90
-    .data       start:0x02103234 end:0x02103248
-
-jogo/02087ea4.cpp:
-    .text       start:0x02087ea4 end:0x02087fb4
-    .data       start:0x02103248 end:0x021032a8
-
-jogo/02089bf0.cpp:
-    .text       start:0x02089bf0 end:0x02089dc4
-    .data       start:0x021032a8 end:0x021032e0
-
-jogo/GreenHillBoat_02089dc4.cpp:
-    .text       start:0x02089dc4 end:0x02089f80
-    .data       start:0x021032e0 end:0x02103320
+jogo/0208ab90.cpp:
+    .text       start:0x0208ab90 end:0x0208bdb8
+    .bss        start:0x021acff8 end:0x021ad040
 
 jogo/0208c060.cpp:
     .text       start:0x0208c060 end:0x0208c0f4
     .data       start:0x021033a8 end:0x021033b4
 
-jogo/0208c12c.cpp:
-    .text       start:0x0208c12c end:0x0208c1f0
+jogo/CombatRunAwayGui_0208c12c.cpp:
+    .text       start:0x0208c12c end:0x0208c30c
     .data       start:0x02103474 end:0x0210348c
+    .bss        start:0x021ad040 end:0x021ad058
 
-jogo/0208d11c.cpp:
-    .text       start:0x0208d11c end:0x0208d2d0
+jogo/GameModeSplashScreens_0208c370.cpp:
+    .text       start:0x0208c370 end:0x0208d2d0
     .data       start:0x021035dc end:0x021035fc
+    .bss        start:0x021ad058 end:0x021ad0ac
+
+jogo/CGameProjectile_0208d438.cpp:
+    .text       start:0x0208d438 end:0x0208e0cc
+    .bss        start:0x021ad0ac end:0x021ad0e8
+
+jogo/0208eb64.cpp:
+    .text       start:0x0208eb64 end:0x0208ebe0
+    .bss        start:0x021ad0e8 end:0x021ad0f4
 
 jogo/GameModeLevelUp_0208fc80.cpp:
-    .text       start:0x0208fc80 end:0x02092110
+    .text       start:0x0208fc80 end:0x02092180
     .data       start:0x021038b0 end:0x02103ad0
+    .bss        start:0x021ad0f4 end:0x021ad160
 
-jogo/CreatureStatsDisplay_02092358.cpp:
-    .text       start:0x02092358 end:0x02092494
-    .data       start:0x02103bac end:0x02103bd4
+jogo/CreatureStatsDisplay_02092304.cpp:
+    .text       start:0x02092304 end:0x02093070
+    .data       start:0x02103bac end:0x02103cd4
+    .bss        start:0x021ad160 end:0x021ad178
 
-jogo/02092494.cpp:
-    .text       start:0x02092494 end:0x02092818
-    .data       start:0x02103bd4 end:0x02103c04
+jogo/TechniqueUpgradeDisplay_020936fc.cpp:
+    .text       start:0x020936fc end:0x02094b54
+    .data       start:0x02103dd4 end:0x02103e6c
+    .bss        start:0x021ad178 end:0x021ad1e4
 
-jogo/02092900.cpp:
-    .text       start:0x02092900 end:0x02093070
-    .data       start:0x02103c04 end:0x02103cd4
+jogo/02094f70.cpp:
+    .text       start:0x02094f70 end:0x02095d58
 
-jogo/02093978.cpp:
-    .text       start:0x02093978 end:0x02093cd4
-    .data       start:0x02103dd4 end:0x02103e18
-
-jogo/02093cd4.cpp:
-    .text       start:0x02093cd4 end:0x020940cc
-    .data       start:0x02103e18 end:0x02103e58
-
-jogo/020940cc.cpp:
-    .text       start:0x020940cc end:0x02094264
-    .data       start:0x02103e58 end:0x02103e6c
-
-jogo/GameModeQuestLog_020963c4.cpp:
-    .text       start:0x020963c4 end:0x02097700
+jogo/GameModeQuestLog_020961a8.cpp:
+    .text       start:0x020961a8 end:0x020977b0
     .data       start:0x021041bc end:0x021042ec
+    .bss        start:0x021ad214 end:0x021ad280
 
-jogo/02098778.cpp:
-    .text       start:0x02098778 end:0x02098820
+jogo/GuiPanelButton_020980dc.cpp:
+    .text       start:0x020980dc end:0x020988f0
     .data       start:0x02104488 end:0x021044a0
+    .bss        start:0x021ad280 end:0x021ad298
+
+jogo/020989fc.cpp:
+    .text       start:0x020989fc end:0x02098e7c
+    .bss        start:0x021ad298 end:0x021ad2a4
 
 jogo/02098f30.cpp:
     .text       start:0x02098f30 end:0x02099178
     .data       start:0x021044f8 end:0x02104518
 
 jogo/GameModeStartUp_02099508.cpp:
-    .text       start:0x02099508 end:0x020998cc
-    .data       start:0x021046c4 end:0x021046ec
-
-jogo/02099b64.cpp:
-    .text       start:0x02099b64 end:0x0209ceac
-    .data       start:0x021046ec end:0x021048fc
+    .text       start:0x02099508 end:0x0209cef0
+    .data       start:0x021046c4 end:0x021048fc
+    .bss        start:0x021ad2b0 end:0x021ad304
 
 jogo/UniversalToolGui_0209d09c.cpp:
-    .text       start:0x0209d09c end:0x0209d52c
+    .text       start:0x0209d09c end:0x0209e150
     .data       start:0x021049d0 end:0x02104b64
+    .bss        start:0x021ad304 end:0x021ad334
 
 jogo/GuiAnimatedImage_0209e470.cpp:
-    .text       start:0x0209e470 end:0x0209e7f0
+    .text       start:0x0209e470 end:0x0209ea44
     .data       start:0x02104c38 end:0x02104c50
+    .bss        start:0x021ad334 end:0x021ad358
+
+jogo/GameModeMovieSequence_0209eb68.cpp:
+    .text       start:0x0209eb68 end:0x0209f364
+    .bss        start:0x021ad358 end:0x021ad394
+
+jogo/GameModeMovieSequence_0209f4d0.cpp:
+    .text       start:0x0209f4d0 end:0x0209fa64
+    .bss        start:0x021ad394 end:0x021ad3a0
 
 jogo/GuiList_0209fc00.cpp:
     .text       start:0x0209fc00 end:0x020a0078
     .data       start:0x02104e9c end:0x02104ea4
+    .bss        start:0x021ad3a0 end:0x021ad3b8
 
 jogo/020a04f4.cpp:
     .text       start:0x020a04f4 end:0x020a05b0
     .data       start:0x02104f74 end:0x02104f88
+    .bss        start:0x021ad3b8 end:0x021ad3c4
 
 jogo/GameModeChaoGarden_020a0ad4.cpp:
     .text       start:0x020a0ad4 end:0x020a9cb8
     .data       start:0x02105174 end:0x021056b4
+    .bss        start:0x021ad3c4 end:0x021ad454
 
 jogo/GameModeWorldMap_020aa370.cpp:
-    .text       start:0x020aa370 end:0x020b1430
+    .text       start:0x020aa370 end:0x020b16bc
+    .bss        start:0x021ad458 end:0x021ad50c
 
-jogo/020b1aec.cpp:
-    .text       start:0x020b1aec end:0x020b1b58
-    .data       start:0x02105e4c end:0x02105e68
-
-jogo/020b2014.cpp:
-    .text       start:0x020b2014 end:0x020b2054
-    .data       start:0x02105e68 end:0x02105e80
-
-jogo/GameModeStore_020b2054.cpp:
-    .text       start:0x020b2054 end:0x020b3040
-    .data       start:0x02105e80 end:0x02105f5c
+jogo/GameModeStore_020b19ac.cpp:
+    .text       start:0x020b19ac end:0x020b3040
+    .data       start:0x02105e4c end:0x02105f5c
+    .bss        start:0x021ad50c end:0x021ad560
 
 jogo/CGameStore_020b330c.cpp:
-    .text       start:0x020b330c end:0x020b3ab0
+    .text       start:0x020b330c end:0x020b3c08
     .data       start:0x02105fdc end:0x02105ffc
+    .bss        start:0x021ad56c end:0x021ad590
 
-jogo/020b409c.cpp:
-    .text       start:0x020b409c end:0x020b40f8
-    .data       start:0x021061e4 end:0x021061f4
+jogo/GameModeReward_020b3df0.cpp:
+    .text       start:0x020b3df0 end:0x020b56ac
+    .data       start:0x021061e4 end:0x021062e8
+    .bss        start:0x021ad590 end:0x021ad614
 
-jogo/020b41cc.cpp:
-    .text       start:0x020b41cc end:0x020b4428
-    .data       start:0x021061f4 end:0x0210622c
-
-jogo/020b4428.cpp:
-    .text       start:0x020b4428 end:0x020b463c
-    .data       start:0x0210622c end:0x0210623c
-
-jogo/020b4730.cpp:
-    .text       start:0x020b4730 end:0x020b4b18
-    .data       start:0x0210623c end:0x021062a4
-
-jogo/020b4b18.cpp:
-    .text       start:0x020b4b18 end:0x020b4bbc
-    .data       start:0x021062a4 end:0x021062b4
-
-jogo/020b4f04.cpp:
-    .text       start:0x020b4f04 end:0x020b51dc
-    .data       start:0x021062b4 end:0x021062c8
-
-jogo/020b5438.cpp:
-    .text       start:0x020b5438 end:0x020b5564
-    .data       start:0x021062c8 end:0x021062d4
-
-jogo/020b55cc.cpp:
-    .text       start:0x020b55cc end:0x020b56ac
-    .data       start:0x021062d4 end:0x021062e8
+jogo/GameModeProfile_020b5d94.cpp:
+    .text       start:0x020b5d94 end:0x020b5e6c
+    .bss        start:0x021ad650 end:0x021ad65c
 
 jogo/GameModeProfile_020b5e6c.cpp:
-    .text       start:0x020b5e6c end:0x020b7578
-    .data       start:0x021065e0 end:0x021067a4
+    .text       start:0x020b5e6c end:0x020b773c
+    .data       start:0x021065e0 end:0x021067ac
+    .bss        start:0x021ad65c end:0x021ad6a4
 
-jogo/020b7578.cpp:
-    .text       start:0x020b7578 end:0x020b773c
-    .data       start:0x021067a4 end:0x021067ac
-
-jogo/020b839c.cpp:
-    .text       start:0x020b839c end:0x020b88c4
-    .data       start:0x02106938 end:0x021069c4
-
-jogo/020b88c4.cpp:
-    .text       start:0x020b88c4 end:0x020b8a38
-    .data       start:0x021069c4 end:0x021069f8
+jogo/GameModeMenu_020b7ef8.cpp:
+    .text       start:0x020b7ef8 end:0x020b8d14
+    .data       start:0x02106938 end:0x021069f8
+    .bss        start:0x021adad4 end:0x021adb10
 
 jogo/020b8ec4.cpp:
     .text       start:0x020b8ec4 end:0x020b9204
     .data       start:0x02106ac8 end:0x02106b24
+    .bss        start:0x021adb10 end:0x021adb1c
 
 jogo/020b92a0.cpp:
     .text       start:0x020b92a0 end:0x020b990c
     .data       start:0x02106b24 end:0x02106b50
+    .bss        start:0x021adb34 end:0x021adb40
 
 jogo/020b990c.cpp:
     .text       start:0x020b990c end:0x020b9960
@@ -603,66 +598,40 @@ jogo/020b990c.cpp:
 jogo/020b9980.cpp:
     .text       start:0x020b9980 end:0x020b9d04
     .data       start:0x02106b88 end:0x02106c10
+    .bss        start:0x021adb44 end:0x021adb68
 
 jogo/GameModeStronghold_020b9f68.cpp:
-    .text       start:0x020b9f68 end:0x020bb980
+    .text       start:0x020b9f68 end:0x020bbce0
     .data       start:0x02106f54 end:0x02107114
+    .bss        start:0x021adb68 end:0x021adb98
 
 jogo/GameModeStronghold_020bbce0.cpp:
     .text       start:0x020bbce0 end:0x020bbd7c
     .data       start:0x02107114 end:0x02107128
 
-jogo/020bc168.cpp:
-    .text       start:0x020bc168 end:0x020bc244
-    .data       start:0x0210715c end:0x02107164
+jogo/020bbf2c.cpp:
+    .text       start:0x020bbf2c end:0x020bce60
+    .data       start:0x0210715c end:0x02107194
+    .bss        start:0x021adb98 end:0x021adbbc
 
-jogo/020bc244.cpp:
-    .text       start:0x020bc244 end:0x020bc2c8
-    .data       start:0x02107164 end:0x0210716c
-
-jogo/020bc2c8.cpp:
-    .text       start:0x020bc2c8 end:0x020bc3c4
-    .data       start:0x0210716c end:0x02107178
-
-jogo/020bc3c4.cpp:
-    .text       start:0x020bc3c4 end:0x020bc43c
-    .data       start:0x02107178 end:0x0210718c
-
-jogo/020bc43c.cpp:
-    .text       start:0x020bc43c end:0x020bc578
-    .data       start:0x0210718c end:0x02107194
-
-jogo/020bcec8.cpp:
-    .text       start:0x020bcec8 end:0x020bcf58
-    .data       start:0x0210725c end:0x02107260
-
-jogo/GuiTabbedCreatureStatsDisplay_020bd0cc.cpp:
-    .text       start:0x020bd0cc end:0x020bd2cc
-    .data       start:0x02107260 end:0x021072b4
-
-jogo/020bd310.cpp:
-    .text       start:0x020bd310 end:0x020be0c0
-    .data       start:0x021072b4 end:0x021073d0
+jogo/GuiTabbedCreatureStatsDisplay_020bcec8.cpp:
+    .text       start:0x020bcec8 end:0x020be0c0
+    .data       start:0x0210725c end:0x021073d0
+    .bss        start:0x021adbbc end:0x021adbc8
 
 jogo/CreatureStatsPanelDisplay_020be3ac.cpp:
-    .text       start:0x020be3ac end:0x020be4f0
-    .data       start:0x021074d8 end:0x02107500
+    .text       start:0x020be3ac end:0x020bee4c
+    .data       start:0x021074d8 end:0x0210754c
+    .bss        start:0x021adbd4 end:0x021adbf8
 
-jogo/020be500.cpp:
-    .text       start:0x020be500 end:0x020be630
-    .data       start:0x02107504 end:0x02107508
-
-jogo/020be71c.cpp:
-    .text       start:0x020be71c end:0x020beaec
-    .data       start:0x02107508 end:0x02107548
-
-jogo/020beaec.cpp:
-    .text       start:0x020beaec end:0x020bed80
-    .data       start:0x02107548 end:0x0210754c
+jogo/020bee4c.cpp:
+    .text       start:0x020bee4c end:0x020bef70
+    .bss        start:0x021adbf8 end:0x021adc04
 
 jogo/020bf040.cpp:
     .text       start:0x020bf040 end:0x020bf104
     .data       start:0x02107600 end:0x02107610
+    .bss        start:0x021adc04 end:0x021adc10
 
 jogo/020bf130.cpp:
     .text       start:0x020bf130 end:0x020bf228
@@ -676,45 +645,85 @@ jogo/020bf8a8.cpp:
     .text       start:0x020bf8a8 end:0x020bf954
     .data       start:0x02107728 end:0x02107738
 
+jogo/020bfa44.cpp:
+    .text       start:0x020bfa44 end:0x020bfd4c
+    .bss        start:0x021adc10 end:0x021adc1c
+
 jogo/CombatVictoryGui_020c0008.cpp:
     .text       start:0x020c0008 end:0x020c0068
     .data       start:0x021077f4 end:0x02107800
 
-jogo/CombatQueueItemGUI_020c0334.cpp:
-    .text       start:0x020c0334 end:0x020c0464
+jogo/020c0068.cpp:
+    .text       start:0x020c0068 end:0x020c0248
+    .bss        start:0x021adc1c end:0x021adc34
+
+jogo/CombatQueueItemGUI_020c0270.cpp:
+    .text       start:0x020c0270 end:0x020c0464
     .data       start:0x021078b8 end:0x021078ec
+    .bss        start:0x021adc34 end:0x021adc40
 
 jogo/020c0480.cpp:
     .text       start:0x020c0480 end:0x020c05e8
     .data       start:0x021078ec end:0x02107900
+    .bss        start:0x021adc40 end:0x021adc4c
 
-jogo/020c0864.cpp:
-    .text       start:0x020c0864 end:0x020c09dc
+jogo/020c06c8.cpp:
+    .text       start:0x020c06c8 end:0x020c09dc
     .data       start:0x02107930 end:0x02107940
+    .bss        start:0x021adc4c end:0x021adc64
 
-jogo/020c16b0.cpp:
-    .text       start:0x020c16b0 end:0x020c181c
+jogo/FireAndForgetEmitterVisualEffect_020c1600.cpp:
+    .text       start:0x020c1600 end:0x020c2cfc
     .data       start:0x021079ec end:0x021079fc
+    .bss        start:0x021adc64 end:0x021adc94
+
+jogo/020c2d7c.cpp:
+    .text       start:0x020c2d7c end:0x020c2f38
+    .bss        start:0x021adc94 end:0x021adca0
 
 jogo/020c3000.cpp:
     .text       start:0x020c3000 end:0x020c3190
     .data       start:0x02107a64 end:0x02107a84
+    .bss        start:0x021adca0 end:0x021adcac
 
-jogo/GameModeInventory_020c4654.cpp:
-    .text       start:0x020c4654 end:0x020c4828
+jogo/020c31cc.cpp:
+    .text       start:0x020c31cc end:0x020c32a4
+    .bss        start:0x021adcac end:0x021adcb8
+
+jogo/020c3c84.cpp:
+    .text       start:0x020c3c84 end:0x020c3e24
+    .bss        start:0x021adcbc end:0x021adcc8
+
+jogo/GameModeInventory_020c3f6c.cpp:
+    .text       start:0x020c3f6c end:0x020c4c08
     .data       start:0x02107d04 end:0x02107d24
+    .bss        start:0x021adcc8 end:0x021add10
 
 jogo/020c4ca8.cpp:
     .text       start:0x020c4ca8 end:0x020c4ed8
     .data       start:0x02107d4c end:0x02107d68
+    .bss        start:0x021add10 end:0x021add28
+
+jogo/020c4fe4.cpp:
+    .text       start:0x020c4fe4 end:0x020c5554
+    .bss        start:0x021add28 end:0x021add34
+
+jogo/020c57e8.cpp:
+    .text       start:0x020c57e8 end:0x020c598c
+    .bss        start:0x021add34 end:0x021add40
 
 jogo/LevelUpStats_020c5a30.cpp:
-    .text       start:0x020c5a30 end:0x020c6280
+    .text       start:0x020c5a30 end:0x020c6788
     .data       start:0x02107e5c end:0x02107e90
+    .bss        start:0x021add40 end:0x021add7c
 
 jogo/020c6788.cpp:
     .text       start:0x020c6788 end:0x020c6940
     .data       start:0x02107f30 end:0x02107f3c
+
+jogo/020c6a4c.cpp:
+    .text       start:0x020c6a4c end:0x020c6b50
+    .bss        start:0x021add7c end:0x021add88
 
 NitroSystem/libraries/fnd/src/list.c:
     complete

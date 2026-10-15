@@ -511,6 +511,39 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
 - **Resultado:** ROM idêntica, 50 funções conferidas no CI, e o progresso foi de 13,67%
   para **13,76%**.
 
+## 25. As variáveis escondidas, de novo: 84% do código separado por arquivo (Fase 2.4)
+- **Erro nº 16: a conclusão do Erro nº 12 estava errada.** Decompilando o sistema de
+  arquivos, achei o `Singleton<CDSFileSystem>::Instance()` copiado (inline) dentro de
+  uma função: a guarda e o objeto ficam na `.bss` do `main.cpp`, mas a variável de 12
+  bytes passada ao `__register_global_object` fica na `.bss` deste arquivo. No Erro
+  nº 12 eu tinha visto o `main` usar a mesma variável três vezes e concluído que ela era
+  compartilhada entre arquivos. Três usos no mesmo arquivo não dizem nada sobre arquivos
+  diferentes. Um `.o` de teste resolve: numa função inline com um `static`, o objeto e a
+  guarda saem "multidef" (uma cópia por programa), e a variável sai **local**, uma por
+  arquivo, a mesma para todas as funções do arquivo.
+- **A regra nova.** Duas funções que passam a mesma variável ao `__register_global_object`
+  estão no mesmo arquivo, como duas funções que leem a mesma cópia de uma string. Como o
+  `Instance()` está copiado em mais de 3 mil lugares, ela alcança quase todo o código.
+  `mapa_arquivos.py` agora junta as funções pelas duas regras (990 funções passam 438
+  variáveis) e também pela ordem da `.bss`: se um pedaço de cima tem variáveis depois das
+  de um de baixo, são o mesmo arquivo (dentro de um arquivo o compilador ordena essas
+  variáveis do jeito dele, como nos pools do alocador).
+- **As conferências, todas podiam falhar:** os 337 pares de cópias da mesma string
+  continuam em pedaços diferentes; nenhum dos 149 marcadores cai no meio das strings de um
+  pedaço; e, pela contiguidade da `.bss`, 8 pedaços contêm variáveis de um `__sinit`, cada
+  um de um só, na ordem dos `__sinit`.
+- **Arquivos sem código.** O primeiro pedaço vai do `main` até `0x02002d0c`, e há três
+  marcadores antes das strings dele. Dois são arquivos sem nenhuma função no jogo. Faz
+  sentido: o linker descarta as funções que ninguém chama, mas o `__sinit` de um arquivo
+  fica sempre (a tabela `.ctor` aponta para ele), e com ele os dados que ele grava. E a
+  ordem dentro do bloco de variáveis de um arquivo mistura variáveis e typeinfo, então o
+  marcador não marca o começo do arquivo, só que o arquivo existe.
+- **Resultado:** 161 pedaços cobrem **84%** dos bytes do código do jogo (antes, 175
+  pedaços e 38%), 125 deles com a faixa da `.bss`; a ROM continua idêntica. Um pedaço que
+  atravessa um arquivo já decompilado (o `HashResourceName` no meio do sistema de
+  arquivos) fica em duas partes. O que sobra (16%) são as pontas e os arquivos que não
+  usam strings nem `Singleton`.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

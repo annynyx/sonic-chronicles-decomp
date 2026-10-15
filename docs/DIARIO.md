@@ -418,6 +418,22 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   arquivo, muda essa ordem e o build acusa. Se só usar dados globais, a borda errada não
   muda nenhum byte: o erro fica só na organização do fonte, e não na ROM.
 
+## 22. As sobras das bibliotecas (tentativa)
+- **Os dois arquivos com modelos do C++.** O `CPP_ios.c` e o `CPP_msl_thread.c` ficavam de
+  fora porque definem funções de modelo (`shared_ptr<char>`, `move_ptr`) que o jogo tem
+  em outro lugar. Elas são "multidef" no `.o`, e a ideia era deixar a cópia do `.o` ceder
+  à do jogo, como já se faz com os dados. Com a trava desligada, a configuração
+  regenerada do zero (desde o `af53d17`) saiu igual à versionada mais os dois arquivos,
+  mas o build cresceu 160 bytes: o `CPP_ios.o` trouxe a sua cópia das funções, e o jogo
+  tem outra no mesmo lugar, que não cede porque no assembly elas têm nome automático.
+  Pior, as duas cópias são diferentes: no jogo, a sequência depois do `CPP_ios` tem os
+  tamanhos 0x1a, 0x2, 0x4, 0x12..., e no `.o` 0x28, 0x14, 0xc, 0x2. As cópias que o
+  linker da Nintendo guardou vieram de outra compilação. A trava estava certa; voltou.
+- **O resto** continua como estava em [BUILD.md](BUILD.md#as-bibliotecas-da-nintendo-ligadas-do-fonte):
+  `CPP_locale` e `C_math_arm` (funções em outra ordem), `CPP_iostream` e `C_ansi_fp`
+  (uma função do meio não bate) e o `gx_vramcnt.c` do SDK. Juntos são uns 1,9% do
+  código; ficam para depois, porque o objetivo agora é o código do jogo.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

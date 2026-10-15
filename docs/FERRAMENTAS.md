@@ -146,6 +146,7 @@ fáceis de testar no PC. As versões *matching* (os mesmos bytes do jogo) ficam 
 | Script | O que faz |
 |---|---|
 | `ferramentas.sh` | baixa `dsd`, `wibo` e os compiladores `mwccarm` para `work/ferramentas/` (SHA-256 conferido) |
+| `baixar_rom.sh` | na nuvem: baixa a ROM do link em `SONIC_ROM_URL` (aceita link de compartilhamento do Google Drive) para `work/rom/ywse.nds` e confere o SHA-1, sem nunca imprimir o link |
 | `montar_rom.sh rom.nds` | reconstrói a ROM a partir do assembly e de `src/` e compara o SHA-1 |
 | `compilar.sh fonte.cpp saida.o` | compila com o compilador e as flags do jogo |
 | `comparar.py arquivo.o símbolo endereço` | compara uma função compilada com a do jogo, instrução por instrução |

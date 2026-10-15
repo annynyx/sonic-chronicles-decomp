@@ -15,6 +15,13 @@ Requisitos: Linux x86-64 (ou WSL), `python3` com `pip install capstone pyelftool
 `curl`, `unzip`. O build leva uns 7 segundos. A ROM esperada (USA, `YWSE`) tem
 SHA-1 `f4ff8291b38bf9a33ab280fb9f7625cf4d549473`.
 
+**Numa sessão na nuvem**, a ROM chega por um link privado na variável de ambiente
+`SONIC_ROM_URL`. `decomp/tools/baixar_rom.sh` a baixa para `work/rom/ywse.nds` e confere
+o SHA-1. Ele aceita o link de compartilhamento do Google Drive. Para isso, o arquivo
+precisa estar como "Qualquer pessoa com o link", e a rede do ambiente precisa liberar
+`drive.google.com` e `drive.usercontent.google.com`. A variável e a regra de rede só
+valem para sessões abertas depois da mudança.
+
 > Nada disto vai para o Git: `work/` está no `.gitignore`. No repositório ficam só
 > os scripts, o C++ decompilado (`src/`, `include/`) e a configuração (`config/`),
 > que tem endereços, tamanhos e nomes, nenhum byte do jogo.

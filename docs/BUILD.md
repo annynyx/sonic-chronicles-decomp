@@ -110,6 +110,27 @@ python3 decomp/tools/comparar.py /tmp/x.o _Z16HashResourceNameRK10CExoString 0x0
 O `comparar.py` mostra o assembly do jogo e o seu lado a lado, com `!!` nas
 instruções diferentes e `R` nos bytes que o linker ainda vai preencher.
 
+### Um arquivo decompilado entra no build
+
+Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no build assim
+(o exemplo é a `CExoString`):
+
+1. Em `delinks.txt`, o arquivo ganha `complete` e as faixas de cada seção que o `.o`
+   gera: `.text` e, se houver, `.data` (strings, vtable, typeinfo), `.rodata`, `.bss`.
+   O `.text` vai até o múltiplo de 4.
+2. `python3 decomp/tools/nomes_do_fonte.py src/Aurora/CExoString.cpp --aplicar`
+   compila o fonte, encaixa cada função e cada dado do `.o` na faixa, comparando os
+   bytes, e põe em `symbols.txt` os nomes que o compilador gera
+   (`_ZN10CExoStringC1EPKc`...), que é como o resto do jogo vai chamá-los. Uma
+   relocação para o meio de um símbolo (a vtable + 8) vira "símbolo + deslocamento"
+   em `relocs.txt`. Quando o `.o` tem duas cópias iguais (o `C1` e o `C2` de um
+   construtor) e o jogo só uma, o nome é o da cópia que o próprio `.o` usa, ou o `C1`;
+   a outra o linker descarta. Se algo não encaixar, o script para.
+3. As funções vão para `decomp/compilador/casos.txt`, e
+   `python3 decomp/tools/conferir_sem_rom.py --gerar work/extract/arm9/arm9.bin`
+   regrava os hashes, para o CI conferir sem a ROM.
+4. `montar_rom.sh` tem de dizer IDÊNTICA, e `progresso.py` mostra o número novo.
+
 ---
 
 ## As bibliotecas da Nintendo, ligadas do fonte
@@ -119,7 +140,7 @@ arquivos do NitroSDK e 62 dos 68 arquivos do MSL (a biblioteca C/C++ da Metrower
 o jogo usa não vêm mais do assembly cortado. O build compila os `.c` do fonte público do
 SDK e da NitroSystem (veja [COMPILADOR.md](COMPILADOR.md#a-nitrosystem-100-da-região-reconhecida)),
 tira os `.o` do MSL de dentro dos `.a` do CodeWarrior 2.0 sp2, liga tudo, e a ROM
-continua idêntica. São 132 KB, **13,48% do código do ARM9** (com o ITCM; a conta está
+continua idêntica. São 132 KB, **13,47% do código do ARM9** (com o ITCM; a conta está
 [abaixo](#a-métrica-de-progresso)). Na primeira vez,
 `montar_rom.sh` prepara as bibliotecas sozinho (`nitrosdk.sh`, `nitrosystem.sh` e
 `msl.sh`, para `work/bibliotecas/`).
@@ -279,11 +300,12 @@ do ITCM); o resto é o jogo, onde ainda pode haver alguma biblioteca não identi
      NitroSDK                            49.084      55.132   89,03%
      MSL                                 36.952      49.892   74,06%
    bibliotecas (213 arquivos)           135.472     154.460   87,71%
-   jogo (2 arquivos)                         84     851.320    0,01%
-   TOTAL                                135.556   1.005.780   13,48%
+   jogo (2 arquivos)                      2.044     851.320    0,24%
+   TOTAL                                137.516   1.005.780   13,67%
 ```
 
-Até a Fase 2.4, a conta era feita à mão e só com a `.text` (13,58%, os "13,6%" de antes).
+Até a Fase 2.4, a conta era feita à mão e só com a `.text` (13,58% naquela hora, os
+"13,6%" de antes; antes da `CExoString` o total era 13,48%).
 A `.init` entrou porque também é código do jogo que vai ter de sair de fonte: sem ela,
 seria possível chegar a "100%" com 7.760 bytes ainda vindos do assembly.
 

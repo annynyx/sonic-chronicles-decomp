@@ -56,14 +56,17 @@ def main():
                 nome, h = linha.split()
                 esperado[nome] = h
     saida, falhas = [], 0
+    objetos = {}                  # cada fonte é compilado uma vez só
     with tempfile.TemporaryDirectory() as tmp:
         for n, linha in enumerate(open(CASOS)):
             if not linha.strip() or linha.startswith("#"):
                 continue
             fonte, nome, end = linha.split()
-            obj = os.path.join(tmp, f"{n}.o")
-            subprocess.run([os.path.join(REPO, "decomp/tools/compilar.sh"), fonte, obj],
-                           cwd=REPO, check=True, stdout=subprocess.DEVNULL)
+            if fonte not in objetos:
+                objetos[fonte] = os.path.join(tmp, f"{len(objetos)}.o")
+                subprocess.run([os.path.join(REPO, "decomp/tools/compilar.sh"), fonte, objetos[fonte]],
+                               cwd=REPO, check=True, stdout=subprocess.DEVNULL)
+            obj = objetos[fonte]
             dados, mascara = funcao(obj, nome)
             if gerar:
                 jogo = arm9[int(end, 16) - BASE:int(end, 16) - BASE + len(dados)]

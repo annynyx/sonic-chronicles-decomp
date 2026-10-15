@@ -1,6 +1,38 @@
 # Funções que já dão 100% de match. testar_compilador.sh compila cada fonte
 # com cada versão do mwccarm e compara o símbolo com o endereço no jogo.
 # fonte                            símbolo gerado pelo compilador              endereço
+src/Aurora/CExoString.cpp          _ZN10CExoString11AllocBufferEj              0x02004e00
+src/Aurora/CExoString.cpp          _ZN10CExoString10FreeBufferEPc              0x02004e0c
+src/Aurora/CExoString.cpp          _ZN10CExoStringC1Ev                         0x02004e1c
+src/Aurora/CExoString.cpp          _ZN10CExoStringC2EPKc                       0x02004e2c
+src/Aurora/CExoString.cpp          _ZN10CExoStringC1EPKc                       0x02004e68
+src/Aurora/CExoString.cpp          _ZN10CExoStringC1EPKt                       0x02004ea4
+src/Aurora/CExoString.cpp          _ZN10CExoStringC1ERKS_                      0x02004efc
+src/Aurora/CExoString.cpp          _ZN10CExoStringC1Ei                         0x02004f38
+src/Aurora/CExoString.cpp          _ZN10CExoStringD1Ev                         0x02004f70
+src/Aurora/CExoString.cpp          _ZN10CExoStringD0Ev                         0x02004f88
+src/Aurora/CExoString.cpp          _ZN10CExoStringaSERKS_                      0x02004fa4
+src/Aurora/CExoString.cpp          _ZN10CExoStringaSEPKc                       0x0200501c
+src/Aurora/CExoString.cpp          _ZNK10CExoStringeqERKS_                     0x02005094
+src/Aurora/CExoString.cpp          _ZNK10CExoStringeqEPKc                      0x020050e8
+src/Aurora/CExoString.cpp          _ZNK10CExoStringneERKS_                     0x0200512c
+src/Aurora/CExoString.cpp          _ZNK10CExoStringneEPKc                      0x02005174
+src/Aurora/CExoString.cpp          _ZNK10CExoStringltERKS_                     0x020051b0
+src/Aurora/CExoString.cpp          _ZNK10CExoStringixEi                        0x020051e4
+src/Aurora/CExoString.cpp          _ZNK10CExoStringplERKS_                     0x02005204
+src/Aurora/CExoString.cpp          _ZN10CExoStringpLERKS_                      0x020052a0
+src/Aurora/CExoString.cpp          _ZNK10CExoString5AsINTEv                    0x020052c4
+src/Aurora/CExoString.cpp          _ZNK10CExoString7AsFLOATEv                  0x020052d8
 src/Aurora/CExoString.cpp          _ZNK10CExoString4CStrEv                     0x020052f0
+src/Aurora/CExoString.cpp          _ZNK10CExoString4FindERKS_                  0x02005300
+src/Aurora/CExoString.cpp          _ZNK10CExoString4FindEc                     0x02005334
+src/Aurora/CExoString.cpp          _ZN10CExoString6FormatEPKcz                 0x02005364
+src/Aurora/CExoString.cpp          _ZNK10CExoString9GetLengthEv                0x020053f0
+src/Aurora/CExoString.cpp          _ZNK10CExoString4LeftEi                     0x02005404
+src/Aurora/CExoString.cpp          _ZNK10CExoString9LowerCaseEv                0x02005450
+src/Aurora/CExoString.cpp          _ZNK10CExoString5RightEi                    0x02005490
+src/Aurora/CExoString.cpp          _ZNK10CExoString9SubStringEii               0x020054e4
+src/Aurora/CExoString.cpp          _ZNK10CExoString9UpperCaseEv                0x0200553c
+src/Aurora/CExoString.cpp          _ZNK10CExoString13CompareNoCaseERKS_        0x0200557c
 src/Aurora/ResourceHash.cpp        _Z16HashResourceNameRK10CExoString          0x02009b78
 decomp/compilador/lista.cpp        _Z20Lista_Par16_RemoveAtP5ListaI5Par16Ei    0x0202d428

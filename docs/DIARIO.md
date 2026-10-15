@@ -434,6 +434,51 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   (uma função do meio não bate) e o `gx_vramcnt.c` do SDK. Juntos são uns 1,9% do
   código; ficam para depois, porque o objetivo agora é o código do jogo.
 
+## 23. A `CExoString` inteira (Fase 3.1)
+- **A classe.** Doze bytes: a vtable (só o destrutor é virtual), `m_sString` e
+  `m_nBufferLength`, com os nomes da `CExoString` do Neverwinter Nights, do mesmo motor.
+  São 33 funções seguidas, de `0x02004e00` a `0x020055b8`, e a ordem do jogo é a do
+  fonte: os dois auxiliares de memória, os construtores, o destrutor, os operadores, e
+  `AsINT`, `CStr`, `Find`, `Format`, `Left`, `SubString`, `UpperCase`, `CompareNoCase`...
+  28 bateram na primeira compilação. As outras 5 ensinaram as lições que estão em
+  [COMPILADOR.md](COMPILADOR.md#o-que-aprendemos-igualando-funções): chamar uma função
+  dentro dos argumentos muda a ordem das leituras, e um valor guardado numa variável é
+  lido uma vez só.
+- **Uma biblioteca que faltava.** `LowerCase`, `UpperCase` e `CompareNoCase` chamam três
+  funções sem nome no meio do MSL. Não estavam no MSL C: estão no **MSL_Extras**
+  (`extras_string.h`), que a Fase 2.3 não tinha procurado. São `strlwr`, `strupr` e
+  `stricmp`. As duas primeiras têm o mesmo código e só diferem na tabela que leem
+  (`__lower_map` ou `__upper_mapC`), e foi assim que ganharam o nome.
+- **Os dados também saem do fonte.** O destrutor virtual é a primeira função virtual da
+  classe, então o `.o` traz a vtable, o typeinfo e o nome `"10CExoString"`, além da
+  string `"%i"` do construtor de `int`. Na ordem do `.o` eles caem exatamente nos
+  endereços do jogo (`0x020f5510` a `0x020f553c`).
+- **O que fica para depois.** O arquivo de verdade tem mais coisa: o `""` para onde o
+  `g_emptyString` aponta (`0x020f5508`), uma variável em `0x020f550c` e o `__sinit` dela
+  (`0x020edb7c`), que também constrói dois objetos da biblioteca C++ em `0x021609e8`.
+  Como no `CStr` antes, a parte provada entrou isolada; o resto continua no assembly.
+- **Um marcador em cada arquivo.** A variável de `0x020f550c` é `FX_Div(2.0, π)`,
+  calculada no `__sinit`. E os 149 `__sinit` do jogo fazem a mesma conta, cada um para a
+  sua variável: é uma constante declarada num header que quase todo arquivo inclui, e
+  cada arquivo tem a sua cópia, como as strings. São 149 marcadores, um por arquivo, na
+  `.data` e na `.init`. Não dizem onde fica cada função, mas ligam cada núcleo ao seu
+  `__sinit` e mostram quando não há arquivo nenhum entre dois núcleos. É o próximo passo
+  da Fase 2.4.
+- **Uma ferramenta para pôr arquivos no build.** `nomes_do_fonte.py` encaixa o `.o` na
+  faixa do arquivo, comparando os bytes, e troca os nomes em `symbols.txt` pelos do
+  compilador (passo a passo em [BUILD.md](BUILD.md#um-arquivo-decompilado-entra-no-build)).
+- **Erro nº 14:** a ferramenta transformava toda relocação para o meio de um símbolo em
+  "símbolo + deslocamento", inclusive os ponteiros para funções Thumb, que têm o bit 0
+  ligado (`0x02004f71` é a função de `0x02004f70`). O linker somaria 1 e ainda ligaria o
+  bit: o ponteiro andaria 1 byte. O build acusou; agora esses ficam como estavam.
+- **Erro nº 15:** o construtor padrão existe duas vezes no `.o` (`C2` e `C1`, mesmos
+  bytes) e uma vez no jogo. A ferramenta deu ao endereço o nome do primeiro, o `C2`, mas o
+  próprio `.o` chama o `C1` (`CExoString result;` no `operator+`). Com os dois citados, o
+  linker guardou os dois, e tudo depois andou 16 bytes. Agora ela prefere a cópia que o
+  `.o` usa, e depois o `C1`.
+- **Resultado:** ROM idêntica, 35 funções conferidas no CI, e o progresso foi de 13,48%
+  para **13,67%** (o código do jogo, de 84 para 2.044 bytes).
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

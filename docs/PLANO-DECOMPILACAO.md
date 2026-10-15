@@ -19,7 +19,7 @@ diante, as partes podem ser feitas em paralelo, e de forma incremental para semp
 | Nomes | ~2.230 por RTTI (classes, métodos virtuais, construtores, destrutores) + manuais em `analise/symbols_manual.txt` |
 | Classes | 290, com herança (`docs/hierarquia_classes.md`) |
 | Pseudo-C | Ghidra headless (`analise/ghidra_scripts/`) para todas as funções |
-| Funções já reescritas | `HashResourceName`, `CExoString::CStr`, escolha do TLK por idioma (`src/`), validadas contra o jogo |
+| Funções já reescritas | `HashResourceName`, a `CExoString` inteira (33 funções), escolha do TLK por idioma (`src/`), validadas contra o jogo |
 | Formatos de dados | todos os principais lidos **e escritos** byte a byte (`engine/`) |
 | Bibliotecas embutidas | NitroSDK 4.2 (`0x04027531`), NitroSystem (`NNS_Tga`, `G3D`), MSL C++ da Metrowerks (iostreams) |
 | Compilador | CodeWarrior para DS, **mwccarm 2.0 sp2, `-O4,p`, Thumb, RTTI ligado, exceções desligadas** ([COMPILADOR.md](COMPILADOR.md)) |
@@ -109,7 +109,7 @@ precisa ser reescrito do zero.
 ✅ `decomp/tools/progresso.py` (no lugar do relatório do `objdiff`, que o projeto trocou
 pelo `comparar.py`): lê `config/YWSE/` e, se houver, o mapa do linker; separa
 bibliotecas e jogo. Conta explicada em [BUILD.md](BUILD.md#a-métrica-de-progresso).
-Hoje: **13,48%** (bibliotecas 87,71%, jogo 0,01%).
+Hoje: **13,67%** (bibliotecas 87,71%, jogo 0,24%).
 
 ## Fase 3: núcleo do motor Aurora (semanas 5 a 8)
 
@@ -118,7 +118,7 @@ retorno, porque essas funções são chamadas em todo lugar.
 
 | Parte | Classes / funções | Por que primeiro |
 |---|---|---|
-| 3.1 Strings | `CExoString` (já começado), `CResRef` | usadas em todo lugar |
+| 3.1 Strings | `CExoString` ✅ (33 funções, `src/Aurora/CExoString.cpp`), `CResRef` | usadas em todo lugar |
 | 3.2 Memória e singletons | alocador (`func_020033e8`/`func_02003438`), `Singleton<T>`, `ResourcePool<T>` | padrão repetido em centenas de funções |
 | 3.3 Arquivos | `CDSFileSystem`, `CErfMan`, `CErfTable`, `FileReference`, leitura de `.small` | o formato já está 100% documentado |
 | 3.4 Dados | leitores GFF4, GDA, 2DA, `CTlkTable` (o hash já foi descoberto) | já temos as especificações e os escritores |

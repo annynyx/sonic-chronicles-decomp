@@ -893,31 +893,31 @@ from:0x02004dc0 kind:thumb_call to:0x0200341c module:main
 from:0x02004df2 kind:thumb_call to:0x0200341c module:main
 from:0x02004e08 kind:load to:0x020033e9 module:main
 from:0x02004e14 kind:thumb_call to:0x02003438 module:main
-from:0x02004e28 kind:load to:0x020f5530 module:main
+from:0x02004e28 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004e40 kind:thumb_call to:0x020e3740 module:main
 from:0x02004e4e kind:thumb_call to:0x02004e00 module:main
 from:0x02004e58 kind:thumb_call to:0x020e1158 module:main
-from:0x02004e60 kind:load to:0x020f5530 module:main
+from:0x02004e60 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004e7c kind:thumb_call to:0x020e3740 module:main
 from:0x02004e8a kind:thumb_call to:0x02004e00 module:main
 from:0x02004e94 kind:thumb_call to:0x020e1158 module:main
-from:0x02004e9c kind:load to:0x020f5530 module:main
+from:0x02004e9c kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004ed2 kind:thumb_call to:0x020033e8 module:main
-from:0x02004ef4 kind:load to:0x020f5530 module:main
+from:0x02004ef4 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004f12 kind:thumb_call to:0x020e3740 module:main
 from:0x02004f20 kind:thumb_call to:0x02004e00 module:main
 from:0x02004f2a kind:thumb_call to:0x020e1158 module:main
-from:0x02004f34 kind:load to:0x020f5530 module:main
+from:0x02004f34 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004f48 kind:thumb_call to:0x020e291c module:main
 from:0x02004f52 kind:thumb_call to:0x02004e00 module:main
 from:0x02004f5c kind:thumb_call to:0x020e1158 module:main
-from:0x02004f68 kind:load to:0x020f5530 module:main
+from:0x02004f68 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004f6c kind:load to:0x020f5538 module:main
 from:0x02004f7a kind:thumb_call to:0x02004e0c module:main
-from:0x02004f84 kind:load to:0x020f5530 module:main
+from:0x02004f84 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004f92 kind:thumb_call to:0x02004e0c module:main
 from:0x02004f98 kind:thumb_call to:0x0200341c module:main
-from:0x02004fa0 kind:load to:0x020f5530 module:main
+from:0x02004fa0 kind:load to:0x020f5528 add:0x8 module:main
 from:0x02004fb8 kind:thumb_call to:0x020e3740 module:main
 from:0x02004fc2 kind:thumb_call to:0x020e3740 module:main
 from:0x02004fdc kind:thumb_call to:0x02004e0c module:main

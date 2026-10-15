@@ -40,6 +40,16 @@ versão     -O4,p   -O4,s   -O3,p   -O2
 dsi/1.1     2/3     1/3     2/3     1/3      (todas as dsi/: igual)
 ```
 
+Com a `CExoString` inteira decompilada (Fase 3.1), a mesma matriz tem 35 funções e
+continua apontando para a 2.0:
+
+```
+versão     -O4,p   -O4,s   -O3,p   -O2
+1.2/base    0/35    0/35    0/35    0/35     (a 1.2 não conhece a opção -ipa)
+2.0/base    35/35   16/35   35/35   31/35    (2.0/sp1 ... sp2p4: igual)
+dsi/1.1     21/35   15/35   21/35   19/35    (dsi/1.6sp1 e sp2: 19 em -O4,s)
+```
+
 - **1.2** gera `mul` para `hash * 33` e salva os registradores com outra convenção
   (`push {r4, r5, lr}` + `sub sp, #4` em vez de `push {r3, r4, r5, lr}`).
 - **DSi (4.0)** acerta CStr e o hash, mas na remoção de item aloca os registradores
@@ -75,6 +85,28 @@ Algumas lições destas três, que devem valer para o resto do jogo:
 - **`ldrsb r5, [r3, r6]` com `r6 = 0`** é só um `*p`: em Thumb, o `ldrsb` (byte com
   sinal) não tem a forma com deslocamento fixo, então o compilador usa um registrador
   zerado.
+
+Mais lições, da `CExoString` (33 funções, [`src/Aurora/CExoString.cpp`](../src/Aurora/CExoString.cpp)):
+
+- **Uma chamada dentro dos argumentos muda a ordem das leituras.** Em
+  `stricmp(string.CStr(), m_sString)`, o compilador lê `m_sString` antes de chamar
+  `CStr` e o guarda num registrador; o jogo lê depois. Com a chamada numa linha própria
+  (`const char* other = string.CStr();`), a ordem fica a do jogo. O mesmo no `Find`.
+- **Um valor guardado numa variável é lido uma vez só.** O `operator[]` do jogo lê
+  `m_sString`, chama `strlen` e usa o mesmo registrador depois; escrito com
+  `m_sString` nas duas vezes, o compilador relê o campo depois da chamada.
+- **Um `BOOL` calculado fora do laço** dá o padrão "r2 = 1 se o ponteiro é NULL", testado a
+  cada volta (o construtor de texto de 16 bits).
+- **O `ldr r0, =0` no lugar de `movs r0, #0`:** o `movs` mexe nas flags, e o compilador
+  ainda precisa delas para o `beq` seguinte. Não é preciso fazer nada no fonte.
+- **O tamanho de um array local** só aparece arredondado na pilha (`sub sp, #0x24`):
+  de 33 a 36 bytes, o código é o mesmo.
+- **Construtores em dobro.** Para cada construtor, o compilador gera o `C1` (objeto
+  inteiro) e o `C2` (a parte "base" de uma classe derivada), com os mesmos bytes; o
+  linker descarta o que ninguém chama. Com `-ipa file`, o `C2` vem antes do `C1`, e é
+  assim no jogo (`0x02004e2c`, chamado 1 vez, e `0x02004e68`, chamado 293 vezes): mais
+  uma confirmação da opção. Os destrutores saem `D1`, `D0` (o que também faz
+  `delete this`) e `D2`.
 
 ## `-ipa file`: a ordem dos dados
 

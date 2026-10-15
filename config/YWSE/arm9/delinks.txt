@@ -23,13 +23,10 @@ jogo/02004718.cpp:
     .text       start:0x02004718 end:0x02004b9c
     .data       start:0x020f54e8 end:0x020f5504
 
-jogo/CExoString_02004f38.cpp:
-    .text       start:0x02004f38 end:0x02004f70
-    .data       start:0x020f5538 end:0x020f553c
-
 src/Aurora/CExoString.cpp:
     complete
-    .text       start:0x020052f0 end:0x02005300
+    .text       start:0x02004e00 end:0x020055b8
+    .data       start:0x020f5510 end:0x020f553c
 
 jogo/020084c8.cpp:
     .text       start:0x020084c8 end:0x0200854c

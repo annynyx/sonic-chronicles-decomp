@@ -20,13 +20,15 @@ for dir in "$F"/mwccarm/1.2/* "$F"/mwccarm/2.0/* "$F"/mwccarm/dsi/*; do
     v="${dir#"$F"/mwccarm/}"
     printf "%-12s" "$v"
     for o in "${OPTS[@]}"; do
-        ok=0; n=0
+        ok=0
+        rm -f "$TMP"/*.o
         while read -r fonte sim end; do
             case "$fonte" in ""|\#*) continue;; esac
-            n=$((n + 1))
-            # a opção do fim da linha de comando vence a -O4,p de compilar.sh
-            MWCC_VERSAO="$v" decomp/tools/compilar.sh "$fonte" "$TMP/$n.o" "$o" >/dev/null 2>&1 &&
-                python3 decomp/tools/comparar.py "$TMP/$n.o" "$sim" "$end" "$ARM9" >/dev/null &&
+            # cada fonte é compilado uma vez por versão e otimização; a opção do fim
+            # da linha de comando vence a -O4,p de compilar.sh
+            obj="$TMP/$(echo "$fonte" | tr / _).o"
+            [ -f "$obj" ] || MWCC_VERSAO="$v" decomp/tools/compilar.sh "$fonte" "$obj" "$o" >/dev/null 2>&1
+            [ -f "$obj" ] && python3 decomp/tools/comparar.py "$obj" "$sim" "$end" "$ARM9" >/dev/null &&
                 ok=$((ok + 1))
         done < "$CASOS"
         printf "%-8s" "$ok/$TOTAL"

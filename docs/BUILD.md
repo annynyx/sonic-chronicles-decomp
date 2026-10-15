@@ -116,8 +116,9 @@ Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no bui
 (o exemplo é a `CExoString`):
 
 1. Em `delinks.txt`, o arquivo ganha `complete` e as faixas de cada seção que o `.o`
-   gera: `.text` e, se houver, `.data` (strings, vtable, typeinfo), `.rodata`, `.bss`.
-   O `.text` vai até o múltiplo de 4.
+   gera: `.text` e, se houver, `.data` (strings, vtable, typeinfo, o marcador `2/π`),
+   `.rodata`, `.bss`, `.init` (o `__sinit`) e `.ctor` (os 4 bytes que apontam para
+   ele). O `.text` vai até o múltiplo de 4. O `src/Aurora/Memory.cpp` tem todas.
 2. `python3 decomp/tools/nomes_do_fonte.py src/Aurora/CExoString.cpp --aplicar`
    compila o fonte, encaixa cada função e cada dado do `.o` na faixa, comparando os
    bytes, e põe em `symbols.txt` os nomes que o compilador gera
@@ -300,8 +301,8 @@ do ITCM); o resto é o jogo, onde ainda pode haver alguma biblioteca não identi
      NitroSDK                            49.084      55.132   89,03%
      MSL                                 36.952      49.892   74,06%
    bibliotecas (213 arquivos)           135.472     154.460   87,71%
-   jogo (2 arquivos)                      2.044     851.320    0,24%
-   TOTAL                                137.516   1.005.780   13,67%
+   jogo (3 arquivos)                      2.932     851.320    0,34%
+   TOTAL                                138.404   1.005.780   13,76%
 ```
 
 Até a Fase 2.4, a conta era feita à mão e só com a `.text` (13,58% naquela hora, os

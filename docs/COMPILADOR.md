@@ -108,6 +108,26 @@ Mais lições, da `CExoString` (33 funções, [`src/Aurora/CExoString.cpp`](../s
   uma confirmação da opção. Os destrutores saem `D1`, `D0` (o que também faz
   `delete this`) e `D2`.
 
+E do alocador ([`src/Aurora/Memory.cpp`](../src/Aurora/Memory.cpp), 15 funções, com a
+`.bss`, a `.data` e o `__sinit`):
+
+- **Uma constante `const` com valor calculado vai para a `.data`.** `const fx32 X =
+  FX_Div(...)` fica na `.data` e é calculada no `__sinit`; sem o `const`, a variável vai
+  para a `.bss`. No jogo ela está na `.data`.
+- **A ordem das atribuições no construtor aparece no `__sinit`.** O construtor inline dos
+  pools é copiado dentro do `__sinit`, e o jogo grava a quantidade antes do mínimo e do
+  tamanho: o construtor atribui nessa ordem.
+- **Onde fica o `return NULL`.** Com `if (size == 0) return NULL;` no começo, o compilador
+  põe esse retorno logo depois do teste; no jogo ele está no fim, o que corresponde a
+  `if (size != 0) { ... } return NULL;`.
+- **O compilador junta constantes, mas não através de um ponteiro.**
+  `(u32)top - 0xa000 + 31` vira `top - 0x9fe1`; `(u32)((char*)top - 0xa000) + 31`
+  mantém as duas contas, como no jogo.
+- **Um array de objetos globais com construtor** (`static MemoryPool s_pools[5] = {
+  MemoryPool(...), ... }`) gera, no `__sinit`, a construção e o registro de cada
+  elemento, cada um com a sua variável escondida; as variáveis saem na `.bss` numa
+  ordem própria do compilador, e é a mesma do jogo.
+
 ## `-ipa file`: a ordem dos dados
 
 As três funções batem com ou sem `-ipa file` (a "análise interprocedural por arquivo":

@@ -11,6 +11,14 @@ jogo/02002918.cpp:
     .text       start:0x02002918 end:0x02002d0c
     .data       start:0x020f5404 end:0x020f5424
 
+src/Aurora/Memory.cpp:
+    complete
+    .text       start:0x0200325c end:0x020034ec
+    .init       start:0x020eda24 end:0x020edb0c
+    .ctor       start:0x020f4ffc end:0x020f5000
+    .data       start:0x020f5424 end:0x020f5428
+    .bss        start:0x02110f34 end:0x02110fec
+
 jogo/020034f4.cpp:
     .text       start:0x020034f4 end:0x02003610
     .data       start:0x020f542c end:0x020f5440

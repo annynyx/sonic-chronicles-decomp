@@ -1,6 +1,21 @@
 # Funções que já dão 100% de match. testar_compilador.sh compila cada fonte
 # com cada versão do mwccarm e compara o símbolo com o endereço no jogo.
 # fonte                            símbolo gerado pelo compilador              endereço
+src/Aurora/Memory.cpp              _ZN10MemoryPoolD1Ev                         0x0200325c
+src/Aurora/Memory.cpp              _ZN10MemoryPool4InitEv                      0x02003280
+src/Aurora/Memory.cpp              _ZN10MemoryPool11CanAllocateEj              0x020032b4
+src/Aurora/Memory.cpp              _ZN10MemoryPool8AllocateEv                  0x020032d0
+src/Aurora/Memory.cpp              _ZN10MemoryPool4OwnsEPv                     0x020032ec
+src/Aurora/Memory.cpp              _ZN10MemoryPool4FreeEPv                     0x02003308
+src/Aurora/Memory.cpp              _Z9InitPoolsv                               0x02003324
+src/Aurora/Memory.cpp              _Z10AllocSmallj                             0x02003348
+src/Aurora/Memory.cpp              _Z9FreeSmallPv                              0x0200337c
+src/Aurora/Memory.cpp              _Znwm                                       0x020033b4
+src/Aurora/Memory.cpp              _Znam                                       0x020033e8
+src/Aurora/Memory.cpp              _ZdlPv                                      0x0200341c
+src/Aurora/Memory.cpp              _ZdaPv                                      0x02003438
+src/Aurora/Memory.cpp              NitroStartUp                                0x02003454
+src/Aurora/Memory.cpp              __sinit_Memory.cpp                          0x020eda24
 src/Aurora/CExoString.cpp          _ZN10CExoString11AllocBufferEj              0x02004e00
 src/Aurora/CExoString.cpp          _ZN10CExoString10FreeBufferEPc              0x02004e0c
 src/Aurora/CExoString.cpp          _ZN10CExoStringC1Ev                         0x02004e1c

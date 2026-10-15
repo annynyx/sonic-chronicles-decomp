@@ -49347,13 +49347,13 @@ from:0x020edad4 kind:load to:0x02110f34 module:main
 from:0x020edad8 kind:load to:0x02110f74 module:main
 from:0x020edadc kind:load to:0x0200325d module:main
 from:0x020edae0 kind:load to:0x02110f50 module:main
-from:0x020edae4 kind:load to:0x02110f8c module:main
+from:0x020edae4 kind:load to:0x02110f74 add:0x18 module:main
 from:0x020edaec kind:load to:0x02110f44 module:main
-from:0x020edaf0 kind:load to:0x02110fa4 module:main
+from:0x020edaf0 kind:load to:0x02110f74 add:0x30 module:main
 from:0x020edaf8 kind:load to:0x02110f5c module:main
-from:0x020edafc kind:load to:0x02110fbc module:main
+from:0x020edafc kind:load to:0x02110f74 add:0x48 module:main
 from:0x020edb00 kind:load to:0x02110f38 module:main
-from:0x020edb04 kind:load to:0x02110fd4 module:main
+from:0x020edb04 kind:load to:0x02110f74 add:0x60 module:main
 from:0x020edb08 kind:load to:0x02110f68 module:main
 from:0x020edb14 kind:thumb_call to:0x020d5cfc module:main
 from:0x020edb24 kind:load to:0x020f5428 module:main

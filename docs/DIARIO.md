@@ -479,6 +479,38 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
 - **Resultado:** ROM idêntica, 35 funções conferidas no CI, e o progresso foi de 13,48%
   para **13,67%** (o código do jogo, de 84 para 2.044 bytes).
 
+## 24. Os marcadores e o alocador (Fases 2.4 e 3.2)
+- **Os marcadores conferidos.** A constante `2/π` de cada arquivo (DIARIO 23) foi achada
+  nos 149 `__sinit`, um deles em ARM. As 149 variáveis são diferentes e estão, na `.data`,
+  na mesma ordem dos `__sinit` na `.init`: a conferência podia falhar e não falhou. E
+  nenhuma cai no meio das strings de um núcleo, como o modelo `[variáveis][strings]`
+  exige. Daí sai uma prova nova: **se há um marcador entre as strings de dois núcleos,
+  eles são arquivos diferentes**, porque o marcador é uma variável e não pode vir depois
+  das strings do próprio arquivo. Dos 170 núcleos com strings, 77 têm marcadores entre
+  eles e o anterior, e 34 têm dois ou mais, o que quer dizer que há pelo menos um arquivo
+  inteiro sem strings no meio.
+- **Um desses arquivos é o alocador.** Entre o núcleo `02002918` e o do som há dois
+  marcadores. O primeiro, `0x020f5424`, é do `__sinit_020eda24`, que configura 5 "pools"
+  de blocos pequenos e registra o destrutor de cada um. A `.bss` dele fecha certinho:
+  4 bytes de um sinalizador, 5 × 12 das variáveis do `__register_global_object` e
+  5 × 0x18 dos pools, de `0x02110f34` a `0x02110fec`. O código é o `new`/`delete` do
+  jogo (que pega um bloco de pool ou, se não der, do heap do NitroSDK) e uma função que
+  o crt0 do SDK chama antes do `main`: `NitroStartUp`, que monta os heaps.
+- **O primeiro arquivo do jogo com tudo.** `src/Aurora/Memory.cpp` traz o código (14
+  funções), o `__sinit`, a entrada na `.ctor`, o marcador na `.data` e a `.bss`, e a ROM
+  sai idêntica. 9 funções bateram de primeira; as lições das outras estão em
+  [COMPILADOR.md](COMPILADOR.md#o-que-aprendemos-igualando-funções). A do marcador: ele só
+  vai para a `.data` declarado `const` (`const fx32 X = FX_Div(...)`), o que confirma que
+  é uma constante de header, local a cada arquivo.
+- **Um erro do jogo.** Quem devolve um bloco ao pool grava o índice dele na lista, mas
+  não diminui o contador de blocos usados. O bloco nunca é reaproveitado, e quando um pool
+  enche, os pedidos vão para o heap. Ficou no C++ como está, com um comentário.
+- **As pontas continuam abertas.** As duas funções vazias depois do `NitroStartUp`
+  (`0x020034ec` e `0x020034f0`) e as que vêm antes do destrutor podem ser deste arquivo ou
+  dos vizinhos; ficaram no assembly.
+- **Resultado:** ROM idêntica, 50 funções conferidas no CI, e o progresso foi de 13,67%
+  para **13,76%**.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

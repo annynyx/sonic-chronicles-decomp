@@ -141,20 +141,20 @@ func_020031f0 kind:function(thumb,size=0xc) addr:0x020031f0
 CMultiplayerBase__vfunc01_020031fc kind:function(thumb,size=0xc) addr:0x020031fc
 CRules__vfunc01_02003208 kind:function(thumb,size=0x28) addr:0x02003208
 func_02003230 kind:function(thumb,size=0x2c) addr:0x02003230
-func_0200325c kind:function(thumb,size=0x24) addr:0x0200325c
-func_02003280 kind:function(thumb,size=0x34) addr:0x02003280
-func_020032b4 kind:function(thumb,size=0x1c) addr:0x020032b4
-func_020032d0 kind:function(thumb,size=0x1c) addr:0x020032d0
-func_020032ec kind:function(thumb,size=0x1a) addr:0x020032ec
-func_02003308 kind:function(thumb,size=0x1a) addr:0x02003308
-func_02003324 kind:function(thumb,size=0x24) addr:0x02003324
-func_02003348 kind:function(thumb,size=0x34) addr:0x02003348
-func_0200337c kind:function(thumb,size=0x38) addr:0x0200337c
-func_020033b4 kind:function(thumb,size=0x34) addr:0x020033b4
+_ZN10MemoryPoolD1Ev kind:function(thumb,size=0x24) addr:0x0200325c
+_ZN10MemoryPool4InitEv kind:function(thumb,size=0x34) addr:0x02003280
+_ZN10MemoryPool11CanAllocateEj kind:function(thumb,size=0x1c) addr:0x020032b4
+_ZN10MemoryPool8AllocateEv kind:function(thumb,size=0x1c) addr:0x020032d0
+_ZN10MemoryPool4OwnsEPv kind:function(thumb,size=0x1a) addr:0x020032ec
+_ZN10MemoryPool4FreeEPv kind:function(thumb,size=0x1a) addr:0x02003308
+_Z9InitPoolsv kind:function(thumb,size=0x24) addr:0x02003324 local
+_Z10AllocSmallj kind:function(thumb,size=0x34) addr:0x02003348 local
+_Z9FreeSmallPv kind:function(thumb,size=0x38) addr:0x0200337c local
+_Znwm kind:function(thumb,size=0x34) addr:0x020033b4
 _Znam kind:function(thumb,size=0x34) addr:0x020033e8
 _ZdlPv kind:function(thumb,size=0x1a) addr:0x0200341c
 _ZdaPv kind:function(thumb,size=0x1a) addr:0x02003438
-func_02003454 kind:function(thumb,size=0x98) addr:0x02003454
+NitroStartUp kind:function(thumb,size=0x98) addr:0x02003454
 func_020034ec kind:function(thumb,size=0x2) addr:0x020034ec
 func_020034f0 kind:function(thumb,size=0x2) addr:0x020034f0
 func_020034f4 kind:function(thumb,size=0x11c) addr:0x020034f4
@@ -6722,7 +6722,7 @@ _ExitProcess kind:function(thumb,size=0x8) addr:0x020eccac
 __sinit_020ed9c4 kind:function(thumb,size=0x28) addr:0x020ed9c4
 __sinit_020ed9ec kind:function(thumb,size=0x1c) addr:0x020ed9ec
 __sinit_020eda08 kind:function(thumb,size=0x1c) addr:0x020eda08
-__sinit_020eda24 kind:function(thumb,size=0xe8) addr:0x020eda24
+__sinit_Memory.cpp kind:function(thumb,size=0xe8) addr:0x020eda24 local
 __sinit_020edb0c kind:function(thumb,size=0x1c) addr:0x020edb0c
 __sinit_020edb28 kind:function(thumb,size=0x1c) addr:0x020edb28
 __sinit_020edb44 kind:function(thumb,size=0x1c) addr:0x020edb44
@@ -6946,7 +6946,7 @@ data_020f4fe8 kind:data(any) addr:0x020f4fe8
 .p__sinit_020ed9c4 kind:data(word) addr:0x020f4ff0
 .p__sinit_020ed9ec kind:data(word) addr:0x020f4ff4
 .p__sinit_020eda08 kind:data(word) addr:0x020f4ff8
-.p__sinit_020eda24 kind:data(word) addr:0x020f4ffc
+.p__sinit_Memory.cpp kind:data(byte[0x4]) addr:0x020f4ffc local
 .p__sinit_020edb0c kind:data(word) addr:0x020f5000
 .p__sinit_020edb28 kind:data(word) addr:0x020f5004
 .p__sinit_020edb44 kind:data(word) addr:0x020f5008
@@ -7122,7 +7122,7 @@ data_020f53c0 kind:data(any) addr:0x020f53c0
 data_020f53e0 kind:data(any) addr:0x020f53e0
 data_020f5404 kind:data(any) addr:0x020f5404
 data_020f5414 kind:data(any) addr:0x020f5414
-data_020f5424 kind:data(any) addr:0x020f5424
+FX_TWO_OVER_PI kind:data(byte[0x4]) addr:0x020f5424 local
 data_020f5428 kind:data(any) addr:0x020f5428
 data_020f542c kind:data(any) addr:0x020f542c
 data_020f5440 kind:data(any) addr:0x020f5440
@@ -9609,17 +9609,13 @@ data_02110f18 kind:bss addr:0x02110f18
 data_02110f24 kind:bss addr:0x02110f24
 data_02110f28 kind:bss addr:0x02110f28
 data_02110f2c kind:bss addr:0x02110f2c
-data_02110f34 kind:bss addr:0x02110f34
-data_02110f38 kind:bss addr:0x02110f38
-data_02110f44 kind:bss addr:0x02110f44
-data_02110f50 kind:bss addr:0x02110f50
-data_02110f5c kind:bss addr:0x02110f5c
-data_02110f68 kind:bss addr:0x02110f68
-data_02110f74 kind:bss addr:0x02110f74
-data_02110f8c kind:bss addr:0x02110f8c
-data_02110fa4 kind:bss addr:0x02110fa4
-data_02110fbc kind:bss addr:0x02110fbc
-data_02110fd4 kind:bss addr:0x02110fd4
+s_bPoolsReady kind:data(byte[0x4]) addr:0x02110f34 local
+@55 kind:data(byte[0xc]) addr:0x02110f38 local
+@49 kind:data(byte[0xc]) addr:0x02110f44 local
+@46 kind:data(byte[0xc]) addr:0x02110f50 local
+@52 kind:data(byte[0xc]) addr:0x02110f5c local
+@58 kind:data(byte[0xc]) addr:0x02110f68 local
+s_pools kind:data(byte[0x78]) addr:0x02110f74 local
 data_02110fec kind:bss addr:0x02110fec
 data_02110ff4 kind:bss addr:0x02110ff4
 data_02111000 kind:bss addr:0x02111000
@@ -9654,7 +9650,7 @@ data_02160c70 kind:bss addr:0x02160c70
 data_02160c7c kind:bss addr:0x02160c7c
 data_02160c80 kind:bss addr:0x02160c80
 data_02160cfc kind:bss addr:0x02160cfc
-data_02160dfc kind:bss addr:0x02160dfc
+g_expHeap kind:bss addr:0x02160dfc
 data_02160e18 kind:bss addr:0x02160e18
 data_02160e3c kind:bss addr:0x02160e3c
 data_02160e7c kind:bss addr:0x02160e7c

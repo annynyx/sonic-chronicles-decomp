@@ -109,7 +109,7 @@ precisa ser reescrito do zero.
 ✅ `decomp/tools/progresso.py` (no lugar do relatório do `objdiff`, que o projeto trocou
 pelo `comparar.py`): lê `config/YWSE/` e, se houver, o mapa do linker; separa
 bibliotecas e jogo. Conta explicada em [BUILD.md](BUILD.md#a-métrica-de-progresso).
-Hoje: **13,67%** (bibliotecas 87,71%, jogo 0,24%).
+Hoje: **13,76%** (bibliotecas 87,71%, jogo 0,34%).
 
 ## Fase 3: núcleo do motor Aurora (semanas 5 a 8)
 
@@ -118,8 +118,8 @@ retorno, porque essas funções são chamadas em todo lugar.
 
 | Parte | Classes / funções | Por que primeiro |
 |---|---|---|
-| 3.1 Strings | `CExoString` ✅ (33 funções, `src/Aurora/CExoString.cpp`), `CResRef` | usadas em todo lugar |
-| 3.2 Memória e singletons | alocador (`func_020033e8`/`func_02003438`), `Singleton<T>`, `ResourcePool<T>` | padrão repetido em centenas de funções |
+| 3.1 Strings | `CExoString` ✅ (33 funções, `src/Aurora/CExoString.cpp`); `CResRef` não existe nesta versão do motor (os recursos são achados pelo hash do nome) | usadas em todo lugar |
+| 3.2 Memória e singletons | alocador ✅ (`new`/`delete` com 5 pools e `NitroStartUp`, `src/Aurora/Memory.cpp`), `Singleton<T>`, `ResourcePool<T>` | padrão repetido em centenas de funções |
 | 3.3 Arquivos | `CDSFileSystem`, `CErfMan`, `CErfTable`, `FileReference`, leitura de `.small` | o formato já está 100% documentado |
 | 3.4 Dados | leitores GFF4, GDA, 2DA, `CTlkTable` (o hash já foi descoberto) | já temos as especificações e os escritores |
 | 3.5 Regras | `CRules`, `StatInfos`, `StatRedirect` | ponte para o modding avançado |

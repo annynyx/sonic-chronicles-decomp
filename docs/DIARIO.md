@@ -544,6 +544,67 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   arquivos) fica em duas partes. O que sobra (16%) são as pontas e os arquivos que não
   usam strings nem `Singleton`.
 
+## 26. O sistema de arquivos em C++ (Fase 3.3)
+- **O que o arquivo faz.** `src/Aurora/CDSFileSystem.cpp` junta quatro classes:
+  `CDSFileSystem` abre os arquivos do cartucho (NitroFS), conta quantas vezes cada um
+  foi aberto, lê de uma vez ou em segundo plano (uma fila de pedidos, com estado e um
+  tempo-limite de 60 quadros) e descomprime LZ, RL e Huffman; `CErfTable` é um pacote
+  HERF (o índice de 12 bytes por recurso, achado por busca binária no hash); `CErfMan`
+  abre o `test.herf` e o do idioma do console (francês, italiano, alemão, espanhol; o
+  resto usa o inglês); e `CErfResource` é um recurso pedido pelo nome, que procura
+  `nome.small` (comprimido) quando pedem. São 52 funções, 0x02008bb0-0x0200a308.
+- **Erros do jogo, mantidos como estão:** o destrutor de `CErfTable` só apaga o índice
+  quando ele é NULL (`==` no lugar de `!=`); `CErfTable::Open` não apaga o cabeçalho de
+  8 bytes que leu; os 12 caminhos que `Init` guarda nunca são usados.
+- **Os templates.** O jogo tem as cópias de `CExoArrayList<T>` (a lista do motor) e dos
+  construtores inline espalhadas no fim de vários arquivos: cada `.o` gera a sua cópia
+  "multidef" e o linker fica com a primeira que vê. Das 72 funções comparadas, 20 são
+  cópias que o jogo guardou no `main.cpp` e no `CExoString.cpp`, e todas batem. O
+  compilador põe **cada função numa seção própria**, então dá para fazer a nossa cópia
+  ceder o lugar à do jogo sem sobrar byte: o `preparar_link.py`, que já fazia isso com as
+  bibliotecas, agora faz com o `src/` também, olhando os nomes de todo o código cortado
+  do jogo (não só dos `_dsd_gap`: o destrutor de `CDSFileSystem` está num pedaço `jogo/`,
+  e o linker acusou "Multiply-defined" até isso ser corrigido).
+- **`Singleton<T>` tem um destrutor virtual vazio.** Três coisas independentes mostram
+  isso, e as três só batem com ele: (1) no `Instance()` copiado, só o endereço do
+  primeiro campo sai como constante pronta (sem destrutor na base, saem os dois
+  primeiros); (2) no construtor de `CErfMan`, o endereço do objeto é carregado antes da
+  vtable; (3) na `.data`, typeinfos e vtables saem ordenados por tamanho, e os empates
+  (`CErfMan`/`CDSFileSystem`, nome de `CDSFileSystem`/vtable de `CErfTable`) só ficam na
+  ordem do jogo com ele. A vtable de `Singleton<T>` que isso cria não é usada por
+  ninguém, e o linker a descarta, no jogo e aqui.
+- **O `FSFile` do NitroSDK.** O jogo copia um `FSFile` palavra por palavra nos primeiros
+  0x20 bytes e em dois blocos depois (16 e 24 bytes): é o formato do SDK, com `prop` e
+  `arg` como `union`s. O `include/nitro.h` agora o declara assim.
+- **O `memcpy` do jogo é o intrínseco do compilador.** Com tamanho constante e pequeno
+  ele vira cópias de byte no lugar (os campos do índice HERF, o `"./"` de 3 bytes);
+  senão, uma chamada. O jogo tem as duas formas, então o `include/msl.h` manda o
+  `memcpy` para o `__memcpy`. As 50 funções de antes continuam iguais.
+- **O `DelIndex` não bateu, e ficou no assembly.** `CExoArrayList<T>::DelIndex` (tira um
+  elemento e puxa os outros) existe no jogo para vários `T`. O nosso template reproduz
+  byte a byte a cópia para um tipo de 16 bytes (`0x0202d788`), mas não as dos tipos de
+  0x18, 0x1c e 0x60 bytes: nelas o jogo calcula o endereço do elemento seguinte como
+  "deslocamento atual + tamanho" (redução de força), e o nosso refaz a multiplicação.
+  Com 16 bytes é um deslocamento de bits, e nem o jogo reduz. Testei 960 formas
+  equivalentes do laço (decremento, tipo de laço, incremento, expressão do elemento),
+  as versões 1.2, 2.0 e DSi do compilador, opções de otimização e uma função auxiliar
+  inline: nenhuma deu os quatro casos. As duas cópias deste arquivo (`0x0200a1b0` e
+  `0x0200a258`) estão no fim do `.text`, no meio de outras cinco cópias de template que
+  batem; o trecho `0x0200a1b0-0x0200a308` (7 funções) continua do assembly, e o nosso `.o`
+  cobre o resto. Fica para quando aparecer outra pista.
+- **Erro nº 17: dois "acertos" que não eram.** Testando opções, `-O4,s` e `-ipa program`
+  deram "0 diferenças" no `DelIndex`. Era porque, com elas, a função nem saía no `.o`, e o
+  meu laço contava as linhas marcadas com `!!` de uma saída de erro. Os scripts de teste
+  agora escrevem `ERR` quando a comparação não roda.
+- **O alinhamento da `.data`.** Os nomes de classe e as strings saem no `.o` com
+  alinhamento 1, mas no jogo cada um começa num múltiplo de 4: o linker alinha. O
+  `nomes_do_fonte.py` agora conta assim, e pula as cópias multidef que ficaram em outro
+  arquivo e as que ninguém usa.
+- **Resultado:** ROM idêntica na primeira ligação. O arquivo vem do C++ com 45 funções,
+  o `__sinit`, a `.ctor`, a `.data` (typeinfos, vtables e 21 strings) e a `.bss`; o
+  `HashResourceName`, que estava isolado, entrou nele. 119 funções conferidas no CI
+  (eram 50) e o progresso foi de 13,76% para **14,32%**.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

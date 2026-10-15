@@ -31,4 +31,10 @@ char* strupr(char* s);
 int stricmp(const char* a, const char* b);
 }
 
+// memcpy passa pelo intrínseco __memcpy do compilador. Com tamanho constante e
+// pequeno, ele vira cópias de byte no lugar (o jogo copia assim os 4 bytes de cada
+// campo do índice HERF); com tamanho variável, vira a chamada a memcpy de sempre. O
+// jogo tem as duas formas, então o memcpy do header que ele usava era este.
+#define memcpy(dst, src, n) __memcpy(dst, src, n)
+
 #endif

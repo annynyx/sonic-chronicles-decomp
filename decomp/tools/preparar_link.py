@@ -5,11 +5,15 @@ jogo usa. O nosso recebe um .o por arquivo que o jogo tem, ao lado do assembly c
 (_dsd_gap) do resto. Três coisas mudam com isso, e este script cuida de cada uma, sempre
 nas CÓPIAS dos .o em work/build (os originais, em work/bibliotecas, ficam intactos):
 
-1. Dados "multidef" (bind 13 da Metrowerks). O typeinfo de std::exception vai em todo .o
-   que o usa, e o linker fica com uma cópia só. No jogo ficou a de um arquivo do jogo, que
-   para nós está no assembly, com o nome global. O mwldarm aceita várias cópias multidef,
-   mas não uma multidef e uma global ("Multiply-defined"). Então, quando o assembly define
-   o nome, a cópia do .o vira "indefinida": quem a usa passa a usar a do jogo.
+1. Dados e funções "multidef" (bind 13 da Metrowerks). O typeinfo de std::exception vai
+   em todo .o que o usa, e o linker fica com uma cópia só. No jogo ficou a de um arquivo
+   do jogo, que para nós está no assembly, com o nome global. O mwldarm aceita várias
+   cópias multidef, mas não uma multidef e uma global ("Multiply-defined"). Então, quando
+   o assembly define o nome, a cópia do .o vira "indefinida": quem a usa passa a usar a do
+   jogo. Vale também para o nosso C++ (src/): os métodos de CExoArrayList<T>, o objeto de
+   um Singleton<T> e o seu typeinfo saem em todo .o que os usa, e o jogo ficou com a
+   cópia do primeiro arquivo que o linker viu. Cada função do .o está numa seção própria,
+   então a seção da cópia que cedeu fica sem nome e sem uso, e o -dead a descarta.
 
 2. A tabela de exceções. O .lcf manda guardar toda seção .exceptix (KEEP_SECTION), porque
    a do assembly é um bloco de dados que ninguém cita. Mas no .o cada função tem a sua
@@ -47,14 +51,15 @@ def tabelas(f):
 
 
 # 1. multidef: a cópia do .o cede o lugar à do jogo
-do_assembly = set()
-for f in objetos:
-    if "_dsd_gap" in f:
+do_assembly = set()            # os nomes que o código cortado do jogo define (os _dsd_gap e
+for f in objetos:              # os pedaços jogo/ de delinks.txt, todos em work/build/delinks)
+    if f.startswith("work/build/delinks/"):
         _, _, simbolos = tabelas(f)
         do_assembly |= {s.name for s in simbolos if s.name and s["st_shndx"] != "SHN_UNDEF"
                         and s["st_info"]["bind"] == "STB_GLOBAL"}
+nossos = [f for f in objetos if f.startswith("work/build/src/")]
 cedidos = 0
-for f in bibliotecas:
+for f in bibliotecas + nossos:
     elf, secoes, simbolos = tabelas(f)
     dados = bytearray(open(f, "rb").read())
     tab = elf.get_section_by_name(".symtab").header
@@ -66,7 +71,7 @@ for f in bibliotecas:
             dados[p + 14:p + 16] = bytes(2)             # st_shndx: SHN_UNDEF
             cedidos += 1
     open(f, "wb").write(dados)
-print(f"   {cedidos} dado(s) multidef ficam com a cópia do jogo")
+print(f"   {cedidos} cópia(s) multidef cedem o lugar à do jogo")
 
 # 2. a .exceptix das funções que o jogo descartou sai do link
 funcoes_jogo = {m.group(1) for f in SIMBOLOS[:2]

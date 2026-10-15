@@ -98,8 +98,8 @@ precisa ser reescrito do zero.
   fonte" (*translation unit*). O jogo foi compilado arquivo por arquivo, e as
   classes ajudam a adivinhar a divisão (ex.: tudo de `CTlkTable` num `TlkTable.cpp`).
   **Pronto quando:** o build continua idêntico com o ARM9 dividido em TUs.
-  🟡 161 pedaços que com certeza são de um arquivo só (**84%** dos bytes do código do
-  jogo) já estão em `delinks.txt`, com a ROM idêntica (`decomp/tools/mapa_arquivos.py`,
+  🟡 153 pedaços que com certeza são de um arquivo só (**84%** dos bytes do código do
+  jogo, contando os 3 arquivos já em C++) já estão em `delinks.txt`, com a ROM idêntica (`decomp/tools/mapa_arquivos.py`,
   as regras das strings e das variáveis do `__register_global_object`, em
   [BUILD.md](BUILD.md#o-mapa-de-arquivos-do-jogo); DIARIO 19, 21, 24 e 25). O que sobra
   são as pontas e os arquivos sem strings nem `Singleton`; a borda de cada arquivo é
@@ -109,7 +109,7 @@ precisa ser reescrito do zero.
 ✅ `decomp/tools/progresso.py` (no lugar do relatório do `objdiff`, que o projeto trocou
 pelo `comparar.py`): lê `config/YWSE/` e, se houver, o mapa do linker; separa
 bibliotecas e jogo. Conta explicada em [BUILD.md](BUILD.md#a-métrica-de-progresso).
-Hoje: **13,76%** (bibliotecas 87,71%, jogo 0,34%).
+Hoje: **14,32%** (bibliotecas 87,71%, jogo 1,00%).
 
 ## Fase 3: núcleo do motor Aurora (semanas 5 a 8)
 
@@ -119,8 +119,8 @@ retorno, porque essas funções são chamadas em todo lugar.
 | Parte | Classes / funções | Por que primeiro |
 |---|---|---|
 | 3.1 Strings | `CExoString` ✅ (33 funções, `src/Aurora/CExoString.cpp`); `CResRef` não existe nesta versão do motor (os recursos são achados pelo hash do nome) | usadas em todo lugar |
-| 3.2 Memória e singletons | alocador ✅ (`new`/`delete` com 5 pools e `NitroStartUp`, `src/Aurora/Memory.cpp`), `Singleton<T>`, `ResourcePool<T>` | padrão repetido em centenas de funções |
-| 3.3 Arquivos | `CDSFileSystem`, `CErfMan`, `CErfTable`, `FileReference`, leitura de `.small` | o formato já está 100% documentado |
+| 3.2 Memória e singletons | alocador ✅ (`new`/`delete` com 5 pools e `NitroStartUp`, `src/Aurora/Memory.cpp`), `Singleton<T>` ✅ (`include/Aurora/Singleton.h`, com destrutor virtual: DIARIO 26), `CExoArrayList<T>` ✅ (menos o `DelIndex` de elementos de tamanho que não é potência de 2), `ResourcePool<T>` | padrão repetido em centenas de funções |
+| 3.3 Arquivos | 🟡 `CDSFileSystem`, `CErfMan`, `CErfTable` e a leitura de `.small` ✅ (`src/Aurora/CDSFileSystem.cpp`, 45 funções, com a `.data`, a `.bss` e o `__sinit`; as 7 cópias de template do fim continuam em assembly, DIARIO 26); falta `FileReference` (outro arquivo) e o teste com dados reais | o formato já está 100% documentado |
 | 3.4 Dados | leitores GFF4, GDA, 2DA, `CTlkTable` (o hash já foi descoberto) | já temos as especificações e os escritores |
 | 3.5 Regras | `CRules`, `StatInfos`, `StatRedirect` | ponte para o modding avançado |
 

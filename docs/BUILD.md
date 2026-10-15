@@ -102,7 +102,7 @@ O endereço do ARM9 aponta para a função (procure em `symbols.txt` a que cont�
 endereço). Compile o arquivo e compare só aquela função:
 
 ```
-decomp/tools/compilar.sh src/Aurora/ResourceHash.cpp /tmp/x.o
+decomp/tools/compilar.sh src/Aurora/CDSFileSystem.cpp /tmp/x.o
 python3 decomp/tools/comparar.py /tmp/x.o --listar
 python3 decomp/tools/comparar.py /tmp/x.o _Z16HashResourceNameRK10CExoString 0x02009b78
 ```
@@ -127,6 +127,15 @@ Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no bui
    em `relocs.txt`. Quando o `.o` tem duas cópias iguais (o `C1` e o `C2` de um
    construtor) e o jogo só uma, o nome é o da cópia que o próprio `.o` usa, ou o `C1`;
    a outra o linker descarta. Se algo não encaixar, o script para.
+   As cópias "multidef" (os métodos de `CExoArrayList<T>`, construtores inline que não
+   foram expandidos, typeinfos, o objeto de um `Singleton<T>`) saem em todo `.o` que as
+   usa, e o jogo ficou com a do primeiro arquivo ligado. Antes, dê a elas em
+   `symbols.txt` o nome que o compilador gera, no endereço em que o jogo as guardou (o
+   `main.cpp` tem muitas): o script pula as que têm nome fora da faixa, e
+   `preparar_link.py` faz o linker usar a do jogo. Uma cópia que não bate no fim do
+   arquivo (o `DelIndex` do sistema de arquivos) fica de fora da faixa e continua no
+   assembly; a nossa cede o lugar do mesmo jeito. Os dados de alinhamento 1 (strings,
+   nomes de classe) contam como alinhados em 4, como o linker os põe.
 3. As funções vão para `decomp/compilador/casos.txt`, e
    `python3 decomp/tools/conferir_sem_rom.py --gerar work/extract/arm9/arm9.bin`
    regrava os hashes, para o CI conferir sem a ROM.
@@ -200,10 +209,12 @@ antes do link (os de `work/bibliotecas` ficam intactos):
   (`KEEP_SECTION`), porque a do assembly é um bloco que ninguém cita. Mas no `.o` cada
   função tem a sua, que aponta para ela: guardada, ela manteria viva uma função que o
   jogo descartou. A `.exceptix` dessas funções sai do link.
-- **Dados "multidef".** O typeinfo de `std::exception` vai em todo `.o` que o usa, e o
-  linker fica com uma cópia. No jogo ficou a de um arquivo do jogo, que para nós está no
-  assembly. O `mwldarm` aceita várias cópias multidef, mas não uma multidef e uma
-  global; a cópia do `.o` cede o lugar.
+- **Dados e funções "multidef".** O typeinfo de `std::exception` vai em todo `.o` que o
+  usa, e o linker fica com uma cópia. No jogo ficou a de um arquivo do jogo, que para nós
+  está no assembly. O `mwldarm` aceita várias cópias multidef, mas não uma multidef e uma
+  global; a cópia do `.o` cede o lugar. O mesmo vale para os `.o` do nosso C++ (`src/`),
+  cujos templates o jogo guardou em outros arquivos; como o compilador põe cada função
+  numa seção própria, a seção da cópia que cedeu fica sem uso e o `-dead` a descarta.
 
 E três coisas que `ligar_bibliotecas.py` passou a acertar na configuração:
 

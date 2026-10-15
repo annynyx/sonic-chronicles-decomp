@@ -13,6 +13,13 @@ linker vai descartar porque ninguém usa (o compilador gera dois construtores, o
 C2, e o jogo só tem os que alguém chama). Se sobrar um pedaço do jogo sem nada do .o,
 ou se uma seção do .o não couber, o script para: o fonte ainda não bate com o jogo.
 
+Funções e dados "multidef" (templates, funções inline que não foram expandidas,
+typeinfos, o objeto de um Singleton) saem em todo .o que os usa, e o linker fica com uma
+cópia só. Se o nome já está em symbols.txt fora das faixas do arquivo, a cópia que fica
+no jogo é aquela (de um arquivo ligado antes) e esta é pulada; o preparar_link.py faz o
+linker usar a do jogo. Um dado multidef que não encaixa é pulado também: ninguém o usa, e
+o linker o descarta (a vtable de Singleton<T>).
+
 Os símbolos dentro das faixas são trocados pelos do .o; os "static" (e as strings, que
 o compilador chama de @123) ficam "local", como no .o. Uma relocação que aponta para o
 meio de um símbolo (o código guarda o endereço da vtable + 8, onde começam as funções)
@@ -42,7 +49,8 @@ def faixas(fonte):
 
 def pedacos(obj):
     """Cada seção de dados/código do .o, na ordem do arquivo: (nome da seção, bytes,
-    alinhamento, posições de relocação, [(símbolo, deslocamento, tamanho, local, tipo)])."""
+    alinhamento, posições de relocação, [(símbolo, deslocamento, tamanho, local, tipo)],
+    multidef)."""
     elf = ELFFile(open(obj, "rb"))
     secoes = list(elf.iter_sections())
     simbolos = list(elf.get_section_by_name(".symtab").iter_symbols())
@@ -67,7 +75,13 @@ def pedacos(obj):
             if tipo == "arm" and any(m.name == "$t" and m["st_shndx"] == i for m in simbolos):
                 tipo = "thumb"
             nomes.append((x.name, x["st_value"] & ~1, x["st_size"], x["st_info"]["bind"] == "STB_LOCAL", tipo))
-        saida.append((s.name, corpo, max(s.header.sh_addralign, 1), rels.get(i, set()), nomes))
+        multidef = bool(nomes) and all(x["st_info"]["bind"] == "STB_LOPROC" for x in simbolos
+                                       if x["st_shndx"] == i and x.name and not x.name.startswith("$")
+                                       and x["st_info"]["type"] != "STT_SECTION")
+        # o linker põe cada seção de dados num múltiplo de 4, mesmo as de alinhamento 1
+        # (as strings): no jogo, toda string começa num múltiplo de 4
+        alinhamento = max(s.header.sh_addralign, 1 if s.name in (".text", ".init") else 4)
+        saida.append((s.name, corpo, alinhamento, rels.get(i, set()), nomes, multidef))
     return saida, citados
 
 
@@ -83,10 +97,23 @@ def bate(corpo, mascara, end):
     return len(jogo) == len(corpo) and all(i in mascara or a == b for i, (a, b) in enumerate(zip(corpo, jogo)))
 
 
+def em_outro_lugar(alvo):
+    """Os nomes que symbols.txt põe fora das faixas do arquivo."""
+    fora = set()
+    for l in open(os.path.join(CFG, "symbols.txt")):
+        m = re.match(r"(\S+) kind:\S+ addr:0x(\w+)", l)
+        if m and not any(i <= int(m.group(2), 16) < f for i, f in alvo.values()):
+            fora.add(m.group(1))
+    return fora
+
+
 def encaixar(fonte, obj):
     """{endereço: (nome, tamanho, local, tipo)} de tudo o que o .o põe no jogo."""
     alvo = faixas(fonte)
     todos, citados = pedacos(obj)
+    fora = em_outro_lugar(alvo)
+    # a cópia multidef que o jogo guardou em outro arquivo não entra nesta faixa
+    todos = [x for x in todos if not (x[5] and all(n in fora for n, *_ in x[4]))]
     achados = {}
     for sec, (ini, fim) in alvo.items():
         pos = ini
@@ -95,8 +122,9 @@ def encaixar(fonte, obj):
         while i < len(lista):
             # cópias seguidas com os mesmos bytes (o C2 e o C1 de um construtor): o jogo
             # pode ter as duas, uma só ou nenhuma
+            # (só no código: dois typeinfos têm os mesmos bytes no .o, todos de relocação)
             grupo = [lista[i]]
-            while i + len(grupo) < len(lista) and lista[i + len(grupo)][1] == lista[i][1]:
+            while sec == ".text" and i + len(grupo) < len(lista) and lista[i + len(grupo)][1] == lista[i][1]:
                 grupo.append(lista[i + len(grupo)])
             i += len(grupo)
             p = pos
@@ -109,12 +137,12 @@ def encaixar(fonte, obj):
                 no_jogo += 1
                 p = q + len(grupo[0][1])
             if no_jogo == 0:
-                if sec != ".text":
+                if sec != ".text" and not grupo[0][5]:
                     nomes = grupo[0][4]
                     sys.exit(f"{sec} de {fonte}: {nomes[0][0] if nomes else '?'} não bate em {pos:#010x}")
                 continue
             ficam = sorted(grupo, key=lambda x: preferencia(x, citados))[:no_jogo]
-            for _, corpo, alinhamento, _, nomes in [x for x in grupo if x in ficam]:
+            for _, corpo, alinhamento, _, nomes, _ in [x for x in grupo if x in ficam]:
                 pos = (pos + alinhamento - 1) & ~(alinhamento - 1)
                 for nome, desl, tam, local, tipo in nomes:
                     achados[pos + desl] = (nome, tam, local, tipo)

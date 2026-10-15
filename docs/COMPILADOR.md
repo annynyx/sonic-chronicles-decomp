@@ -23,7 +23,7 @@ As flags estão num lugar só: [`decomp/tools/compilar.sh`](../decomp/tools/comp
 | Função | Endereço | Tamanho | Arquivo |
 |---|---|---|---|
 | `CExoString::CStr` | `0x020052f0` | 0x10 | [`src/Aurora/CExoString.cpp`](../src/Aurora/CExoString.cpp) |
-| `HashResourceName` | `0x02009b78` | 0x44 | [`src/Aurora/ResourceHash.cpp`](../src/Aurora/ResourceHash.cpp) |
+| `HashResourceName` | `0x02009b78` | 0x44 | [`src/Aurora/CDSFileSystem.cpp`](../src/Aurora/CDSFileSystem.cpp) |
 | lista: remover item | `0x0202d428` | 0x2c | [`decomp/compilador/lista.cpp`](../decomp/compilador/lista.cpp) |
 
 As duas primeiras já são arquivos do jogo de verdade: o build da
@@ -127,6 +127,40 @@ E do alocador ([`src/Aurora/Memory.cpp`](../src/Aurora/Memory.cpp), 15 funções
   MemoryPool(...), ... }`) gera, no `__sinit`, a construção e o registro de cada
   elemento, cada um com a sua variável escondida; as variáveis saem na `.bss` numa
   ordem própria do compilador, e é a mesma do jogo.
+
+E do sistema de arquivos ([`src/Aurora/CDSFileSystem.cpp`](../src/Aurora/CDSFileSystem.cpp),
+45 funções no arquivo e 24 cópias de template que o jogo guardou em outros lugares):
+
+- **Num campo de bits, `x.campo--` repete a expressão.** `m_requests[i].timeout--`
+  chama `operator[]` duas vezes (uma para ler, outra para gravar), e a conta sai como
+  "+ 0xffff" em 16 bits. Escrito `x = x - 1` com duas chamadas, a conta sai `subs #1`.
+  O mesmo vale para `count++`.
+- **Um `(int)` muda o tamanho da conta.** `estado == 1 || estado == 2`, num campo de bits
+  de 16 bits, vira "`estado - 1 <= 1`" feito em 16 bits; o jogo faz em 32, o que sai com
+  `(int)estado == 1 || (int)estado == 2`.
+- **`if (tipo == 0) ... else switch`.** Um `switch` de 4 casos vira uma árvore de
+  comparações; o jogo testa o 0 primeiro (com as flags do `ands`) e os outros três em
+  fila, que é o `if` seguido de um `switch` de 3. Os corpos saem na ordem do fonte (LZ,
+  RL, Huffman), as comparações na ordem dos valores.
+- **Ler um campo uma vez só antes de uma chamada** (`int cache = m_files[i].cache;`) faz
+  o compilador reusar o valor depois da chamada; lido duas vezes, `operator[]` é chamado
+  de novo.
+- **`b ? 1 : 0` num campo de 1 bit** sai com um corte para 16 bits a mais; atribuir a
+  comparação direto (`campo = x != 0`) não.
+- **Uma `struct` dentro de outra é copiada em bloco.** O jogo copia o `FSFile` palavra
+  por palavra nos primeiros 0x20 bytes e com `ldm`/`stm` em dois blocos depois: `prop` e
+  `arg` são `union`s, como no NitroSDK. Campos soltos, ou um array de 2 palavras, saem
+  palavra por palavra.
+- **O `memcpy` é o intrínseco `__memcpy`.** Com tamanho constante e pequeno ele vira
+  cópias de byte; com tamanho variável, `bl memcpy`. `include/msl.h` faz a troca.
+- **`(high + low) / 2`, não `(low + high) / 2`:** a ordem da soma aparece na instrução.
+- **A base `Singleton<T>` tem destrutor virtual vazio** (DIARIO 26). Ele não gera código
+  que fique no jogo, mas muda três coisas que aparecem: quais endereços de campo saem
+  como constante pronta no construtor copiado em `Instance()`, a ordem das cargas no
+  construtor de `CErfMan` e a ordem dos typeinfos e vtables na `.data`.
+- **Cada função numa seção própria.** O `.o` do mwccarm tem uma seção `.text` por
+  função; os dados pequenos (typeinfo, strings) também. A seção de dados de alinhamento 1
+  fica num múltiplo de 4 no jogo: o linker alinha.
 
 ## `-ipa file`: a ordem dos dados
 
@@ -278,6 +312,11 @@ sobram (`0x020d6930`, `0x020e067c`, `0x020e096c`) ainda não sabemos de onde vê
   procuradas, e sem decompilação pública conhecida.
 - `-enum int`, `-char signed`, `-inline`, `-str`: ainda sem uma função que dependa
   delas. (`-ipa file` foi achada pelos dados, acima.)
+- **O `DelIndex` das listas com elementos de tamanho que não é potência de 2.** O jogo
+  calcula o endereço do elemento seguinte somando o tamanho ao deslocamento atual
+  (redução de força); o mesmo template, aqui, refaz a multiplicação. Com elementos de 4
+  ou 16 bytes (deslocamento de bits) os dois batem. Nenhuma das 960 formas do laço
+  testadas, nem outra versão do compilador, reproduz os dois casos (DIARIO 26).
 
 ## Como repetir
 

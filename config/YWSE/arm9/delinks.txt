@@ -61,39 +61,13 @@ jogo/02008a70.cpp:
     .text       start:0x02008a70 end:0x02008bb0
     .data       start:0x020f5868 end:0x020f587c
 
-jogo/02008be8.cpp:
-    .text       start:0x02008be8 end:0x02008cb0
-
-jogo/02008f2c.cpp:
-    .text       start:0x02008f2c end:0x02008f68
-    .data       start:0x020f59c0 end:0x020f59c4
-
-jogo/02008fe8.cpp:
-    .text       start:0x02008fe8 end:0x0200919c
-    .data       start:0x020f59c4 end:0x020f59cc
-
-jogo/0200978c.cpp:
-    .text       start:0x0200978c end:0x02009824
-    .data       start:0x020f59cc end:0x020f5a14
-
-jogo/CErfTable_0200985c.cpp:
-    .text       start:0x0200985c end:0x02009b78
-    .bss        start:0x021a41f0 end:0x021a41fc
-
-src/Aurora/ResourceHash.cpp:
+src/Aurora/CDSFileSystem.cpp:
     complete
-    .text       start:0x02009b78 end:0x02009bbc
-
-jogo/CErfTable_02009bbc.cpp:
-    .text       start:0x02009bbc end:0x02009ee4
-
-jogo/02009ee4.cpp:
-    .text       start:0x02009ee4 end:0x02009f2c
-    .data       start:0x020f5a14 end:0x020f5a1c
-
-jogo/02009f2c.cpp:
-    .text       start:0x02009f2c end:0x0200a104
-    .bss        start:0x021a41fc end:0x021a4208
+    .text       start:0x02008bb0 end:0x0200a1b0
+    .init       start:0x020edd94 end:0x020eddb0
+    .ctor       start:0x020f5048 end:0x020f504c
+    .data       start:0x020f587c end:0x020f5a1c
+    .bss        start:0x021a41f0 end:0x021a4208
 
 jogo/CGameSquad_0200b77c.cpp:
     .text       start:0x0200b77c end:0x0200b8c4

@@ -103,14 +103,14 @@ Input__vfunc00_02002790 kind:function(thumb,size=0x2) addr:0x02002790
 GameMode__vfunc26_02002794 kind:function(thumb,size=0x2) addr:0x02002794
 GameMode__vfunc09_02002798 kind:function(thumb,size=0x4) addr:0x02002798
 constructs_CDSFileSystem_0200279c kind:function(thumb,size=0x70) addr:0x0200279c
-CDSFileSystem__dtor_0200280c kind:function(thumb,size=0x34) addr:0x0200280c
+_ZN13CDSFileSystemD1Ev kind:function(thumb,size=0x34) addr:0x0200280c
 Time__vfunc00_02002840 kind:function(thumb,size=0x2) addr:0x02002840
 CMultiplayerBase__vfunc00_02002844 kind:function(thumb,size=0x2) addr:0x02002844
 CStringDisplayManager__vfunc00_02002848 kind:function(thumb,size=0xe) addr:0x02002848
 CRules__vfunc00_02002858 kind:function(thumb,size=0x20) addr:0x02002858
 func_02002878 kind:function(thumb,size=0xa0) addr:0x02002878
 constructs_CDSFileSystem_CErfMan_02002918 kind:function(thumb,size=0x3f2) addr:0x02002918
-CErfTable__ctor_02002d0c kind:function(thumb,size=0x10) addr:0x02002d0c
+_ZN9CErfTableC1Ev kind:function(thumb,size=0x10) addr:0x02002d0c
 func_02002d1c kind:function(thumb,size=0xa) addr:0x02002d1c
 CStringDisplayManager__vfunc01_02002d28 kind:function(thumb,size=0x14) addr:0x02002d28
 CStringDisplayManager__vfunc02_02002d3c kind:function(thumb,size=0xc) addr:0x02002d3c
@@ -121,22 +121,22 @@ func_02002d68 kind:function(thumb,size=0x1c) addr:0x02002d68
 func_02002d84 kind:function(thumb,size=0xb0) addr:0x02002d84
 func_02002e34 kind:function(thumb,size=0x1c) addr:0x02002e34
 func_02002e50 kind:function(thumb,size=0xc) addr:0x02002e50
-func_02002e5c kind:function(thumb,size=0x18) addr:0x02002e5c
-func_02002e74 kind:function(thumb,size=0x1c) addr:0x02002e74
-func_02002e90 kind:function(thumb,size=0xac) addr:0x02002e90
-func_02002f3c kind:function(thumb,size=0x48) addr:0x02002f3c
-func_02002f84 kind:function(thumb,size=0x18) addr:0x02002f84
-func_02002f9c kind:function(thumb,size=0x12) addr:0x02002f9c
-func_02002fb0 kind:function(thumb,size=0xa0) addr:0x02002fb0
-func_02003050 kind:function(thumb,size=0x60) addr:0x02003050
-func_020030b0 kind:function(thumb,size=0x18) addr:0x020030b0
-func_020030c8 kind:function(thumb,size=0x12) addr:0x020030c8
-func_020030dc kind:function(thumb,size=0x5c) addr:0x020030dc
-func_02003138 kind:function(thumb,size=0xa) addr:0x02003138
-func_02003144 kind:function(thumb,size=0x18) addr:0x02003144
-func_0200315c kind:function(thumb,size=0x1c) addr:0x0200315c
-func_02003178 kind:function(thumb,size=0x68) addr:0x02003178
-func_020031e0 kind:function(thumb,size=0xe) addr:0x020031e0
+_ZN13CExoArrayListI11CDSOpenFileEC1Ei kind:function(thumb,size=0x18) addr:0x02002e5c
+_ZN13CExoArrayListI11CDSOpenFileED1Ev kind:function(thumb,size=0x1c) addr:0x02002e74
+_ZN13CExoArrayListI11CDSOpenFileE8AllocateEi kind:function(thumb,size=0xac) addr:0x02002e90
+_ZN11CDSOpenFileC1Ev kind:function(thumb,size=0x48) addr:0x02002f3c
+_ZN13CExoArrayListI10CDSRequestEC1Ei kind:function(thumb,size=0x18) addr:0x02002f84
+_ZN13CExoArrayListI10CDSRequestED1Ev kind:function(thumb,size=0x12) addr:0x02002f9c
+_ZN13CExoArrayListI10CDSRequestE8AllocateEi kind:function(thumb,size=0xa0) addr:0x02002fb0
+_ZN10CDSRequestC1Ev kind:function(thumb,size=0x60) addr:0x02003050
+_ZN13CExoArrayListI13CDSCacheEntryEC1Ei kind:function(thumb,size=0x18) addr:0x020030b0
+_ZN13CExoArrayListI13CDSCacheEntryED1Ev kind:function(thumb,size=0x12) addr:0x020030c8
+_ZN13CExoArrayListI13CDSCacheEntryE8AllocateEi kind:function(thumb,size=0x5c) addr:0x020030dc
+_ZN13CDSCacheEntryC1Ev kind:function(thumb,size=0xa) addr:0x02003138
+_ZN13CExoArrayListI10CExoStringEC1Ei kind:function(thumb,size=0x18) addr:0x02003144
+_ZN13CExoArrayListI10CExoStringED1Ev kind:function(thumb,size=0x1c) addr:0x0200315c
+_ZN13CExoArrayListI10CExoStringE8AllocateEi kind:function(thumb,size=0x68) addr:0x02003178
+_ZN11CDSOpenFileD1Ev kind:function(thumb,size=0xe) addr:0x020031e0
 func_020031f0 kind:function(thumb,size=0xc) addr:0x020031f0
 CMultiplayerBase__vfunc01_020031fc kind:function(thumb,size=0xc) addr:0x020031fc
 CRules__vfunc01_02003208 kind:function(thumb,size=0x28) addr:0x02003208
@@ -254,7 +254,7 @@ _ZNK10CExoString5RightEi kind:function(thumb,size=0x52) addr:0x02005490
 _ZNK10CExoString9SubStringEii kind:function(thumb,size=0x58) addr:0x020054e4
 _ZNK10CExoString9UpperCaseEv kind:function(thumb,size=0x3e) addr:0x0200553c
 _ZNK10CExoString13CompareNoCaseERKS_ kind:function(thumb,size=0x3a) addr:0x0200557c
-func_020055b8 kind:function(thumb,size=0x34) addr:0x020055b8
+_ZN13CExoArrayListI10CExoStringE3AddERKS0_ kind:function(thumb,size=0x34) addr:0x020055b8
 CGameEffect__vfunc00_020055ec kind:function(thumb,size=0x14) addr:0x020055ec
 CGameEffect__vfunc01_02005600 kind:function(thumb,size=0x14) addr:0x02005600
 CGameEffectCollection__dtor_02005614 kind:function(thumb,size=0x1c) addr:0x02005614
@@ -378,58 +378,58 @@ func_020089ac kind:function(thumb,size=0x78) addr:0x020089ac
 func_02008a24 kind:function(thumb,size=0x1c) addr:0x02008a24
 func_02008a40 kind:function(thumb,size=0x30) addr:0x02008a40
 func_02008a70 kind:function(thumb,size=0x140) addr:0x02008a70
-func_02008bb0 kind:function(thumb,size=0x26) addr:0x02008bb0
-func_02008bd8 kind:function(thumb,size=0x10) addr:0x02008bd8
-func_02008be8 kind:function(thumb,size=0xc8) addr:0x02008be8
-CDSFileSystem__vfunc02_02008cb0 kind:function(thumb,size=0x48) addr:0x02008cb0
-func_02008cf8 kind:function(thumb,size=0xa) addr:0x02008cf8
-func_02008d04 kind:function(thumb,size=0xcc) addr:0x02008d04
-func_02008dd0 kind:function(thumb,size=0x3a) addr:0x02008dd0
-func_02008e0c kind:function(thumb,size=0x3c) addr:0x02008e0c
-func_02008e48 kind:function(thumb,size=0xc4) addr:0x02008e48
-func_02008f0c kind:function(thumb,size=0x20) addr:0x02008f0c
-func_02008f2c kind:function(thumb,size=0x3c) addr:0x02008f2c
-func_02008f68 kind:function(thumb,size=0x48) addr:0x02008f68
-func_02008fb0 kind:function(thumb,size=0x38) addr:0x02008fb0
-func_02008fe8 kind:function(thumb,size=0x1b4) addr:0x02008fe8
-func_0200919c kind:function(thumb,size=0xb0) addr:0x0200919c
-func_0200924c kind:function(thumb,size=0x8) addr:0x0200924c
-func_02009254 kind:function(thumb,size=0x24) addr:0x02009254
-func_02009278 kind:function(thumb,size=0x9c) addr:0x02009278
-func_02009314 kind:function(thumb,size=0x96) addr:0x02009314
-func_020093ac kind:function(thumb,size=0x148) addr:0x020093ac
-func_020094f4 kind:function(thumb,size=0xc2) addr:0x020094f4
-func_020095b8 kind:function(thumb,size=0x100) addr:0x020095b8
-func_020096b8 kind:function(thumb,size=0x72) addr:0x020096b8
-func_0200972c kind:function(thumb,size=0x22) addr:0x0200972c
-CErfMan__vfunc00_02009750 kind:function(thumb,size=0x18) addr:0x02009750
-CErfMan__vfunc01_02009768 kind:function(thumb,size=0x20) addr:0x02009768
-CErfMan__vfunc02_02009788 kind:function(thumb,size=0x2) addr:0x02009788
-func_0200978c kind:function(thumb,size=0x98) addr:0x0200978c
-func_02009824 kind:function(thumb,size=0x38) addr:0x02009824
-CErfTable__dtor_0200985c kind:function(thumb,size=0x94) addr:0x0200985c
-CErfTable__dtor_020098f0 kind:function(thumb,size=0x98) addr:0x020098f0
-constructs_CDSFileSystem_02009988 kind:function(thumb,size=0x194) addr:0x02009988
-func_02009b1c kind:function(thumb,size=0x5c) addr:0x02009b1c
+_ZN7ResNameC1EPKc kind:function(thumb,size=0x26) addr:0x02008bb0
+_ZNK7ResNameeqERKS_ kind:function(thumb,size=0x10) addr:0x02008bd8
+_ZN13CDSFileSystem4InitEi kind:function(thumb,size=0xc8) addr:0x02008be8
+_ZN13CDSFileSystem9FreeCacheEv kind:function(thumb,size=0x48) addr:0x02008cb0
+_ZN13CDSFileSystem8ShutdownEv kind:function(thumb,size=0xa) addr:0x02008cf8
+_ZN13CDSFileSystem6UpdateEv kind:function(thumb,size=0xcc) addr:0x02008d04
+_ZN13CDSFileSystem14CancelRequestsEPhi kind:function(thumb,size=0x3a) addr:0x02008dd0
+_ZN13CDSFileSystem14CancelRequestsEPti kind:function(thumb,size=0x3c) addr:0x02008e0c
+_ZN13CDSFileSystem13FinishRequestEP10CDSRequesti kind:function(thumb,size=0xc4) addr:0x02008e48
+_ZN13CDSFileSystem7AddPathEPKc kind:function(thumb,size=0x20) addr:0x02008f0c
+_ZN13CDSFileSystem8OpenPathEPKcR10CExoStringP6FSFile kind:function(thumb,size=0x3c) addr:0x02008f2c
+_ZN13CDSFileSystem8FindFileEPt kind:function(thumb,size=0x48) addr:0x02008f68
+_ZN13CDSFileSystem8FindFileER7ResName kind:function(thumb,size=0x38) addr:0x02008fb0
+_ZN13CDSFileSystem8OpenFileEPKcPti kind:function(thumb,size=0x1b4) addr:0x02008fe8
+_ZN13CDSFileSystem9CloseFileEPt kind:function(thumb,size=0xb0) addr:0x0200919c
+_ZN13CDSFileSystem9GetLengthEP6FSFile kind:function(thumb,size=0x8) addr:0x0200924c
+_ZN13CDSFileSystem11GetFileSizeEPt kind:function(thumb,size=0x24) addr:0x02009254
+_ZN13CDSFileSystem8ReadFileEPtPvj kind:function(thumb,size=0x9c) addr:0x02009278
+_ZN13CDSFileSystem10ReadFileAtEPtPvjj kind:function(thumb,size=0x96) addr:0x02009314
+_ZN13CDSFileSystem13ReadFileAsyncEPtPPhjjPFvS0_S1_jPvES3_ kind:function(thumb,size=0x148) addr:0x020093ac
+_ZN13CDSFileSystem14ProcessCurrentEv kind:function(thumb,size=0xc2) addr:0x020094f4
+_ZN13CDSFileSystem12StartRequestEP10CDSRequest kind:function(thumb,size=0x100) addr:0x020095b8
+_ZN13CDSFileSystem10DecompressEPKvPPh kind:function(thumb,size=0x72) addr:0x020096b8
+_ZN13CDSFileSystem10DecompressEPPh kind:function(thumb,size=0x22) addr:0x0200972c
+_ZN7CErfManD1Ev kind:function(thumb,size=0x18) addr:0x02009750
+_ZN7CErfManD0Ev kind:function(thumb,size=0x20) addr:0x02009768
+_ZN7CErfMan6UpdateEv kind:function(thumb,size=0x2) addr:0x02009788
+_ZN7CErfMan10LoadTablesEv kind:function(thumb,size=0x98) addr:0x0200978c
+_ZN7CErfMan4FindEjPi kind:function(thumb,size=0x38) addr:0x02009824
+_ZN9CErfTableD1Ev kind:function(thumb,size=0x94) addr:0x0200985c
+_ZN9CErfTableD0Ev kind:function(thumb,size=0x98) addr:0x020098f0
+_ZN9CErfTable4OpenEPKc kind:function(thumb,size=0x194) addr:0x02009988
+_ZN9CErfTable4FindEj kind:function(thumb,size=0x5c) addr:0x02009b1c
 _Z16HashResourceNameRK10CExoString kind:function(thumb,size=0x44) addr:0x02009b78
-func_02009bbc kind:function(thumb,size=0x38) addr:0x02009bbc
-func_02009bf4 kind:function(thumb,size=0x34) addr:0x02009bf4
-constructs_CDSFileSystem_02009c28 kind:function(thumb,size=0x214) addr:0x02009c28
-constructs_CDSFileSystem_02009e3c kind:function(thumb,size=0xa8) addr:0x02009e3c
-func_02009ee4 kind:function(thumb,size=0x48) addr:0x02009ee4
-constructs_CErfMan_02009f2c kind:function(thumb,size=0xa0) addr:0x02009f2c
-constructs_CErfMan_02009fcc kind:function(thumb,size=0xa4) addr:0x02009fcc
-constructs_CErfMan_0200a070 kind:function(thumb,size=0x94) addr:0x0200a070
-CDSFileSystem__dtor_0200a104 kind:function(thumb,size=0x38) addr:0x0200a104
-func_0200a13c kind:function(thumb,size=0xa) addr:0x0200a13c
-func_0200a148 kind:function(thumb,size=0x68) addr:0x0200a148
-func_0200a1b0 kind:function(thumb,size=0x78) addr:0x0200a1b0
-func_0200a228 kind:function(thumb,size=0xa) addr:0x0200a228
-func_0200a234 kind:function(thumb,size=0x24) addr:0x0200a234
-func_0200a258 kind:function(thumb,size=0x76) addr:0x0200a258
-func_0200a2d0 kind:function(thumb,size=0x8) addr:0x0200a2d0
-func_0200a2d8 kind:function(thumb,size=0xc) addr:0x0200a2d8
-func_0200a2e4 kind:function(thumb,size=0x22) addr:0x0200a2e4
+_ZN9CErfTable9GetOffsetEi kind:function(thumb,size=0x38) addr:0x02009bbc
+_ZN9CErfTable7GetSizeEi kind:function(thumb,size=0x34) addr:0x02009bf4
+_ZN9CErfTable4ReadEiPPhPii kind:function(thumb,size=0x214) addr:0x02009c28
+_ZN9CErfTable4ReadEiPPhjii kind:function(thumb,size=0xa8) addr:0x02009e3c
+_ZN12CErfResourceC1ERK10CExoStringi kind:function(thumb,size=0x48) addr:0x02009ee4
+_ZN12CErfResource4ReadEPPhPi kind:function(thumb,size=0xa0) addr:0x02009f2c
+_ZN12CErfResource4ReadEPPhji kind:function(thumb,size=0xa4) addr:0x02009fcc
+_ZN12CErfResource7GetSizeEv kind:function(thumb,size=0x94) addr:0x0200a070
+_ZN13CDSFileSystemD0Ev kind:function(thumb,size=0x38) addr:0x0200a104
+_ZN13CExoArrayListI11CDSOpenFileEixEi kind:function(thumb,size=0xa) addr:0x0200a13c
+_ZN13CExoArrayListI11CDSOpenFileE3AddERKS0_ kind:function(thumb,size=0x68) addr:0x0200a148
+_ZN13CExoArrayListI11CDSOpenFileE8DelIndexEi kind:function(thumb,size=0x78) addr:0x0200a1b0
+_ZN13CExoArrayListI10CDSRequestEixEi kind:function(thumb,size=0xa) addr:0x0200a228
+_ZN13CExoArrayListI10CDSRequestE8AddEmptyEv kind:function(thumb,size=0x24) addr:0x0200a234
+_ZN13CExoArrayListI10CDSRequestE8DelIndexEi kind:function(thumb,size=0x76) addr:0x0200a258
+_ZN13CExoArrayListI13CDSCacheEntryEixEi kind:function(thumb,size=0x8) addr:0x0200a2d0
+_ZN13CExoArrayListI13CDSCacheEntryE5ClearEv kind:function(thumb,size=0xc) addr:0x0200a2d8
+_ZN13CExoArrayListI13CDSCacheEntryE7SetSizeEi kind:function(thumb,size=0x22) addr:0x0200a2e4
 CGameObjectStorageList__ctor_0200a308 kind:function(thumb,size=0x2c) addr:0x0200a308
 CGameObjectStorageList__dtor_0200a334 kind:function(thumb,size=0x20) addr:0x0200a334
 CGameObjectStorageList__dtor_0200a354 kind:function(thumb,size=0x24) addr:0x0200a354
@@ -4522,7 +4522,7 @@ func_020b7d08 kind:function(thumb,size=0x1c) addr:0x020b7d08
 func_020b7d24 kind:function(thumb,size=0x1c) addr:0x020b7d24
 func_020b7d40 kind:function(thumb,size=0x38) addr:0x020b7d40
 func_020b7d78 kind:function(thumb,size=0x34) addr:0x020b7d78
-func_020b7dac kind:function(thumb,size=0x10) addr:0x020b7dac
+_Z5Crc32RK10CExoStringj kind:function(thumb,size=0x10) addr:0x020b7dac
 GameModeMenu__ctor_020b7dbc kind:function(thumb,size=0x84) addr:0x020b7dbc
 GameModeMenu__dtor_020b7e40 kind:function(thumb,size=0x4c) addr:0x020b7e40
 GameModeMenu__dtor_020b7e8c kind:function(thumb,size=0x54) addr:0x020b7e8c
@@ -6741,7 +6741,7 @@ __sinit_020edd04 kind:function(thumb,size=0x1c) addr:0x020edd04
 __sinit_020edd20 kind:function(thumb,size=0x20) addr:0x020edd20
 __sinit_020edd40 kind:function(thumb,size=0x38) addr:0x020edd40
 __sinit_020edd78 kind:function(thumb,size=0x1c) addr:0x020edd78
-__sinit_020edd94 kind:function(thumb,size=0x1c) addr:0x020edd94
+__sinit_CDSFileSystem.cpp kind:function(thumb,size=0x1c) addr:0x020edd94 local
 __sinit_020eddb0 kind:function(thumb,size=0x1c) addr:0x020eddb0
 __sinit_020eddcc kind:function(thumb,size=0x1c) addr:0x020eddcc
 __sinit_020edde8 kind:function(thumb,size=0x1c) addr:0x020edde8
@@ -6965,7 +6965,7 @@ data_020f4fe8 kind:data(any) addr:0x020f4fe8
 .p__sinit_020edd20 kind:data(word) addr:0x020f503c
 .p__sinit_020edd40 kind:data(word) addr:0x020f5040
 .p__sinit_020edd78 kind:data(word) addr:0x020f5044
-.p__sinit_020edd94 kind:data(word) addr:0x020f5048
+.p__sinit_CDSFileSystem.cpp kind:data(byte[0x4]) addr:0x020f5048 local
 .p__sinit_020eddb0 kind:data(word) addr:0x020f504c
 .p__sinit_020eddcc kind:data(word) addr:0x020f5050
 .p__sinit_020edde8 kind:data(word) addr:0x020f5054
@@ -7105,8 +7105,8 @@ data_020f52bc kind:data(any) addr:0x020f52bc
 data_020f52c4 kind:data(any) addr:0x020f52c4
 data_020f52cc kind:data(any) addr:0x020f52cc
 data_020f52d4 kind:data(any) addr:0x020f52d4
-data_020f52dc kind:data(any) addr:0x020f52dc
-data_020f52e4 kind:data(any) addr:0x020f52e4
+_ZTI9SingletonI13CDSFileSystemE kind:data(any) addr:0x020f52dc
+_ZTI9SingletonI7CErfManE kind:data(any) addr:0x020f52e4
 data_020f52ec kind:data(any) addr:0x020f52ec
 data_020f52f8 kind:data(any) addr:0x020f52f8
 data_020f5304 kind:data(any) addr:0x020f5304
@@ -7115,9 +7115,9 @@ data_020f532c kind:data(any) addr:0x020f532c
 data_020f5340 kind:data(any) addr:0x020f5340
 data_020f5354 kind:data(any) addr:0x020f5354
 data_020f5360 kind:data(any) addr:0x020f5360
-data_020f5374 kind:data(any) addr:0x020f5374
+_ZTS9SingletonI7CErfManE kind:data(any) addr:0x020f5374
 data_020f538c kind:data(any) addr:0x020f538c
-data_020f53a4 kind:data(any) addr:0x020f53a4
+_ZTS9SingletonI13CDSFileSystemE kind:data(any) addr:0x020f53a4
 data_020f53c0 kind:data(any) addr:0x020f53c0
 data_020f53e0 kind:data(any) addr:0x020f53e0
 data_020f5404 kind:data(any) addr:0x020f5404
@@ -7199,37 +7199,37 @@ data_020f5860 kind:data(any) addr:0x020f5860
 data_020f5864 kind:data(any) addr:0x020f5864
 data_020f5868 kind:data(any) addr:0x020f5868
 data_020f5874 kind:data(any) addr:0x020f5874
-data_020f587c kind:data(any) addr:0x020f587c
-data_020f5880 kind:data(any) addr:0x020f5880
-data_020f5888 kind:data(any) addr:0x020f5888
-data_020f5894 kind:data(any) addr:0x020f5894
-data_020f58a0 kind:data(any) addr:0x020f58a0
-data_020f58ac kind:data(any) addr:0x020f58ac
-data_020f58b8 kind:data(any) addr:0x020f58b8
-data_020f58d0 kind:data(any) addr:0x020f58d0
-data_020f58e0 kind:data(any) addr:0x020f58e0
-data_020f58f4 kind:data(any) addr:0x020f58f4
-data_020f5900 kind:data(any) addr:0x020f5900
-data_020f590c kind:data(any) addr:0x020f590c
-data_020f5910 kind:data(any) addr:0x020f5910
-data_020f5928 kind:data(any) addr:0x020f5928
-data_020f5938 kind:data(any) addr:0x020f5938
-data_020f5948 kind:data(any) addr:0x020f5948
-data_020f5958 kind:data(any) addr:0x020f5958
-data_020f596c kind:data(any) addr:0x020f596c
-data_020f5980 kind:data(any) addr:0x020f5980
-data_020f5994 kind:data(any) addr:0x020f5994
-data_020f59a0 kind:data(any) addr:0x020f59a0
-data_020f59b4 kind:data(any) addr:0x020f59b4
-data_020f59c0 kind:data(any) addr:0x020f59c0
-data_020f59c4 kind:data(any) addr:0x020f59c4
-data_020f59cc kind:data(any) addr:0x020f59cc
-data_020f59d8 kind:data(any) addr:0x020f59d8
-data_020f59e4 kind:data(any) addr:0x020f59e4
-data_020f59f0 kind:data(any) addr:0x020f59f0
-data_020f59fc kind:data(any) addr:0x020f59fc
-data_020f5a08 kind:data(any) addr:0x020f5a08
-data_020f5a14 kind:data(any) addr:0x020f5a14
+FX_TWO_OVER_PI kind:data(byte[0x4]) addr:0x020f587c local
+_ZTI9CErfTable kind:data(byte[0x8]) addr:0x020f5880
+_ZTS7CErfMan kind:data(byte[0x9]) addr:0x020f5888
+_ZTS9CErfTable kind:data(byte[0xb]) addr:0x020f5894
+_ZTI7CErfMan kind:data(byte[0xc]) addr:0x020f58a0
+_ZTI13CDSFileSystem kind:data(byte[0xc]) addr:0x020f58ac
+_ZTS13CDSFileSystem kind:data(byte[0x10]) addr:0x020f58b8
+_ZTV9CErfTable kind:data(byte[0x10]) addr:0x020f58c8
+_ZTV7CErfMan kind:data(byte[0x14]) addr:0x020f58d8
+_ZTV13CDSFileSystem kind:data(byte[0x14]) addr:0x020f58ec
+@1621 kind:data(byte[0xb]) addr:0x020f5900 local
+@1622 kind:data(byte[0x2]) addr:0x020f590c local
+@1623 kind:data(byte[0x15]) addr:0x020f5910 local
+@1624 kind:data(byte[0xd]) addr:0x020f5928 local
+@1625 kind:data(byte[0x10]) addr:0x020f5938 local
+@1626 kind:data(byte[0x10]) addr:0x020f5948 local
+@1627 kind:data(byte[0x11]) addr:0x020f5958 local
+@1628 kind:data(byte[0x13]) addr:0x020f596c local
+@1629 kind:data(byte[0x11]) addr:0x020f5980 local
+@1630 kind:data(byte[0xc]) addr:0x020f5994 local
+@1631 kind:data(byte[0x12]) addr:0x020f59a0 local
+@1632 kind:data(byte[0x9]) addr:0x020f59b4 local
+@1728 kind:data(byte[0x3]) addr:0x020f59c0 local
+@1769 kind:data(byte[0x7]) addr:0x020f59c4 local
+@1969 kind:data(byte[0xa]) addr:0x020f59cc local
+@1970 kind:data(byte[0xc]) addr:0x020f59d8 local
+@1971 kind:data(byte[0xc]) addr:0x020f59e4 local
+@1972 kind:data(byte[0xc]) addr:0x020f59f0 local
+@1973 kind:data(byte[0xc]) addr:0x020f59fc local
+@1974 kind:data(byte[0xc]) addr:0x020f5a08 local
+@2128 kind:data(byte[0x7]) addr:0x020f5a14 local
 data_020f5a1c kind:data(any) addr:0x020f5a1c
 data_020f5a20 kind:data(any) addr:0x020f5a20
 data_020f5a2c kind:data(any) addr:0x020f5a2c
@@ -9550,7 +9550,7 @@ data_021091a0 kind:bss addr:0x021091a0
 data_02109200 kind:bss addr:0x02109200
 data_02109600 kind:bss addr:0x02109600
 data_02109a00 kind:bss addr:0x02109a00
-data_02109a04 kind:bss addr:0x02109a04
+_ZGVZN9SingletonI7CErfManE8InstanceEvE10s_instance kind:bss addr:0x02109a04
 data_02109a08 kind:bss addr:0x02109a08
 data_02109a0c kind:bss addr:0x02109a0c
 data_02109a10 kind:bss addr:0x02109a10
@@ -9558,7 +9558,7 @@ data_02109a14 kind:bss addr:0x02109a14
 data_02109a18 kind:bss addr:0x02109a18
 data_02109a1c kind:bss addr:0x02109a1c
 data_02109a20 kind:bss addr:0x02109a20
-data_02109a24 kind:bss addr:0x02109a24
+_ZGVZN9SingletonI13CDSFileSystemE8InstanceEvE10s_instance kind:bss addr:0x02109a24
 data_02109a28 kind:bss addr:0x02109a28
 data_02109a2c kind:bss addr:0x02109a2c
 data_02109a38 kind:bss addr:0x02109a38
@@ -9574,11 +9574,11 @@ data_02109aa4 kind:bss addr:0x02109aa4
 data_02109ab0 kind:bss addr:0x02109ab0
 data_02109ac4 kind:bss addr:0x02109ac4
 data_02109acc kind:bss addr:0x02109acc
-data_02109ad8 kind:bss addr:0x02109ad8
+_ZZN9SingletonI7CErfManE8InstanceEvE10s_instance kind:bss addr:0x02109ad8
 data_02109adc kind:bss addr:0x02109adc
 data_02109afc kind:bss addr:0x02109afc
 data_02109b00 kind:bss addr:0x02109b00
-data_02109b24 kind:bss addr:0x02109b24
+_ZZN9SingletonI13CDSFileSystemE8InstanceEvE10s_instance kind:bss addr:0x02109b24
 data_02109b28 kind:bss addr:0x02109b28
 data_02109b60 kind:bss addr:0x02109b60
 data_02109ba0 kind:bss addr:0x02109ba0
@@ -9656,8 +9656,8 @@ data_02160e3c kind:bss addr:0x02160e3c
 data_02160e7c kind:bss addr:0x02160e7c
 data_02160e8c kind:bss addr:0x02160e8c
 data_021701db kind:bss addr:0x021701db
-data_021a41f0 kind:bss addr:0x021a41f0
-data_021a41fc kind:bss addr:0x021a41fc
+@662 kind:data(byte[0xc]) addr:0x021a41f0 local
+@806 kind:data(byte[0xc]) addr:0x021a41fc local
 data_021a4208 kind:bss addr:0x021a4208
 data_021a4214 kind:bss addr:0x021a4214
 data_021a4220 kind:bss addr:0x021a4220

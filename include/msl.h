@@ -25,6 +25,7 @@ int sprintf(char* s, const char* format, ...);
 int sscanf(const char* s, const char* format, ...);
 int vsnprintf(char* s, size_t n, const char* format, va_list args);
 int atoi(const char* s);
+int rand(void);
 double atof(const char* s);
 
 // MSL_Extras (extras_string.h): não são do C padrão

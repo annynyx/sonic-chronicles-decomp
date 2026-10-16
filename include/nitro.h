@@ -11,6 +11,7 @@ typedef unsigned int u32;
 typedef int s32;
 typedef int BOOL;
 typedef s32 fx32;
+typedef long long s64;
 
 #define TRUE 1
 #define FALSE 0

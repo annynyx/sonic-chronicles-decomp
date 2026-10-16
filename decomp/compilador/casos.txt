@@ -157,6 +157,14 @@ src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryEixEi    0
 src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryE8AllocateEi 0x02098eb4
 src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryE3AddERKS0_ 0x02098ef4
 src/Aurora/CTlkTable.cpp           __sinit_CTlkTable.cpp                       0x020eef58
+src/Aurora/CRules.cpp              _ZN13CTwoDimArrays12Load2DArraysEv           0x0201ef68
+src/Aurora/CRules.cpp              _ZN13CTwoDimArrays7SetModeEji                0x0201f128
+src/Aurora/CRules.cpp              _ZN13CTwoDimArrays12GetCached2DAEi           0x0201f1dc
+src/Aurora/CRules.cpp              _ZN13CTwoDimArrays11Load2DArrayEi            0x0201f210
+src/Aurora/CRules.cpp              _Z11RandomRangeiii                           0x020206b4
+src/Aurora/CRules.cpp              _Z11RandomFixediii                           0x020206d8
+src/Aurora/CRules.cpp              _ZN13CExoArrayListI10CExoStringEixEi         0x02020758
+src/Aurora/CRules.cpp              _ZN13CExoArrayListI10CExoStringE7SetSizeEi   0x02020764
 src/Aurora/G2DA.cpp                _ZN4G2DA11GetRowCountEv                     0x0200c458
 src/Aurora/G2DA.cpp                _ZN4G2DA8IsLoadedEv                         0x0200f800
 src/Aurora/G2DA.cpp                _ZNK10GFF4Struct3GetIiEET_PK12GFF4FieldDefS1_ 0x02019348

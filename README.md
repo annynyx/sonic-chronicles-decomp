@@ -92,6 +92,7 @@ docs/                all documentation (below)
 | [`docs/ESPIRITO.md`](docs/ESPIRITO.md) | the principles: how and why we work this way |
 | [`docs/BUILD.md`](docs/BUILD.md) | rebuilding the game from source, step by step |
 | [`docs/COMPILADOR.md`](docs/COMPILADOR.md) | the compiler, its flags, and what makes code match |
+| [`docs/TECHNOLOGY.md`](docs/TECHNOLOGY.md) | every technology the project uses, and why it was chosen |
 | [`docs/FERRAMENTAS.md`](docs/FERRAMENTAS.md) | **every tool**: what it does, how to use it, how it works inside |
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | how the game and this repository are organized |
 | [`docs/FORMATOS.md`](docs/FORMATOS.md) | reference for every decoded format |

@@ -160,7 +160,12 @@ def build_report():
                     "progress_categories": cats}
             if f["nome"].startswith(("src/", "decomp/")):
                 meta["source_path"] = f["nome"]
-            units.append({"name": f"{module}/{os.path.splitext(f['nome'])[0]}",
+            # unit names are shown by progress sites: the game's split files live in
+            # jogo/ ("game"), named in English here without renaming the build's files
+            stem = os.path.splitext(f["nome"])[0]
+            if stem.startswith("jogo/"):
+                stem = "game/" + stem[len("jogo/"):]
+            units.append({"name": f"{module}/{stem}",
                           "measures": unit_measures, "metadata": meta})
 
         # functions: matched when inside a complete file's code

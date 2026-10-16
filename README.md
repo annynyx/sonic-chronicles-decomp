@@ -28,8 +28,29 @@ game is byte-identical to the original (SHA-1 `f4ff8291b38bf9a33ab280fb9f7625cf4
 |---|---|
 | **Formats** | ✅ ROM, HERF, LZ10, GFF4, TLK, GDA, 2DA, NCGR/NCLR and backgrounds documented ([`docs/FORMATOS.md`](docs/FORMATOS.md)) |
 | **Code** | 🟡 6,820 functions mapped, 290 C++ classes recovered, ~2,230 functions named, pseudo-C of everything (generated locally, never committed) |
-| **Matching decompilation** | 🟡 **14.91% of the code comes from source** (`decomp/tools/progresso.py`: libraries 87.71%, game 1.71%). Phases 0 and 1: the game is rebuilt byte-identical ([`docs/BUILD.md`](docs/BUILD.md)), compiler found (mwccarm 2.0 sp2, `-ipa file`, [`docs/COMPILADOR.md`](docs/COMPILADOR.md)). In C++ in the build: all of `CExoString` (33 functions), the allocator (`new`/`delete`, `NitroStartUp`), the file system (`CDSFileSystem`, HERF packs and `.small` reading, 45 functions), the GDA tables with GFF4 reading (52 functions) and the text 2DA tables (21 functions); NitroSystem, 86 NitroSDK files and 62 MSL files linked from the libraries' source; 84% of the game code already split into files; ~1,100 library functions with their real names. Plan: [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) |
+| **Matching decompilation** | 🟡 **14.91% of the code comes from source** (`decomp/tools/progresso.py`: libraries 87.71%, game 1.71%). Phases 0 and 1: the game is rebuilt byte-identical ([`docs/BUILD.md`](docs/BUILD.md)), compiler found (mwccarm 2.0 sp2, `-ipa file`, [`docs/COMPILADOR.md`](docs/COMPILADOR.md)). In C++ in the build: all of `CExoString` (33 functions), the allocator (`new`/`delete`, `NitroStartUp`), the file system (`CDSFileSystem`, HERF packs and `.small` reading, 45 functions), the GDA tables with GFF4 reading (52 functions) and the text 2DA tables (21 functions); 215 functions checked in CI, including 8 of the 9 in `CRules`; NitroSystem, 86 NitroSDK files and 62 MSL files linked from the libraries' source; 84% of the game code already split into files; ~1,100 library functions with their real names. Plan: [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) |
 | **PC port** | ⏳ Phase 7 of the plan, after the decompilation |
+
+## Roadmap: where we are
+
+The full plan, with a "done when" criterion for each part, is in
+[`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md). Phase 3 is the one being worked on
+now.
+
+| Phase | What | State |
+|---|---|---|
+| **0. Matching build** | rebuild the game from the assembly, byte-identical | ✅ done |
+| **1. Compiler** | find the compiler and flags (mwccarm 2.0 sp2, `-O4,p`, Thumb, `-ipa file`) | ✅ done |
+| **2. Libraries** | link the Nintendo and Metrowerks libraries from their source and split the game code into files | 🟡 almost done: NitroSystem 100%, NitroSDK 89%, MSL 74% (87.71% of the library code); 84% of the game code split into files |
+| **3. Aurora engine core** | the engine classes everything else uses | 🟡 **in progress**: strings (`CExoString`) ✅, memory (allocator, `Singleton<T>`, `CExoArrayList<T>`) ✅, file system ✅ (7 template copies still in assembly), data tables (GDA/GFF4 ✅, 2DA ✅, `CTlkTable` 12 of 13 functions); now on **3.5, the game rules**: `CRules` 8 of 9 functions match, `LoadRules` is next |
+| **4. Game objects** | `CGameObject`, items, creatures, the party | ⏳ next |
+| **5. Game modes and interface** | exploration, combat, conversations, the `.gui` screens | ⏳ |
+| **6. Graphics and sound** | backgrounds, models, effects, video | ⏳ |
+| **7. PC port** | a native executable on top of the decompiled code | ⏳ can start during Phase 4 |
+
+Want to help? The parts that help most right now are matching C++ for the engine classes of
+Phase 3 and 4, and the GFF4 and map script formats. Read [`CONTRIBUTING.md`](CONTRIBUTING.md)
+first.
 
 ### How progress is measured
 

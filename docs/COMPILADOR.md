@@ -207,6 +207,17 @@ funções, DIARIO 29):
 - **Procurar a sequência no jogo.** Quando uma forma não aparece, vale procurar no ARM9 a
   mesma sequência de instruções: se ela estiver numa função de biblioteca (MSL, NitroSDK),
   o fonte dela mostra a construção.
+- **O compilador fatora as contas, e a forma fatorada não é a do fonte.** A `C2DA` aloca
+  `linhas * colunas + colunas + linhas` células; o código do jogo calcula
+  `(linhas + 1) * colunas + linhas`, mas escrever assim troca a ordem dos operandos do
+  `muls`. Vale tentar a forma "ingênua" quando a fatorada não bate.
+- **As virtuais inline saem no fim do `.o`, na ordem inversa da declaração.** Com
+  `GetNumColumns` declarada antes de `GetNumRows`, o `.o` traz `GetNumRows` primeiro; o
+  jogo tem o contrário. A ordem na vtable vem da classe base que declara as virtuais, então
+  a classe derivada pode declará-las em qualquer ordem sem mudar a vtable.
+- **`sizeof` no lugar do número.** `linhas * sizeof(char*)` dá o mesmo código que
+  `linhas * 4` no DS e continua certo no teste de 64 bits do PC, onde um ponteiro tem 8
+  bytes.
 
 ## Registradores e pilha: quem fica onde
 
@@ -220,8 +231,18 @@ O que funções de teste pequenas mostraram (só chamadas e variáveis, nada do 
   valores vivos durante uma chamada, os quatro primeiros ficam em registradores e os três
   últimos vão para `[sp]`, `[sp+4]`, `[sp+8]`. Um valor com mais usos fica no registrador
   e empurra outro para a pilha.
-- **As posições na pilha seguem uma numeração interna, não a ordem do fonte.** Inverter a
-  ordem das declarações não muda nada.
+- **As posições na pilha seguem uma numeração interna, não a ordem do fonte.** Nos testes
+  pequenos, inverter a ordem das declarações não mudou nada. Na `C2DA` (DIARIO 30) houve
+  dois casos em que mudou: as variáveis cujo endereço é passado (`&line`) ficam na pilha
+  na ordem inversa da declaração, e na `SkipNewLines`, das 24 ordens possíveis das quatro
+  variáveis, só uma deu os registradores do jogo.
+- **O que entra na numeração muda tudo.** Na `CopyFrom` da `C2DA`, as instruções já eram as
+  do jogo e só a pilha mudava. Bateu quando os contadores dos laços passaram a ser os
+  mesmos em todos os laços (`int i, j;` no topo, no estilo C) e quando a expressão
+  `labelText + position`, usada três vezes, ficou **sem variável**: o compilador a guarda
+  como temporário próprio, numerado depois das variáveis. Um contador declarado no topo
+  e só incrementado no laço (`column++`) continua no código; declarado no laço, o
+  compilador o apaga.
 - **Numa função inline copiada**, a numeração põe primeiro as variáveis da inline, depois
   os parâmetros dela (do último para o primeiro), depois as variáveis da função de fora
   (da última declarada para a primeira). A `CTlkTable::GetString` do jogo segue isso.

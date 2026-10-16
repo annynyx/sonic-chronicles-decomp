@@ -61,6 +61,18 @@ pelo C++ do jogo em `decomp/tests/test_arquivos.cpp` (DIARIO 29).
 ## 2DA (texto)
 `2DA V2.0`, linha de padrão, cabeçalho e linhas separados por TAB. Usado por
 `.ITM` (efeitos de itens), `.SPL` (golpes), mapas de paleta dos cenários.
+Leitura do jogo (`C2DA`, `src/Aurora/C2DA.cpp`): depois dos 8 bytes do cabeçalho, as
+linhas em branco e os espaços no começo de cada linha são pulados; uma primeira linha
+`DEFAULT: valor` (ou `DEFAULT :valor`) dá o valor de uma célula que falta; a linha
+seguinte tem os nomes das colunas; cada uma das outras, o nome da linha e as células,
+separados por espaço ou TAB (um texto entre aspas pode ter espaços). `****` é uma célula
+vazia, e os nomes das linhas e das colunas ficam em minúsculas. Também existe a forma
+binária `2DA V2.b`: os nomes das colunas separados por TAB ou `\0`, um byte, o número de
+linhas (u32), os nomes das linhas, uma posição u16 por célula, 2 bytes e os textos.
+*Validado (370 tabelas, todas `V2.0` com CRLF: 219 `.itm`/`.ITM` e 151 `.spl`/`.SPL` no
+`test.herf`; 12.376 células lidas pelo C++ do jogo, DIARIO 30).* Nenhuma usa `DEFAULT`,
+aspas nem a forma binária. A célula vazia nos arquivos é `***`, que o jogo **não** trata
+como vazia: fica o texto `"***"`, que dá 0 como inteiro.
 
 ## Cenários
 - `.cbgt`: índice de 4096 × `{u16 tamanho, u16 offset/512}` + tiles LZ10 de

@@ -92,6 +92,14 @@ def preferencia(pedaco, citados):
     return (not any(n in citados for n in nomes), not any("C1E" in n or "D1E" in n for n in nomes))
 
 
+def variantes(a, b):
+    """a e b são o C1 e o C2 (ou o D1 e o D2) do mesmo construtor, com os mesmos bytes."""
+    if a[1] != b[1] or not a[4] or not b[4]:
+        return False
+    x, y = a[4][0][0], b[4][0][0]
+    return re.sub(r"([CD])[12]E", r"\1E", x) == re.sub(r"([CD])[12]E", r"\1E", y) and x != y
+
+
 def bate(corpo, mascara, end):
     jogo = ARM9[end - BASE:end - BASE + len(corpo)]
     return len(jogo) == len(corpo) and all(i in mascara or a == b for i, (a, b) in enumerate(zip(corpo, jogo)))
@@ -124,8 +132,18 @@ def encaixar(fonte, obj):
             # pode ter as duas, uma só ou nenhuma
             # (só no código: dois typeinfos têm os mesmos bytes no .o, todos de relocação)
             grupo = [lista[i]]
-            while sec == ".text" and i + len(grupo) < len(lista) and lista[i + len(grupo)][1] == lista[i][1]:
-                grupo.append(lista[i + len(grupo)])
+            while sec == ".text" and i + len(grupo) < len(lista):
+                j = i + len(grupo)
+                k = j
+                if lista[j][1] != lista[i][1]:
+                    # o par C2/C1 (ou D2/D1) de uma classe pode ter cópias multidef no meio
+                    # (o destrutor inline da classe base, na C2DA): elas passam para depois
+                    while k < len(lista) and lista[k][5] and lista[k][1] != lista[i][1]:
+                        k += 1
+                    if k == len(lista) or not variantes(lista[i], lista[k]):
+                        break
+                    lista[j:k + 1] = [lista[k]] + lista[j:k]
+                grupo.append(lista[j])
             i += len(grupo)
             p = pos
             no_jogo = 0

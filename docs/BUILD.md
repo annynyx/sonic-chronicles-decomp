@@ -126,7 +126,9 @@ Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no bui
    relocação para o meio de um símbolo (a vtable + 8) vira "símbolo + deslocamento"
    em `relocs.txt`. Quando o `.o` tem duas cópias iguais (o `C1` e o `C2` de um
    construtor) e o jogo só uma, o nome é o da cópia que o próprio `.o` usa, ou o `C1`;
-   a outra o linker descarta. Se algo não encaixar, o script para.
+   a outra o linker descarta. Isso vale também quando o compilador põe entre as duas uma
+   cópia multidef (o destrutor inline da classe base, na `C2DA`: DIARIO 30). Se algo
+   não encaixar, o script para.
    As cópias "multidef" (os métodos de `CExoArrayList<T>`, construtores inline que não
    foram expandidos, typeinfos, o objeto de um `Singleton<T>`) saem em todo `.o` que as
    usa, e o jogo ficou com a do primeiro arquivo ligado. Antes, dê a elas em

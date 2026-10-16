@@ -28,13 +28,12 @@ jogo/02003e54.cpp:
     .text       start:0x02003e54 end:0x02003e90
     .bss        start:0x02110ff4 end:0x02111000
 
-jogo/0200450c.cpp:
-    .text       start:0x0200450c end:0x0200455c
-    .data       start:0x020f54e4 end:0x020f54e8
-
-jogo/02004718.cpp:
-    .text       start:0x02004718 end:0x02004b9c
-    .data       start:0x020f54e8 end:0x020f5504
+src/Aurora/C2DA.cpp:
+    complete
+    .text       start:0x02003fec end:0x02004c1c
+    .init       start:0x020edb44 end:0x020edb60
+    .ctor       start:0x020f5008 end:0x020f500c
+    .data       start:0x020f5488 end:0x020f5504
 
 src/Aurora/CExoString.cpp:
     complete

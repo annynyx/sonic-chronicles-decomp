@@ -22,6 +22,7 @@ int strcmp(const char* a, const char* b);
 char* strstr(const char* s, const char* sub);
 void* memcpy(void* dst, const void* src, size_t n);
 int sprintf(char* s, const char* format, ...);
+int sscanf(const char* s, const char* format, ...);
 int vsnprintf(char* s, size_t n, const char* format, va_list args);
 int atoi(const char* s);
 double atof(const char* s);

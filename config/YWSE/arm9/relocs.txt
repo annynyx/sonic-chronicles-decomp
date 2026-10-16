@@ -747,18 +747,18 @@ from:0x02003ff6 kind:thumb_call to:0x02004e1c module:main
 from:0x02003ffe kind:thumb_call to:0x02004e1c module:main
 from:0x02004006 kind:thumb_call to:0x02004e1c module:main
 from:0x0200400c kind:thumb_call to:0x02004074 module:main
-from:0x02004014 kind:load to:0x020f54c0 module:main
+from:0x02004014 kind:load to:0x020f54b8 add:0x8 module:main
 from:0x02004020 kind:thumb_call to:0x020040c4 module:main
 from:0x02004028 kind:thumb_call to:0x02004f70 module:main
 from:0x02004030 kind:thumb_call to:0x02004f70 module:main
 from:0x02004036 kind:thumb_call to:0x02004f70 module:main
-from:0x02004040 kind:load to:0x020f54c0 module:main
+from:0x02004040 kind:load to:0x020f54b8 add:0x8 module:main
 from:0x0200404c kind:thumb_call to:0x020040c4 module:main
 from:0x02004054 kind:thumb_call to:0x02004f70 module:main
 from:0x0200405c kind:thumb_call to:0x02004f70 module:main
 from:0x02004062 kind:thumb_call to:0x02004f70 module:main
 from:0x02004068 kind:thumb_call to:0x0200341c module:main
-from:0x02004070 kind:load to:0x020f54c0 module:main
+from:0x02004070 kind:load to:0x020f54b8 add:0x8 module:main
 from:0x02004082 kind:thumb_call to:0x0200501c module:main
 from:0x0200409a kind:thumb_call to:0x0200501c module:main
 from:0x020040a4 kind:thumb_call to:0x0200501c module:main

@@ -791,6 +791,66 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   casos são 14 e 20, sem elas. E o caminho das tabelas "V0.2" nunca roda: ele confere a
   versão no mesmo lugar onde a `Load` exige "V4.0".
 
+## 30. As tabelas 2DA em texto (`C2DA`, Fase 3.4)
+- **O que o arquivo tem.** `src/Aurora/C2DA.cpp` (`0x02003fec-0x02004c1c`) é a `C2DA`, a
+  tabela 2DA em texto, o formato clássico da BioWare (os nomes `C2DA` e `I2DAProducer` vêm
+  do RTTI; os dos métodos seguem a C2DA do Neverwinter Nights, do mesmo motor). A `Load`
+  lê o recurso pelo nome; a `Parse` monta, numa C2DA temporária, uma `CExoString` por
+  célula; e a `CopyFrom` passa tudo para o jeito "compacto": um bloco só, com os ponteiros
+  dos nomes, a posição (u16) de cada célula e os textos. São 21 funções, mais o `__sinit`,
+  a `.ctor` e a `.data` (typeinfos, vtable de 9 entradas e as strings).
+- **ROM idêntica**, e o progresso foi de 14,60% para **14,91%** (o código do jogo, de
+  1,34% para 1,71%). O CI confere 207 funções (eram 185). Com isso, a Fase 3.4 está
+  completa, menos a `CTlkTable::GetString` (seção 28).
+- **O que fez bater** (o COMPILADOR.md tem as lições):
+  - o tamanho do bloco de `CExoString` é `linhas * colunas + colunas + linhas` (células,
+    nomes das colunas, nomes das linhas); o compilador o fatora em
+    `(linhas + 1) * colunas + linhas`, mas escrever a forma fatorada dá outra ordem de
+    operandos;
+  - a `CopyFrom` e a `Parse` foram escritas **no estilo C**: as variáveis no topo da função
+    e os mesmos contadores (`i`, `j`, `column`) em vários laços. Isso muda a numeração das
+    posições na pilha e mantém vivo um contador que só é incrementado (o `column++` do laço
+    dos nomes das colunas). Na `CopyFrom`, a expressão `labelText + position` aparece três
+    vezes **sem variável**: o compilador a guarda como temporário próprio, em outra posição
+    da pilha. Com uma variável `label`, as instruções eram as mesmas e só a pilha mudava;
+  - na `Parse`, as variáveis cujo endereço é passado (`&line`, `&lineLength`...) ficam na
+    pilha na ordem inversa da declaração: a ordem do jogo diz qual foi a do fonte;
+  - as virtuais inline `GetNumColumns` e `GetNumRows` saem no fim do `.o` na ordem
+    **inversa** da declaração na classe. Como a ordem na vtable vem da classe base
+    (`I2DAProducer`), a `C2DA` as declara invertidas sem mudar a vtable.
+- **Erro nº 20: a ferramenta escolhia o construtor errado, e a G2DA já tinha o problema.**
+  O `.o` tem o construtor duas vezes (`C2` e `C1`, mesmos bytes), mas entre eles o
+  compilador pôs o destrutor inline da base (`I2DAProducer::~I2DAProducer`). O
+  `nomes_do_fonte.py` só juntava as cópias quando estavam lado a lado: viu o `C2` sozinho e
+  deu a `0x02003fec` o nome dele. A nossa `LoadData` chama o `C1`; com os dois citados, o
+  linker guardou os dois, e o ARM9 cresceu 32 bytes. Quem acusou foi a montagem: a área
+  segura (`0x02000000-0x02004000`) mudou, porque a C2DA começa 20 bytes antes do fim dela.
+  O mapa do linker mostrou `C2DA::C2DA[base]` e `C2DA::C2DA` em `0x02003fec` e
+  `0x02004018`. A primeira correção juntava qualquer par de cópias iguais separado por
+  multidef, e a G2DA parou de encaixar: lá há templates multidef de bytes iguais que o jogo
+  guarda separados. Agora só o par C1/C2 (ou D1/D2) da mesma função pula as cópias multidef
+  do meio. Com isso, o construtor da G2DA (`0x0201ae10`) também passou de `C2` para `C1`.
+  O nome antigo funcionava, porque ninguém no `.o` dela chama o `C1`, mas estava errado:
+  quem cria um objeto chama o `C1`. Os outros quatro arquivos ligados foram encaixados de
+  novo com a ferramenta nova. Só mudaram os números das strings locais (`@671` virou
+  `@673`), porque a declaração de `sscanf` no `msl.h` andou a numeração do compilador.
+- **Teste com dados reais** (parte 6 do `test_arquivos.cpp`): **370 tabelas 2DA**, todas
+  "V2.0" (160 `.itm` e 116 `.spl`, mais 59 `.ITM` e 35 `.SPL`, no `test.herf`, sem
+  compressão), são abertas pelo nome com o nosso C++. Os nomes das colunas e das linhas, o
+  texto e o inteiro de cada uma das **12.376 células** (1.768 linhas) batem com uma leitura
+  independente do texto feita no teste. Quatro erros plantados foram pegos, cada um pela
+  conferência certa: sem o `strlwr` dos nomes das linhas, a posição da célula sem o
+  terminador, `"***"` no lugar de `"****"` e `%d` no lugar de `%i` (este, pelas células
+  em hexadecimal, `0x00000003`). O teste roda em 64 bits, onde um ponteiro tem 8 bytes; por
+  isso o bloco compacto é medido com `sizeof(char*)`, que no DS dá o mesmo código que o 4.
+- **Achados sobre o jogo.** O jogo só usa a `C2DA` para os itens e as magias. O nome do
+  arquivo está na coluna 5 de uma tabela GDA (a função em `0x02019f34`, que monta as regras,
+  ignora `****` e vazio), e os valores são lidos com `GetINTEntry`. Os arquivos marcam célula
+  vazia com `***` (três asteriscos), mas o leitor só reconhece `****`: essas células ficam
+  com o texto `"***"` e dão 0 como inteiro (com TRUE). O caminho binário ("V2.b") e a linha
+  `DEFAULT:` existem no código, mas nenhum arquivo da ROM os usa. A `Parse` tem um defeito
+  no `DEFAULT` sem dois-pontos: ela desconta o tamanho da linha sem avançar o texto.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

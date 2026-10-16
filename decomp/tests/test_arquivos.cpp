@@ -16,6 +16,9 @@
 //  5. as tabelas GDA (src/Aurora/G2DA.cpp): cada .gda do erf.dict é aberto pelo nome, e
 //     linhas, colunas, o hash e o tipo de cada coluna, o id de cada linha e o valor de
 //     cada célula (pela posição e pela chave) batem com uma leitura independente do GFF4.
+//  6. as tabelas 2DA em texto (src/Aurora/C2DA.cpp): cada recurso que começa com "2DA " é
+//     aberto pelo nome, e os nomes das colunas e das linhas, o texto e o inteiro de cada
+//     célula batem com uma leitura independente do texto.
 // Tudo isso com o alocador do jogo (src/Aurora/Memory.cpp) atendendo cada new e delete.
 //
 // Uso: decomp/build/test_arquivos work/extract/files   (depois do montar_rom.sh)
@@ -23,6 +26,7 @@
 #include <string>
 #include <vector>
 #include "Aurora/CErfMan.h"
+#include "Aurora/C2DA.h"
 #include "Aurora/G2DA.h"
 #include "msl.h"
 
@@ -98,6 +102,62 @@ struct Gff {
     }
 };
 
+// Leitura independente de um 2DA em texto, sem o código do jogo: as linhas que têm alguma
+// palavra (separadas por espaço ou tab). A primeira traz os nomes das colunas; cada uma das
+// seguintes, o nome da linha e as células. "****" é uma célula vazia; uma célula que falta
+// fica vazia (o valor padrão) e uma que sobra é ignorada. Os nomes ficam em minúsculas.
+// Os arquivos do jogo não têm aspas nem a linha "DEFAULT", então esta leitura não as trata.
+struct Texto2DA {
+    std::vector<std::string> colunas, linhas;
+    std::vector<std::vector<std::string> > celulas;
+    u32 sobras;
+
+    static std::string Minusculas(std::string s)
+    {
+        for (size_t i = 0; i < s.size(); i++)
+            s[i] = tolower((unsigned char)s[i]);
+        return s;
+    }
+    void Le(const std::string& texto)
+    {
+        sobras = 0;
+        size_t i = 8;   // depois de "2DA V2.0"
+        bool primeira = true;
+        while (i < texto.size()) {
+            size_t fim = texto.find_first_of("\r\n", i);
+            if (fim == std::string::npos)
+                fim = texto.size();
+            std::vector<std::string> palavras;
+            for (size_t j = i; j < fim;) {
+                size_t k = texto.find_first_of(" \t", j);
+                if (k == std::string::npos || k > fim)
+                    k = fim;
+                if (k > j)
+                    palavras.push_back(texto.substr(j, k - j));
+                j = k + 1;
+            }
+            i = fim + 1;
+            if (palavras.empty())
+                continue;
+            if (primeira) {
+                for (size_t c = 0; c < palavras.size(); c++)
+                    colunas.push_back(Minusculas(palavras[c]));
+                primeira = false;
+                continue;
+            }
+            linhas.push_back(Minusculas(palavras[0]));
+            std::vector<std::string> linha;
+            for (size_t c = 0; c < colunas.size(); c++) {
+                std::string v = c + 1 < palavras.size() ? palavras[c + 1] : "";
+                linha.push_back(v == "****" ? "" : v);
+            }
+            if (palavras.size() > colunas.size() + 1)
+                sobras += palavras.size() - colunas.size() - 1;
+            celulas.push_back(linha);
+        }
+    }
+};
+
 // O nome do arquivo aberto com este id (o ResName do CDSFileSystem, em maiúsculas).
 static std::string NomeAberto(u16 id)
 {
@@ -160,6 +220,7 @@ int main(int argc, char** argv)
 
     // 2. cada recurso pelo nome
     std::vector<std::string> tabelas;
+    std::vector<std::pair<std::string, std::string> > textos2da;   // nome, bytes
     u32 lidos = 0, comprimidos = 0, crus = 0, fora = 0, vazias = 0;
     for (u32 i = 0; i < n; i++) {
         const u8* e = bytes + 8 + 132 * i;
@@ -202,6 +263,8 @@ int main(int argc, char** argv)
             }
         } else {
             CONFERE((u32)obtido == tam && memcmp(buffer, cru, tam) == 0, "%s: bytes diferentes", nome.c_str());
+            if (tam >= 8 && memcmp(cru, "2DA ", 4) == 0)
+                textos2da.push_back(std::make_pair(nome, std::string((const char*)cru, tam)));
         }
         delete[] buffer;
         lidos++;
@@ -339,6 +402,65 @@ int main(int argc, char** argv)
     }
     printf("tabelas GDA: %u, %u linhas, %u células (%u de texto, cuja GetColumnType dá FALSE)\n",
            (u32)tabelas.size(), nLinhas, nCelulas, nTipoFalso);
+
+    // 6. as tabelas 2DA em texto: C2DA::Load lê o recurso, Parse monta a tabela de
+    // CExoString numa C2DA temporária, e CopyFrom passa tudo para o bloco compacto
+    u32 nLinhas2da = 0, nCelulas2da = 0, nVazias = 0, nSobras = 0, nInteiros = 0;
+    for (size_t k = 0; k < textos2da.size(); k++) {
+        const char* nome = textos2da[k].first.c_str();
+        Texto2DA esperado;
+        esperado.Le(textos2da[k].second);
+        CONFERE(textos2da[k].second.compare(4, 4, "V2.0") == 0, "%s não é \"2DA V2.0\"", nome);
+        C2DA tabela;
+        CONFERE(tabela.Load(nome), "%s não carregou", nome);
+        CONFERE(tabela.m_bLoaded && tabela.m_bCompact && tabela.m_bOwnsBuffer, "%s: não ficou compacta", nome);
+        int nl = (int)esperado.linhas.size(), nc = (int)esperado.colunas.size();
+        CONFERE(tabela.GetNumRows() == nl && tabela.GetNumColumns() == nc,
+                "%s: %d x %d, o texto tem %d x %d", nome, tabela.GetNumRows(), tabela.GetNumColumns(), nl, nc);
+        if (tabela.GetNumRows() != nl || tabela.GetNumColumns() != nc)
+            continue;
+        CExoString lido;
+        for (int c = 0; c < nc; c++) {
+            tabela.GetColumnLabel(c, lido);
+            CONFERE(esperado.colunas[c] == lido.CStr(), "%s: coluna %d \"%s\", devia ser \"%s\"", nome, c,
+                    lido.CStr(), esperado.colunas[c].c_str());
+        }
+        for (int r = 0; r < nl; r++) {
+            tabela.GetRowLabel(r, lido);
+            CONFERE(esperado.linhas[r] == lido.CStr(), "%s: linha %d \"%s\", devia ser \"%s\"", nome, r,
+                    lido.CStr(), esperado.linhas[r].c_str());
+            for (int c = 0; c < nc; c++) {
+                const std::string& v = esperado.celulas[r][c];
+                BOOL tem = tabela.GetCExoStringEntry(r, c, lido);
+                CONFERE(v == lido.CStr() && tem == !v.empty(), "%s[%d][%d]: \"%s\", devia ser \"%s\"", nome, r, c,
+                        lido.CStr(), v.c_str());
+                // o inteiro é o "%i" do sscanf: decimal, 0x hexadecimal ou 0 octal; um texto que
+                // não é número dá 0 (com TRUE); uma célula vazia dá 0 (com FALSE)
+                char* fim = NULL;
+                long n = strtol(v.c_str(), &fim, 0);
+                int inteiro = -12345;
+                BOOL ok = tabela.GetINTEntry(r, c, &inteiro);
+                CONFERE(ok == !v.empty() && inteiro == (fim == v.c_str() ? 0 : (int)n),
+                        "%s[%d][%d]: inteiro %d, devia ser %ld (\"%s\")", nome, r, c, inteiro, n, v.c_str());
+                if (fim != v.c_str())
+                    nInteiros++;
+                if (v.empty())
+                    nVazias++;
+                nCelulas2da++;
+            }
+            nLinhas2da++;
+        }
+        // fora da tabela: o valor padrão (vazio, depois da CopyFrom) e FALSE
+        int inteiro = -1;
+        CONFERE(!tabela.GetCExoStringEntry(nl, 0, lido) && lido.GetLength() == 0, "%s: linha fora da tabela", nome);
+        CONFERE(!tabela.GetCExoStringEntry(0, -1, lido) && lido.GetLength() == 0, "%s: coluna fora da tabela", nome);
+        CONFERE(!tabela.GetINTEntry(0, nc, &inteiro) && inteiro == 0, "%s: inteiro fora da tabela", nome);
+        nSobras += esperado.sobras;
+    }
+    printf("tabelas 2DA: %u, %u linhas, %u células (%u números, %u vazias com \"****\"); "
+           "%u células a mais no fim das linhas, ignoradas\n",
+           (u32)textos2da.size(), nLinhas2da, nCelulas2da, nInteiros, nVazias, nSobras);
+    CONFERE(textos2da.size() > 0, "nenhum 2DA no pacote");
 
     printf(falhas ? "%d FALHA(S)\n" : "OK\n", falhas);
     return falhas ? 1 : 0;

@@ -1,7 +1,7 @@
-# Hierarquia de classes C++ do Sonic Chronicles
+# Sonic Chronicles C++ class hierarchy
 
-Recuperada do RTTI (typeinfo) do ARM9. Entre parênteses: nº de métodos virtuais.
-Classes com mais de uma base aparecem sob a primeira.
+Recovered from the ARM9's RTTI (typeinfo). In parentheses: the number of virtual methods.
+Classes with more than one base appear under the first one.
 
 ```
 CGameBaseComponent (0)

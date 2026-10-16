@@ -1,90 +1,119 @@
-# Sonic Chronicles: The Dark Brotherhood: decomp e modding
+# Sonic Chronicles: The Dark Brotherhood: decomp and modding
 
-Engenharia reversa do **Sonic Chronicles: The Dark Brotherhood** (Nintendo DS, BioWare, 2008).
-O objetivo é entender o jogo por dentro, poder **modificá-lo** e, no fim, ter o código
-inteiro decompilado, a base para um executável nativo de PC.
+Reverse engineering of **Sonic Chronicles: The Dark Brotherhood** (Nintendo DS, BioWare, 2008).
+The goal is to understand the game from the inside, to be able to **modify it** and, in the
+end, to have all of its code decompiled, the base for a native PC executable.
 
-> **Nada do jogo está neste repositório.** Nem ROM, nem assets, nem código do jogo.
-> Todas as ferramentas trabalham a partir de uma cópia que você possui.
+> **Nothing from the game is in this repository.** No ROM, no assets, no game code.
+> Every tool works from a copy of the game that you own.
 
-## O espírito do projeto
+## The spirit of the project
 
-Este é um projeto para **aprender fazendo**, com uma regra acima de todas: *nenhuma
-descoberta vale até ser conferida contra o jogo de verdade*. Cada formato decifrado é
-reescrito e comparado byte a byte com o original; cada função reescrita é testada
-contra milhares de dados reais; cada mod é aberto no emulador. Quando uma hipótese
-estava errada, e várias estavam, o erro e a correção ficam registrados, porque é
-assim que se aprende. Leia [`docs/ESPIRITO.md`](docs/ESPIRITO.md) e o diário das
-descobertas em [`docs/DIARIO.md`](docs/DIARIO.md).
+This is a **learning by doing** project, with one rule above all: *no finding counts until it
+has been checked against the real game*. Every decoded format is rewritten and compared byte
+by byte with the original; every rewritten function is tested against thousands of real
+records; every mod is opened in the emulator. When a hypothesis was wrong, and several were,
+the mistake and its fix are written down, because that is how one learns. Read
+[`docs/ESPIRITO.md`](docs/ESPIRITO.md) and the journal of findings in
+[`docs/DIARIO.md`](docs/DIARIO.md).
 
-## Onde estamos
+**AI-assisted.** Much of the matching work is done by a Claude Code agent and reviewed by the
+maintainer. Nothing is taken on its word: a file only counts as decompiled when the rebuilt
+game is byte-identical to the original (SHA-1 `f4ff8291b38bf9a33ab280fb9f7625cf4d549473`).
 
-| Frente | Situação |
+## Status
+
+| Front | State |
 |---|---|
-| **Modding** | ✅ `sonic-mod`: edite itens, criaturas, lojas e textos em planilhas e gere a ROM. Testado no emulador. |
-| **Assets** | ✅ `sonic-dump`: 62 cenários, 3.444 sprites, 342 retratos, textos em 5 idiomas, 660 tabelas, em ~7 s |
-| **Formatos** | ✅ ROM, HERF, LZ10, GFF4, TLK, GDA, 2DA, NCGR/NCLR e cenários: lidos **e escritos** byte a byte |
-| **Código** | 🟡 6.820 funções mapeadas, 290 classes C++ recuperadas, ~2.230 funções nomeadas, pseudo-C de tudo |
-| **Decompilação matching** | 🟡 **14,91% do código sai de fonte** (`decomp/tools/progresso.py`: bibliotecas 87,71%, jogo 1,71%). Fases 0 e 1: a ROM é reconstruída idêntica ([`docs/BUILD.md`](docs/BUILD.md)), compilador achado (mwccarm 2.0 sp2, `-ipa file`, [`docs/COMPILADOR.md`](docs/COMPILADOR.md)). Em C++ no build: a `CExoString` inteira (33 funções), o alocador (`new`/`delete`, `NitroStartUp`) o sistema de arquivos (`CDSFileSystem`, os pacotes HERF e a leitura de `.small`, 45 funções) as tabelas GDA com a leitura de GFF4 (52 funções) e as tabelas 2DA em texto (21 funções); NitroSystem, 86 arquivos do NitroSDK e 62 do MSL ligados a partir das bibliotecas; 84% do código do jogo já separado por arquivo; ~1.100 funções de biblioteca com o nome verdadeiro. Plano: [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) |
-| **Port para PC** | ⏳ Fase 7 do plano; hoje o jogo (modificado) roda no PC via emulador |
+| **Modding** | ✅ `sonic-mod`: edit items, creatures, shops and texts in spreadsheets and build the modified game. Tested in the emulator. |
+| **Assets** | ✅ `sonic-dump`: 62 backgrounds, 3,444 sprites, 342 portraits, texts in 5 languages, 660 tables, in ~7 s |
+| **Formats** | ✅ ROM, HERF, LZ10, GFF4, TLK, GDA, 2DA, NCGR/NCLR and backgrounds: read **and written** byte for byte |
+| **Code** | 🟡 6,820 functions mapped, 290 C++ classes recovered, ~2,230 functions named, pseudo-C of everything (generated locally, never committed) |
+| **Matching decompilation** | 🟡 **14.91% of the code comes from source** (`decomp/tools/progresso.py`: libraries 87.71%, game 1.71%). Phases 0 and 1: the game is rebuilt byte-identical ([`docs/BUILD.md`](docs/BUILD.md)), compiler found (mwccarm 2.0 sp2, `-ipa file`, [`docs/COMPILADOR.md`](docs/COMPILADOR.md)). In C++ in the build: all of `CExoString` (33 functions), the allocator (`new`/`delete`, `NitroStartUp`), the file system (`CDSFileSystem`, HERF packs and `.small` reading, 45 functions), the GDA tables with GFF4 reading (52 functions) and the text 2DA tables (21 functions); NitroSystem, 86 NitroSDK files and 62 MSL files linked from the libraries' source; 84% of the game code already split into files; ~1,100 library functions with their real names. Plan: [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) |
+| **PC port** | ⏳ Phase 7 of the plan; today the (modified) game runs on PC through an emulator |
 
-## Começando
+### How progress is measured
 
-**Só quero modificar o jogo (Windows):** baixe `sonic-tools-windows.zip` nas
-[Releases](../../releases), e então:
+`decomp/tools/progresso.py` counts the code bytes (ARM9 `.text` and `.init`, ITCM `.text`)
+of the files marked `complete` in `config/YWSE/arm9/delinks.txt`. A file is only marked
+complete when `decomp/tools/montar_rom.sh` rebuilds an identical game, so there is no partial
+credit. CI also writes the same numbers as an [objdiff](https://github.com/encounter/objdiff)
+progress report (`decomp/tools/progress_report.py`) and uploads it as the `YWSE_report`
+artifact, which progress trackers such as [recomp.fyi](https://recomp.fyi) read. The project's
+row there comes from [`.recomp.json`](.recomp.json).
+
+## Getting started
+
+**I only want to mod the game (Windows):** download `sonic-tools-windows.zip` from the
+[Releases](../../releases), then:
 ```powershell
-.\sonic-mod.exe unpack "Sonic Chronicles.nds" meu_mod
-# edite meu_mod\tabelas\test\Items.csv, meu_mod\textos\en.csv ...
-.\sonic-mod.exe pack "Sonic Chronicles.nds" meu_mod rom_modificada.nds
+.\sonic-mod.exe unpack "Sonic Chronicles.nds" my_mod
+# edit my_mod\tabelas\test\Items.csv, my_mod\textos\en.csv ...
+.\sonic-mod.exe pack "Sonic Chronicles.nds" my_mod modded.nds
 ```
-Guia completo: [`docs/MODDING.md`](docs/MODDING.md). Para jogar, use o melonDS ou o DeSmuME.
+Full guide: [`docs/MODDING.md`](docs/MODDING.md). To play, use melonDS or DeSmuME.
 
-**Quero os assets:** `sonic-dump "Sonic Chronicles.nds" saida`
+**I want the assets:** `sonic-dump "Sonic Chronicles.nds" output`
 
-**Quero compilar e estudar:**
+**I want to build and study:**
 ```bash
 cd engine && cargo build --release && cargo test --release
-SONIC_ROM=/caminho/rom.nds cargo test --release        # prova de ida e volta com a ROM real
-./analise/run_all.sh /caminho/rom.nds                  # pipeline completo de engenharia reversa
+SONIC_ROM=/path/rom.nds cargo test --release           # round-trip proof with the real game
+./analise/run_all.sh /path/rom.nds                     # full reverse-engineering pipeline
 ```
 
-## Mapa do repositório
+**I want to rebuild the game from source** (the matching decompilation): see
+[`docs/BUILD.md`](docs/BUILD.md). In short, `decomp/tools/ferramentas.sh` downloads the tools
+(dsd, wibo, mwccarm) and `decomp/tools/montar_rom.sh rom.nds` rebuilds the game and checks
+that it is identical.
+
+## Repository map
 
 ```
-engine/              Rust: sonic-formats (biblioteca), sonic-mod, sonic-dump
-analise/             pipeline de engenharia reversa (Python, Ghidra, emulador)
-decomp/              funções do jogo reescritas em C, testadas contra o jogo
-exemplos/            crate Rust mínima e didática (HERF + LZ10)
-docs/                toda a documentação (abaixo)
+engine/              Rust: sonic-formats (library), sonic-mod, sonic-dump
+analise/             reverse-engineering pipeline (Python, Ghidra, emulator)
+decomp/              build and checking tools for the matching decompilation, C tests
+src/, include/       the game's matching C++ (Aurora engine classes)
+config/YWSE/         dsd configuration: file splits (delinks), symbols, relocations
+exemplos/            a minimal, didactic Rust crate (HERF + LZ10)
+docs/                all documentation (below)
 ```
 
-## Documentação
+## Documentation
 
-| Documento | Para quê |
+| Document | What for |
 |---|---|
-| [`docs/ESPIRITO.md`](docs/ESPIRITO.md) | os princípios: como e por que trabalhamos assim |
-| [`docs/FERRAMENTAS.md`](docs/FERRAMENTAS.md) | **cada ferramenta**: o que faz, como usar, como funciona por dentro |
-| [`docs/MODDING.md`](docs/MODDING.md) | guia de modding com receitas (vai junto em cada projeto do `sonic-mod`) |
-| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | como o jogo e este repositório estão organizados |
-| [`docs/FORMATOS.md`](docs/FORMATOS.md) | referência de todos os formatos decifrados |
-| [`docs/COMBATE.md`](docs/COMBATE.md) | **o combate por dentro**: fórmulas, golpes, status, itens, Chao, dificuldade |
-| [`docs/DIARIO.md`](docs/DIARIO.md) | a história das descobertas, incluindo os erros e as correções |
-| [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) | o plano da decompilação real, fase por fase |
-| [`docs/hierarquia_classes.md`](docs/hierarquia_classes.md) | as 290 classes C++ do jogo |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | regras para contribuir |
+| [`docs/ESPIRITO.md`](docs/ESPIRITO.md) | the principles: how and why we work this way |
+| [`docs/BUILD.md`](docs/BUILD.md) | rebuilding the game from source, step by step |
+| [`docs/COMPILADOR.md`](docs/COMPILADOR.md) | the compiler, its flags, and what makes code match |
+| [`docs/FERRAMENTAS.md`](docs/FERRAMENTAS.md) | **every tool**: what it does, how to use it, how it works inside |
+| [`docs/MODDING.md`](docs/MODDING.md) | modding guide with recipes (shipped with every `sonic-mod` project) |
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | how the game and this repository are organized |
+| [`docs/FORMATOS.md`](docs/FORMATOS.md) | reference for every decoded format |
+| [`docs/COMBATE.md`](docs/COMBATE.md) | **combat from the inside**: formulas, moves, status effects, items, Chao, difficulty |
+| [`docs/DIARIO.md`](docs/DIARIO.md) | the story of the findings, mistakes and fixes included |
+| [`docs/PLANO-DECOMPILACAO.md`](docs/PLANO-DECOMPILACAO.md) | the plan for the real decompilation, phase by phase |
+| [`docs/hierarquia_classes.md`](docs/hierarquia_classes.md) | the game's 290 C++ classes |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | rules for contributing |
 
-## Créditos
+File names, script names and some code identifiers are still in Portuguese (the project
+started in Portuguese); the documentation is in English.
 
-- [ds-decomp (`dsd`)](https://github.com/AetiasHax/ds-decomp): análise de funções e disassembly
-- [xoreos](https://github.com/xoreos/xoreos): documentação dos formatos Aurora e a tabela de nomes de
-  coluna GDA (`engine/crates/sonic-formats/data/gda_columns_xoreos.json`, GPLv3)
+## Credits
+
+- [ds-decomp (`dsd`)](https://github.com/AetiasHax/ds-decomp): function analysis, delinking and disassembly
+- [objdiff](https://github.com/encounter/objdiff): the progress report format
+- [xoreos](https://github.com/xoreos/xoreos): documentation of the Aurora formats and the GDA
+  column name table (`engine/crates/sonic-formats/data/gda_columns_xoreos.json`, GPLv3)
+- [NitroSDK](https://github.com/ntrtwl/NitroSDK) and [NitroSystem](https://github.com/ntrtwl/NitroSystem)
+  sources from ntrtwl
 - [ndspy](https://github.com/RoadrunnerWMC/ndspy), [Capstone](https://www.capstone-engine.org/),
   [Ghidra](https://ghidra-sre.org/), [py-desmume](https://github.com/SkyTemple/py-desmume)
-- Inspiração: [pret/pokeplatinum](https://github.com/pret/pokeplatinum) e o
-  [port de PC](https://github.com/cybervisi0n/pokeplatinum)
+- Inspiration: [pret/pokeplatinum](https://github.com/pret/pokeplatinum) and its
+  [PC port](https://github.com/cybervisi0n/pokeplatinum)
 
-## Licença e aviso legal
+## License and legal notice
 
-Código sob **GPL-3.0** ([`LICENSE`](LICENSE)). Sonic Chronicles: The Dark Brotherhood é ©
-SEGA / BioWare. Este é um projeto de fãs, sem afiliação com eles e sem fins comerciais. Use
-apenas com uma cópia que você possua, e não distribua ROMs, assets nem material extraído.
+Code under **GPL-3.0** ([`LICENSE`](LICENSE)). Sonic Chronicles: The Dark Brotherhood is ©
+SEGA / BioWare. This is a fan project, not affiliated with them and non-commercial. Use it
+only with a copy you own, and do not distribute ROMs, assets or extracted material.

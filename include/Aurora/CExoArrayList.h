@@ -11,6 +11,10 @@
 // Os métodos ficam fora da classe, sem "inline": o compilador não os expande, e cada
 // arquivo que usa um deles ganha uma cópia "multidef" (o linker fica com a primeira).
 // É por isso que o jogo tem as cópias espalhadas no fim de vários arquivos.
+//
+// A ordem das declarações abaixo aparece no jogo: no fim de cada arquivo, as cópias saem
+// na ordem em que os métodos são declarados (os que só outro método do template pede
+// vêm numa segunda passada). No arquivo da CTlkTable, Allocate vem antes de Add.
 #ifndef AURORA_CEXOARRAYLIST_H
 #define AURORA_CEXOARRAYLIST_H
 
@@ -23,10 +27,10 @@ public:
     CExoArrayList(int size = 0);
     ~CExoArrayList();
     T& operator[](int index);
+    void Allocate(int size);
     void Add(const T& element);
     void AddEmpty();
     void DelIndex(int index);
-    void Allocate(int size);
     void SetSize(int size);
     void Clear();
 

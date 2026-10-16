@@ -152,6 +152,13 @@ Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no bui
    O fonte do jogo vale para os dois lados por causa do `include/msl.h`, que tem um ramo
    para o `mwccarm` (que define `__MWERKS__`) e outro para o PC.
 
+Quando uma função no meio do arquivo não bate, o arquivo ainda não entra no build: o `.o`
+ocupa a faixa toda, e dividir o fonte em dois `.cpp` não serve (cada um ganharia o seu
+`__sinit`). As funções que batem ficam no fonte e vão para o `casos.txt` (passo 3), e a
+que não bate fica de fora, com a tentativa no DIARIO. É o caso de
+`src/Aurora/CTlkTable.cpp` (DIARIO 28). Uma cópia de template no **fim** do arquivo não
+impede nada: ela fica fora da faixa, como no passo 2.
+
 ---
 
 ## As bibliotecas da Nintendo, ligadas do fonte

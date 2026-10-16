@@ -44,6 +44,8 @@ u = (id << 15) - id - 1;  u = ((u >> 12) ^ u) * 5;  u = (u ^ (u >> 4)) * 0x809; 
 `id = 0xFFFFFFFF` é posição vazia. Textos em cp1252, com `\0` incluído no tamanho,
 sem repetição, na ordem da primeira posição que os usa, alinhados em 4 com `0xFF`.
 *Validado (5 idiomas).*
+Um id com a posição do texto `0xFFFFFFFF` não tem texto naquele idioma (6.579 dos 14.134
+no inglês); a busca do jogo não confere isso (DIARIO 28).
 
 ## GDA (tabelas)
 GFF4 `G2DA`: `gtop {10002 colunas, 10003 linhas}`; coluna = `{u32 CRC32(nome.lower()

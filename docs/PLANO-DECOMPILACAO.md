@@ -120,8 +120,8 @@ retorno, porque essas funções são chamadas em todo lugar.
 |---|---|---|
 | 3.1 Strings | `CExoString` ✅ (33 funções, `src/Aurora/CExoString.cpp`); `CResRef` não existe nesta versão do motor (os recursos são achados pelo hash do nome) | usadas em todo lugar |
 | 3.2 Memória e singletons | alocador ✅ (`new`/`delete` com 5 pools e `NitroStartUp`, `src/Aurora/Memory.cpp`), `Singleton<T>` ✅ (`include/Aurora/Singleton.h`, com destrutor virtual: DIARIO 26), `CExoArrayList<T>` ✅ (menos o `DelIndex` de elementos de tamanho que não é potência de 2), `ResourcePool<T>` | padrão repetido em centenas de funções |
-| 3.3 Arquivos | 🟡 `CDSFileSystem`, `CErfMan`, `CErfTable` e a leitura de `.small` ✅ (`src/Aurora/CDSFileSystem.cpp`, 45 funções, com a `.data`, a `.bss` e o `__sinit`; as 7 cópias de template do fim continuam em assembly, DIARIO 26); teste com dados reais ✅ (`decomp/tests/test_arquivos.cpp`: os 8.689 recursos do `test.herf` lidos pelo nosso C++, DIARIO 27); falta `FileReference` (outro arquivo) | o formato já está 100% documentado |
-| 3.4 Dados | leitores GFF4, GDA, 2DA, `CTlkTable` (o hash já foi descoberto) | já temos as especificações e os escritores |
+| 3.3 Arquivos | 🟡 `CDSFileSystem`, `CErfMan`, `CErfTable` e a leitura de `.small` ✅ (`src/Aurora/CDSFileSystem.cpp`, 45 funções, com a `.data`, a `.bss` e o `__sinit`; as 7 cópias de template do fim continuam em assembly, DIARIO 26); teste com dados reais ✅ (`decomp/tests/test_arquivos.cpp`: os 8.689 recursos do `test.herf` lidos pelo nosso C++, DIARIO 27); `FileReference` deriva de `CGameBaseComponent` e foi para a Fase 4 (DIARIO 28) | o formato já está 100% documentado |
+| 3.4 Dados | 🟡 `CTlkTable`: 12 das 13 funções batem e são conferidas no CI (`src/Aurora/CTlkTable.cpp`); a `GetString` não bateu (registradores e pilha), e por isso o arquivo continua do assembly (DIARIO 28); a busca do jogo foi conferida no `strings.tlk`. Faltam os leitores GFF4, GDA e 2DA | já temos as especificações e os escritores |
 | 3.5 Regras | `CRules`, `StatInfos`, `StatRedirect` | ponte para o modding avançado |
 
 **Pronto quando:** cada parte compila com match e tem um teste que lê dados reais.
@@ -134,9 +134,10 @@ mudança, compilado no PC e rodando sobre os arquivos da ROM. Ele já cobre a 3.
 
 `CGameBaseComponent → CGameObject → CGameCreature / CGameItem / CGameSquad /
 CGameTrigger / Placeable`, `ActionQueue`, `CGameEffect`, `InventoryData`,
-`CPlotManager`. As vtables já estão mapeadas: cada slot é um método a escrever.
-Ordem sugerida: `CGameObject` (base de 51 métodos) → `CGameItem` (itens, o maior
-interesse para mods) → `CGameCreature` → `Placeable` / `Puzzle`.
+`CPlotManager`, `FileReference` (veio da Fase 3.3). As vtables já estão mapeadas: cada
+slot é um método a escrever. Ordem sugerida: `CGameObject` (base de 51 métodos) →
+`CGameItem` (itens, o maior interesse para mods) → `CGameCreature` → `Placeable` /
+`Puzzle`.
 
 **Destrava para modding:** entender os limites que o código impõe (quantos itens,
 personagens no grupo, slots), e assim adicionar personagens jogáveis de verdade.

@@ -642,6 +642,105 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   teste (assim pega se o C++ do jogo deixar de compilar fora do DS), mas não o roda: não
   tem a ROM.
 
+## 28. A tabela de textos (`CTlkTable`, Fase 3.4): 12 de 13 funções
+- **O que o arquivo faz.** `CTlkTable` guarda a lista dos `.tlk` abertos (`strings.tlk` e
+  o do idioma) e, a cada pedido, procura o id em cada um, na ordem em que foram
+  acrescentados. Cada `.tlk` é um `CTlkFile` de 0x20 bytes: lê o cabeçalho na primeira
+  busca, calcula o hash de Wang do id e lê a tabela do cartucho 64 entradas (0x200 bytes)
+  por vez, com sondagem linear. O arquivo do jogo vai de `0x02098930` a `0x02098f24`:
+  construtor, dois destrutores, `Reset`, `GetString`, `AddFile`, o construtor de
+  `CTlkFile`, `Unknown2` e 5 cópias de `CExoArrayList<T>`.
+- **12 das 13 funções batem** (e o `__sinit`), em `src/Aurora/CTlkTable.cpp`, e entram no
+  `casos.txt`: o CI agora confere 132 funções (eram 119). Dois achados:
+  - **As cópias de template saem na ordem em que os métodos são declarados na classe**
+    (com uma segunda passada para os que só outro método do template pede). Aqui o
+    `Allocate` vem antes do `Add`, então a declaração em `include/Aurora/CExoArrayList.h`
+    mudou de lugar. O CDSFileSystem continua batendo e a ROM continua idêntica.
+  - **O elemento da lista é uma `struct` com o ponteiro**, não o ponteiro sozinho. Das 39
+    cópias do `Allocate` para elementos de 4 bytes no jogo, 38 copiam ponteiros (o laço
+    prepara a origem antes do destino) e só esta copia uma struct (o contrário).
+- **A busca, conferida com os dados reais.** Num script à parte (Python, fora do
+  repositório), fiz a busca como o jogo faz: posição = `wang(id) % n`, sondagem linear a
+  partir dali, parada no id `0xFFFFFFFF`, texto em `dados + posição`. No `strings.tlk`
+  (dados em `0x60`, tabela de 18.845 posições), ela acha os **14.134** ids, com até 75
+  passos, e o id `0x7FFFFFFF`, que não existe, para no primeiro passo. No francês, igual.
+  Um detalhe novo, agora no FORMATOS.md: **6.579 ids têm a posição do texto
+  `0xFFFFFFFF`** (sem texto neste idioma), e o código do jogo não trata esse caso (somaria
+  a posição aos dados do mesmo jeito).
+- **A `GetString` não bateu e continua do assembly.** São 0x394 bytes, e as instruções
+  são as mesmas do jogo; o que muda são os registradores e as posições na pilha (148
+  linhas diferentes na melhor forma). No jogo, `data` (o `m_dataOffset` lido a cada volta)
+  e `position` (a posição do texto) vão para a pilha (`[sp+0x28]` e `[sp+0x2c]`), e o
+  endereço do `CDSFileSystem` fica fixo em `r7` durante o laço. No nosso, uma das duas fica
+  em `r7`, e o endereço é relido da tabela de constantes a cada uso. A melhor forma do
+  laço (antes dele, a função lê o cabeçalho se preciso, calcula o hash e lê o primeiro
+  pedaço da tabela):
+
+  ```cpp
+  do {
+      u32 data = m_dataOffset;
+      CTlkEntry entry = *(CTlkEntry*)(m_buffer + i * 8);   // struct { u32 id, position; }
+      if (entry.id == id) {
+          CDSFileSystem::Instance().ReadFileAt(&m_fileId, m_buffer, data + entry.position, m_bufferSize);
+          u32 length = *(u32*)m_buffer;
+          if (length * 2 < m_bufferSize - 4) {
+              if (length >= outSize)
+                  length = outSize - 1;
+              memcpy(out, m_buffer + 4, length);
+              out[length] = 0;
+              return TRUE;
+          }
+          if (length >= outSize)
+              length = outSize - 1;
+          u8* text = new u8[(length + 1) * 2];
+          CDSFileSystem::Instance().ReadFileAt(&m_fileId, text, data + entry.position, length * 2 + 4);
+          memcpy(out, text + 4, length);
+          out[length] = 0;
+          delete[] text;
+          return TRUE;
+      }
+      if (entry.id == 0xffffffff)
+          return FALSE;
+      slot = (slot + 1) % count;
+      i++;
+      if (slot == 0 || m_bufferSize == i * 8) {
+          CDSFileSystem::Instance().ReadFileAt(&m_fileId, m_buffer, m_dataOffset + 8 + slot * 8, m_bufferSize);
+          i = 0;
+      }
+  } while (slot != start);
+  ```
+
+  Testei cerca de 300 formas, a maioria por busca automática: as leituras da entrada em
+  seis formas (direto, `struct` copiada, ponteiro, acessores inline...) e em todas as
+  ordens; o lugar e o tipo das variáveis (`data` antes, depois, no topo; `i` e `slot`
+  `int` ou `u32`); o hash numa função inline; o `count` antes ou depois do hash; o caminho
+  do "achou" como outra função inline; a busca escrita direto no laço da `CTlkTable`; e a
+  `CTlkFile::GetString` sem `inline`, dentro da classe ou depois de quem a chama. Nenhuma
+  pôs `data` e `position` onde o jogo põe.
+- **O que aprendi tentando: como o compilador escolhe quem vai para a pilha.** Em Thumb,
+  só `r4`-`r7` sobrevivem a uma chamada. Com funções de teste pequenas (só chamadas e
+  variáveis, nada do jogo): quando faltam registradores, vão para a pilha os valores com
+  menos usos e, no empate, os mais novos; e **as posições na pilha seguem uma numeração
+  interna, não a ordem do fonte**. Numa função inline copiada, essa numeração põe primeiro
+  as variáveis da inline, depois os parâmetros dela (do último para o primeiro), depois as
+  variáveis da função de fora (da última declarada para a primeira). O jogo segue esse padrão na
+  `GetString` (`start`, a parte do hash tirada do laço, `count` | `outSize`, `out` | o `i`
+  de fora | `data`, `position`). O que ainda não entendi é o lugar de uma variável definida
+  dentro do laço da inline: com o resultado de uma chamada, ela vai para o fim; com uma
+  leitura de memória, vai para o começo. No jogo, `data` e `position` (leituras de
+  memória) estão no fim. As lições estão no COMPILADOR.md.
+- **Por que o arquivo não é ligado.** A `GetString` está no meio do `.text`, e o build
+  liga um arquivo inteiro (o `.o` ocupa a faixa toda). Dividir o fonte em dois `.cpp`, com
+  a `GetString` em assembly entre eles, não serve: cada `.cpp` ganha o seu `__sinit` (a
+  constante do `Comum.h`, DIARIO 24), e o arquivo do jogo só tem um. Então o arquivo todo
+  continua do assembly, e o fonte fica conferido função por função pelo CI. Quando a
+  `GetString` bater, ela entra entre `Reset` e `AddFile`, e o arquivo é ligado (com a
+  `.data`, a `.bss`, a `.init` e a `.ctor`, que ficam para esse dia). O progresso não muda:
+  **14,32%**.
+- **Outra coisa do plano:** `FileReference`, que faltava na Fase 3.3, deriva de
+  `CGameBaseComponent` (a árvore do RTTI em `hierarquia_classes.md`): é um componente de
+  objeto de jogo, e vai para a Fase 4.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

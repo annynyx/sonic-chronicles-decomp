@@ -162,6 +162,41 @@ E do sistema de arquivos ([`src/Aurora/CDSFileSystem.cpp`](../src/Aurora/CDSFile
   função; os dados pequenos (typeinfo, strings) também. A seção de dados de alinhamento 1
   fica num múltiplo de 4 no jogo: o linker alinha.
 
+E da tabela de textos ([`src/Aurora/CTlkTable.cpp`](../src/Aurora/CTlkTable.cpp), 12 de
+13 funções, DIARIO 28):
+
+- **As cópias de template saem na ordem da declaração dos métodos na classe**, não na
+  ordem em que o arquivo os usa. Os que só outro método do template pede (o `Allocate`,
+  que o `Add` chama) vêm numa segunda passada, a não ser que o arquivo também os peça.
+  No arquivo da `CTlkTable` o `Allocate` vem antes do `Add`, e foi isso que fixou a
+  ordem em `include/Aurora/CExoArrayList.h`.
+- **O tipo do elemento aparece na cópia.** Para elementos de 4 bytes, o laço do
+  `Allocate` que copia ponteiros prepara primeiro a origem (`r3`) e depois o destino
+  (`r5`); com uma `struct` de um campo, a ordem e os registradores se invertem. O jogo tem
+  as duas formas, e isso diz o tipo.
+
+## Registradores e pilha: quem fica onde
+
+Quando uma função tem mais valores vivos do que registradores, o compilador escolhe quais
+vão para a pilha, e em que posição. Isso explica a maioria das diferenças que sobram
+quando as instruções já são as mesmas. Em Thumb, só `r4`-`r7` sobrevivem a uma chamada.
+O que funções de teste pequenas mostraram (só chamadas e variáveis, nada do jogo; DIARIO
+28):
+
+- **Vão para a pilha os valores com menos usos; no empate, os mais novos.** Com sete
+  valores vivos durante uma chamada, os quatro primeiros ficam em registradores e os três
+  últimos vão para `[sp]`, `[sp+4]`, `[sp+8]`. Um valor com mais usos fica no registrador
+  e empurra outro para a pilha.
+- **As posições na pilha seguem uma numeração interna, não a ordem do fonte.** Inverter a
+  ordem das declarações não muda nada.
+- **Numa função inline copiada**, a numeração põe primeiro as variáveis da inline, depois
+  os parâmetros dela (do último para o primeiro), depois as variáveis da função de fora
+  (da última declarada para a primeira). A `CTlkTable::GetString` do jogo segue isso.
+- **Ainda sem regra:** uma variável definida dentro de um laço da inline vai para o fim da
+  numeração se recebe o resultado de uma chamada, e para o começo se recebe uma leitura de
+  memória. É o que falta para a `GetString` bater (no jogo, as duas leituras do laço estão
+  no fim).
+
 ## `-ipa file`: a ordem dos dados
 
 As três funções batem com ou sem `-ipa file` (a "análise interprocedural por arquivo":
@@ -317,6 +352,10 @@ sobram (`0x020d6930`, `0x020e067c`, `0x020e096c`) ainda não sabemos de onde vê
   (redução de força); o mesmo template, aqui, refaz a multiplicação. Com elementos de 4
   ou 16 bytes (deslocamento de bits) os dois batem. Nenhuma das 960 formas do laço
   testadas, nem outra versão do compilador, reproduz os dois casos (DIARIO 26).
+- **A `CTlkTable::GetString` (`0x020989fc`).** As instruções são as do jogo, mas duas
+  variáveis do laço (`data` e `position`) vão para posições da pilha diferentes, e com
+  elas os registradores do laço. Cerca de 300 formas testadas (DIARIO 28); falta entender
+  a numeração acima.
 
 ## Como repetir
 

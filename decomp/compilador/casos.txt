@@ -122,3 +122,16 @@ src/Aurora/CDSFileSystem.cpp       _ZN13CExoArrayListI10CDSRequestE8AddEmptyEv 0
 src/Aurora/CDSFileSystem.cpp       _ZN13CExoArrayListI13CDSCacheEntryEixEi     0x0200a2d0
 src/Aurora/CDSFileSystem.cpp       _ZN13CExoArrayListI13CDSCacheEntryE5ClearEv 0x0200a2d8
 src/Aurora/CDSFileSystem.cpp       _ZN13CExoArrayListI13CDSCacheEntryE7SetSizeEi 0x0200a2e4
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTableC1Ev                           0x02098930
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTableD1Ev                           0x02098964
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTableD0Ev                           0x020989ac
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTable5ResetEv                       0x020989f8
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTable7AddFileERK10CExoString        0x02098d90
+src/Aurora/CTlkTable.cpp           _ZN8CTlkFileC1E10CExoString                 0x02098dd4
+src/Aurora/CTlkTable.cpp           _ZN9CTlkTable8Unknown2Ev                    0x02098e7c
+src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryEC1Ei    0x02098e80
+src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryED1Ev    0x02098e98
+src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryEixEi    0x02098eac
+src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryE8AllocateEi 0x02098eb4
+src/Aurora/CTlkTable.cpp           _ZN13CExoArrayListI14CTlkTableEntryE3AddERKS0_ 0x02098ef4
+src/Aurora/CTlkTable.cpp           __sinit_CTlkTable.cpp                       0x020eef58

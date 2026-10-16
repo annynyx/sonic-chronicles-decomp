@@ -1,11 +1,11 @@
 """Imprime 'hash nome' para cada arquivo NOMEADO de um manifesto de HERF.
 Aceita os dois formatos:
   - _manifest.json do tools/herf.py (Python)
-  - _manifesto.json do sonic-dump (Rust; usa só o pacote 'test')
+  - _manifesto.json da antiga ferramenta em Rust (usa só o pacote 'test')
 Para arquivos que eram '.small', recoloca o sufixo do nome original (é dele que vem o hash)."""
 import json, sys
 for e in json.load(open(sys.argv[1])):
-    if 'nome' in e:                       # formato do sonic-dump
+    if 'nome' in e:                       # formato da antiga ferramenta em Rust
         if e.get('pacote') != 'test' or not e['nome_recuperado']:
             continue
         name, small = e['nome'], e['era_small']

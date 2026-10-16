@@ -1,61 +1,57 @@
-# Arquitetura
+# Architecture
 
-## O jogo
+## The game
 
-Sonic Chronicles roda no motor **Aurora da BioWare** (o mesmo família de NWN, KotOR,
-Dragon Age), adaptado para o DS e escrito em C++ (CodeWarrior, com RTTI e exceções).
+Sonic Chronicles runs on **BioWare's Aurora engine** (the same family as NWN, KotOR and
+Dragon Age), adapted to the DS and written in C++ (CodeWarrior, with RTTI and exceptions).
 
 ```
- ┌────────────────────────── ARM9 (1,1 MB de código) ───────────────────────────┐
- │ Jogo:  GameMode (16 modos) · GuiManager · CGameObject e derivados · Puzzles   │
- │ Motor Aurora: CExoString · CDSFileSystem/CErfMan · CTlkTable · CRules · GFF4 │
- │ NitroSystem (NNS: G3D, G2D, som) · MSL C++ (Metrowerks) · NitroSDK 4.2       │
+ ┌────────────────────────── ARM9 (1.1 MB of code) ─────────────────────────────┐
+ │ Game:  GameMode (16 modes) · GuiManager · CGameObject and subclasses · Puzzles│
+ │ Aurora engine: CExoString · CDSFileSystem/CErfMan · CTlkTable · CRules · GFF4│
+ │ NitroSystem (NNS: G3D, G2D, sound) · MSL C++ (Metrowerks) · NitroSDK 4.2     │
  └───────────────────────────────────────────────────────────────────────────────┘
- Dados (NitroFS):  test.herf (8.691 recursos) · test_[efgis].herf (por idioma)
-                   strings*.tlk (textos) · <área>.cbgt/.pal/.2da/.cdpth (cenários)
-                   *.vx (vídeos) · sound_data.sdat (som)
+ Data (NitroFS):   test.herf (8,691 resources) · test_[efgis].herf (per language)
+                   strings*.tlk (texts) · <area>.cbgt/.pal/.2da/.cdpth (backgrounds)
+                   *.vx (videos) · sound_data.sdat (sound)
 ```
 
-O jogo é **guiado por dados**: itens, criaturas, lojas, capítulos, diálogos,
-áreas e telas são tabelas e arquivos GFF4 dentro do `test.herf`. É isso que torna
-o modding por dados (`sonic-mod`) possível antes da decompilação estar pronta.
+The game is **data-driven**: items, creatures, shops, chapters, dialogs, areas and screens
+are tables and GFF4 files inside `test.herf`. The engine code that reads them (Phase 3 of
+the plan) is the first part of the game being decompiled.
 
-Fluxo de um recurso: o código pede um nome (ex.: `"Items.GDA"`); `CErfMan` calcula
-`HashResourceName` (DJB2), procura `nome.small` e depois `nome` no índice ordenado
-do HERF (busca binária), descomprime o `.small` (LZ10) se preciso, e o leitor do
-formato (GFF4/GDA/TLK) interpreta.
+How a resource is loaded: the code asks for a name (e.g. `"Items.GDA"`); `CErfMan` computes
+`HashResourceName` (DJB2), looks up `name.small` and then `name` in the HERF's sorted index
+(binary search), decompresses the `.small` (LZ10) if needed, and the format's reader
+(GFF4/GDA/TLK) interprets it.
 
-## Este repositório
+## This repository
 
 ```
-engine/                       Rust (workspace) — o que se usa no dia a dia
-  crates/sonic-formats/       biblioteca: todos os formatos, leitura E escrita
-  crates/sonic-dump/          CLI: extrai assets para PNG/CSV/JSON
-  crates/sonic-mod/           CLI: unpack (projeto editável) / pack (ROM modificada)
-analise/                      pipeline de engenharia reversa
-  run_all.sh                  ROM -> funções, nomes, assembly, dados, pseudo-C
-  tools/                      Python: RTTI, xref, HERF, GFF4, GDA, diálogos, emulador
-  ghidra_scripts/             preparação do Ghidra + decompilação em massa
-  symbols_manual.txt          nomes dados à mão, com a evidência
-decomp/                       funções do jogo reescritas em C + testes contra o jogo
-exemplos/rust-minimo/         versão didática mínima (HERF + LZ10)
-docs/                         esta documentação
-work/                         (não versionado) tudo que é gerado a partir da ROM
+analise/                      reverse-engineering pipeline
+  run_all.sh                  ROM -> functions, names, assembly, pseudo-C
+  tools/                      Python: RTTI, xrefs, HERF, GFF4
+  ghidra_scripts/             Ghidra setup + bulk decompilation
+  symbols_manual.txt          names given by hand, with the evidence
+decomp/                       matching-decompilation tools, C rewrites + tests against the game
+src/, include/                the game's matching C++
+config/YWSE/                  dsd configuration (file splits, symbols, relocations)
+docs/                         this documentation
+work/                         (not versioned) everything generated from the ROM
 ```
 
-### Princípios
-1. **Nada do jogo no repositório.** Tudo é gerado a partir da ROM do usuário.
-2. **Toda escrita é provada por ida e volta.** Ler e escrever sem mudar nada tem
-   que dar o arquivo original byte a byte (`engine/crates/sonic-formats/tests`).
-3. **Toda descoberta é validada contra o jogo**, nunca só contra a hipótese:
-   hashes recalculados, cenários medidos pelas bordas, mods testados no emulador.
-4. **A biblioteca não sabe de disco nem de CLI.** Assim um futuro executável
-   (visualizador, port) reaproveita os mesmos leitores.
+### Principles
+1. **Nothing from the game in the repository.** Everything is generated from the user's ROM.
+2. **Matching code counts only when the rebuilt game is identical** (SHA-1
+   `f4ff8291b38bf9a33ab280fb9f7625cf4d549473`, [BUILD.md](BUILD.md)).
+3. **Every finding is validated against the game**, never only against the hypothesis:
+   recomputed hashes, backgrounds measured by their edges, the engine's C++ run on the real
+   game files.
 
-### Testes
+### Tests
 ```
-cd engine && cargo test --release                                 # unitários
-SONIC_ROM=rom.nds cargo test --release -- --nocapture             # ida e volta com a ROM real
-make -C decomp test MANIFEST=$PWD/saida/herf/_manifesto.json        # funções em C contra o jogo
-SDL_VIDEODRIVER=dummy python3 analise/tools/emu_run.py rom.nds out "w 600; s tela"   # no emulador
+python3 decomp/tools/conferir_sem_rom.py           # decompiled functions match (no ROM needed)
+decomp/tools/montar_rom.sh rom.nds                 # the rebuilt game is identical
+make -C decomp test HERF_DIR=$PWD/work/herf        # C functions against the game (after run_all.sh)
+make -C decomp arquivos                            # the engine's C++ on the game files (after montar_rom.sh)
 ```

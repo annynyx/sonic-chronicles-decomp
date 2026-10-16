@@ -1,50 +1,51 @@
-# O espírito do projeto
+# The spirit of the project
 
-Este projeto começou com uma pergunta simples: *"dá para abrir um jogo de DS e entender
-como ele funciona?"* Este documento diz como trabalhamos e por quê.
+This project started with a simple question: *"can you open a DS game and understand how it
+works?"* This document says how we work and why.
 
-## 1. Aprender é o objetivo, não um efeito colateral
-Cada ferramenta é escrita para ser **lida**, não só usada. O código é comentado
-explicando o *porquê* de cada byte; os formatos estão documentados em
-[`FORMATOS.md`](FORMATOS.md); a história de como cada coisa foi descoberta está em
-[`DIARIO.md`](DIARIO.md). Se você não entende uma parte, isso é um bug na documentação.
+## 1. Learning is the goal, not a side effect
+Every tool is written to be **read**, not only used. The code is commented explaining *why*
+each byte is what it is; the formats are documented in [`FORMATOS.md`](FORMATOS.md); the
+story of how each thing was found is in [`DIARIO.md`](DIARIO.md). If you don't understand a
+part, that is a bug in the documentation.
 
-## 2. Nada vale até ser conferido contra o jogo
-Uma hipótese que "parece certa" não é uma descoberta. Exemplos do que isso significa aqui:
+## 2. Nothing counts until it is checked against the game
+A hypothesis that "looks right" is not a finding. Examples of what that means here:
 
-- **Formatos:** todo escritor tem que reproduzir o arquivo original **byte a byte**
-  quando nada muda (229 tabelas, 5 TLKs, 6 pacotes: todos idênticos).
-- **Funções reescritas:** `HashResourceName` em C recalcula os 8.690 nomes do jogo e
-  acerta todos.
-- **Imagens:** a ordem dos tiles dos cenários foi escolhida *medindo* a continuidade
-  das bordas (4,8 contra 35 a 56 nas outras hipóteses), não no olho.
-- **Mods:** abertos no emulador e conferidos pela captura de tela.
+- **Formats:** every reader is run on all the real files (229 GDA tables, 370 2DA tables,
+  5 TLKs, 8,689 pack resources) and compared with an independent reading.
+- **Rewritten functions:** `HashResourceName` in C recomputes the game's 8,690 names and gets
+  all of them right.
+- **Images:** the tile order of the backgrounds was chosen by *measuring* edge continuity
+  (4.8 against 35 to 56 for the other hypotheses), not by eye.
+- **Matching decompilation:** a file counts as decompiled only when the whole game, rebuilt
+  with it, is byte-identical to the original.
 
-## 3. Erros são registrados, não escondidos
-Várias hipóteses estavam erradas: os "construtores" que não eram construtores, os
-destrutores na posição errada da vtable, os 12 nomes falsos aceitos por colisão de
-hash, os retratos pintados com a paleta do Tails. Cada um está no
-[`DIARIO.md`](DIARIO.md) com a evidência que derrubou a hipótese. Isso vale mais do
-que fingir que acertamos de primeira.
+## 3. Mistakes are recorded, not hidden
+Several hypotheses were wrong: the "constructors" that were not constructors, the
+destructors at the wrong vtable slot, the 12 false names accepted through hash collisions,
+the portraits painted with Tails' palette. Each one is in [`DIARIO.md`](DIARIO.md) with the
+evidence that brought the hypothesis down. That is worth more than pretending we got it
+right the first time.
 
-## 4. Honestidade sobre o que não funciona
-O README e os documentos dizem claramente o que está pronto, o que é experimental e o
-que é só plano. "Testado no emulador" quer dizer que foi testado no emulador. "Não
-testado" fica escrito.
+## 4. Honesty about what doesn't work
+The README and the documents say clearly what is done, what is experimental and what is only
+a plan. "Rebuilt identical" means the SHA-1 of the whole game matched. "Not tested" is written
+down.
 
-## 5. Nada do jogo no repositório
-O jogo pertence à SEGA e à BioWare. Aqui só há **conhecimento e ferramentas**: código
-escrito por nós, documentação e metadados (endereços, nomes). Tudo que deriva do jogo,
-como ROM, assets, assembly e pseudo-C, é gerado localmente a partir da cópia de quem usa
-e fica fora do Git (`work/`, `saida/`, `.gitignore`). Essa é a mesma postura de projetos
-como o [pret](https://github.com/pret).
+## 5. Nothing from the game in the repository
+The game belongs to SEGA and BioWare. Here there is only **knowledge and tools**: code we
+wrote, documentation and metadata (addresses, names). Everything derived from the game, such
+as the ROM, assets, assembly and pseudo-C, is generated locally from the user's own copy and
+stays out of Git (`work/`, `saida/`, `.gitignore`). This is the same stance as projects like
+[pret](https://github.com/pret).
 
-## 6. Ferramentas reutilizáveis
-A biblioteca `sonic-formats` não sabe nada de disco nem de linha de comando: só lê e
-escreve formatos. Assim, as mesmas peças servem ao extrator, ao modding e, um dia, a um
-executável nativo do jogo.
+## 6. Reusable tools
+The engine's C++ in `src/` compiles unchanged for the DS and for the PC
+(`decomp/tests/test_arquivos.cpp`). That way the same code serves the matching build, the
+tests on the real game files and, one day, a native executable of the game.
 
-## 7. Passos pequenos e verificáveis
-O [plano de decompilação](PLANO-DECOMPILACAO.md) é dividido em partes de 1 a 5 dias,
-cada uma com um critério de "pronto" objetivo. Um PR pequeno e conferido vale mais do
-que um grande e duvidoso.
+## 7. Small, verifiable steps
+The [decompilation plan](PLANO-DECOMPILACAO.md) is split into parts of 1 to 5 days, each
+with an objective "done" criterion. A small, checked PR is worth more than a big, doubtful
+one.

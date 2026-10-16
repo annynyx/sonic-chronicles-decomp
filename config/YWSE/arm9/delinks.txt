@@ -1,0 +1,1664 @@
+    .text       start:0x02000000 end:0x020eccb4 kind:code align:32
+    .exception  start:0x020eccb4 end:0x020ed01c kind:rodata align:1
+    .exceptix   start:0x020ed01c end:0x020ed9c4 kind:rodata align:4
+    .init       start:0x020ed9c4 end:0x020ef814 kind:code align:4
+    .rodata     start:0x020ef814 end:0x020f4ff0 kind:rodata align:4
+    .ctor       start:0x020f4ff0 end:0x020f5244 kind:rodata align:4
+    .data       start:0x020f5260 end:0x021090e0 kind:data align:32
+    .bss        start:0x021090e0 end:0x021b9500 kind:bss align:32
+
+jogo/02000bec.cpp:
+    .text       start:0x02000bec end:0x02002d0c
+    .data       start:0x020f5404 end:0x020f5424
+    .bss        start:0x02109a2c end:0x02109ab0
+
+src/Aurora/Memory.cpp:
+    complete
+    .text       start:0x0200325c end:0x020034ec
+    .init       start:0x020eda24 end:0x020edb0c
+    .ctor       start:0x020f4ffc end:0x020f5000
+    .data       start:0x020f5424 end:0x020f5428
+    .bss        start:0x02110f34 end:0x02110fec
+
+jogo/020034f4.cpp:
+    .text       start:0x020034f4 end:0x02003610
+    .data       start:0x020f542c end:0x020f5440
+
+jogo/02003e54.cpp:
+    .text       start:0x02003e54 end:0x02003e90
+    .bss        start:0x02110ff4 end:0x02111000
+
+src/Aurora/C2DA.cpp:
+    complete
+    .text       start:0x02003fec end:0x02004c1c
+    .init       start:0x020edb44 end:0x020edb60
+    .ctor       start:0x020f5008 end:0x020f500c
+    .data       start:0x020f5488 end:0x020f5504
+
+src/Aurora/CExoString.cpp:
+    complete
+    .text       start:0x02004e00 end:0x020055b8
+    .data       start:0x020f5510 end:0x020f553c
+
+jogo/02005880.cpp:
+    .text       start:0x02005880 end:0x02005aa0
+    .bss        start:0x02160a08 end:0x02160a14
+
+jogo/CGameEffectCollection_02005fcc.cpp:
+    .text       start:0x02005fcc end:0x02007598
+    .bss        start:0x02160a30 end:0x02160a78
+
+jogo/020076f0.cpp:
+    .text       start:0x020076f0 end:0x02007818
+    .bss        start:0x02160c2c end:0x02160c38
+
+jogo/020084c8.cpp:
+    .text       start:0x020084c8 end:0x0200854c
+    .data       start:0x020f5820 end:0x020f5844
+
+jogo/02008a70.cpp:
+    .text       start:0x02008a70 end:0x02008bb0
+    .data       start:0x020f5868 end:0x020f587c
+
+src/Aurora/CDSFileSystem.cpp:
+    complete
+    .text       start:0x02008bb0 end:0x0200a1b0
+    .init       start:0x020edd94 end:0x020eddb0
+    .ctor       start:0x020f5048 end:0x020f504c
+    .data       start:0x020f587c end:0x020f5a1c
+    .bss        start:0x021a41f0 end:0x021a4208
+
+jogo/CGameSquad_0200b77c.cpp:
+    .text       start:0x0200b77c end:0x0200b8c4
+    .bss        start:0x021a4208 end:0x021a4214
+
+jogo/CGameObject_0200beec.cpp:
+    .text       start:0x0200beec end:0x0200c8b0
+    .bss        start:0x021a4214 end:0x021a4238
+
+jogo/CGameCreature_0200d898.cpp:
+    .text       start:0x0200d898 end:0x02014424
+    .data       start:0x020f5e34 end:0x020f5e3c
+    .bss        start:0x021a4288 end:0x021a42e8
+
+jogo/020148c8.cpp:
+    .text       start:0x020148c8 end:0x02019348
+    .data       start:0x020f5ea0 end:0x020f60b4
+
+jogo/02019a84.cpp:
+    .text       start:0x02019a84 end:0x02019d64
+
+jogo/02019d64.cpp:
+    .text       start:0x02019d64 end:0x02019db4
+    .bss        start:0x021a445c end:0x021a4468
+
+jogo/02019f34.cpp:
+    .text       start:0x02019f34 end:0x0201abb4
+    .data       start:0x020f6224 end:0x020f622c
+    .bss        start:0x021a49a8 end:0x021a49c0
+
+src/Aurora/G2DA.cpp:
+    complete
+    .text       start:0x0201ae10 end:0x0201b918
+    .init       start:0x020edeec end:0x020edf08
+    .ctor       start:0x020f5070 end:0x020f5074
+    .data       start:0x020f6270 end:0x020f6300
+
+jogo/CPlotEntry_0201bb84.cpp:
+    .text       start:0x0201bb84 end:0x0201c78c
+    .data       start:0x020f63d4 end:0x020f63e0
+    .bss        start:0x021a49c0 end:0x021a49e4
+
+jogo/0201cae4.cpp:
+    .text       start:0x0201cae4 end:0x0201cb5c
+    .bss        start:0x021a49e4 end:0x021a49f0
+
+jogo/C2DManager_0201cf5c.cpp:
+    .text       start:0x0201cf5c end:0x0201ec98
+    .data       start:0x020f6464 end:0x020f6470
+    .bss        start:0x021a49f4 end:0x021a4a30
+
+jogo/0201ef68.cpp:
+    .text       start:0x0201ef68 end:0x0201f128
+    .data       start:0x020f6508 end:0x020f652c
+
+jogo/0201f270.cpp:
+    .text       start:0x0201f270 end:0x020206b4
+    .data       start:0x020f652c end:0x020f6554
+    .bss        start:0x021a57f8 end:0x021a5804
+
+jogo/GuiWidget_02020790.cpp:
+    .text       start:0x02020790 end:0x020219bc
+    .data       start:0x020f65e8 end:0x020f6618
+    .bss        start:0x021a5804 end:0x021a5840
+
+jogo/GuiPanel_02021b14.cpp:
+    .text       start:0x02021b14 end:0x02024120
+    .data       start:0x020f675c end:0x020f6990
+    .bss        start:0x021a5864 end:0x021a58ac
+
+jogo/020244b0.cpp:
+    .text       start:0x020244b0 end:0x02024564
+
+jogo/StreamingBackground_02024828.cpp:
+    .text       start:0x02024828 end:0x020266dc
+    .data       start:0x020f8c20 end:0x020f8c80
+    .bss        start:0x021a6a94 end:0x021a6aac
+
+jogo/Model_02026980.cpp:
+    .text       start:0x02026980 end:0x0202730c
+    .bss        start:0x021a6ab0 end:0x021a6ae0
+
+jogo/020273b8.cpp:
+    .text       start:0x020273b8 end:0x0202787c
+
+jogo/02027938.cpp:
+    .text       start:0x02027938 end:0x0202a044
+    .data       start:0x020f9140 end:0x020f91cc
+    .bss        start:0x021a6bb4 end:0x021a6c08
+
+jogo/CGamePlayerCreature_0202a1a4.cpp:
+    .text       start:0x0202a1a4 end:0x0202ac2c
+    .data       start:0x020f9310 end:0x020f9320
+    .bss        start:0x021ac234 end:0x021ac264
+
+jogo/0202c1a8.cpp:
+    .text       start:0x0202c1a8 end:0x0202ce24
+    .bss        start:0x021ac264 end:0x021ac270
+
+jogo/0202cfd4.cpp:
+    .text       start:0x0202cfd4 end:0x0202d0e4
+    .data       start:0x020f9378 end:0x020f93a8
+
+jogo/CGameObjectInventory_0202dacc.cpp:
+    .text       start:0x0202dacc end:0x0202e284
+    .bss        start:0x021ac270 end:0x021ac288
+
+jogo/0202e404.cpp:
+    .text       start:0x0202e404 end:0x0202e520
+    .data       start:0x020f9418 end:0x020f9428
+
+jogo/0202e560.cpp:
+    .text       start:0x0202e560 end:0x0202e680
+    .data       start:0x020f9428 end:0x020f9434
+
+jogo/0202e680.cpp:
+    .text       start:0x0202e680 end:0x0202e724
+    .data       start:0x020f9434 end:0x020f9440
+
+jogo/0202e724.cpp:
+    .text       start:0x0202e724 end:0x0202e77c
+    .data       start:0x020f9440 end:0x020f944c
+
+jogo/0202e804.cpp:
+    .text       start:0x0202e804 end:0x0202ea28
+    .bss        start:0x021ac290 end:0x021ac29c
+
+jogo/0202ea9c.cpp:
+    .text       start:0x0202ea9c end:0x0202ed44
+    .bss        start:0x021ac620 end:0x021ac62c
+
+jogo/0202eda0.cpp:
+    .text       start:0x0202eda0 end:0x0202eec4
+    .data       start:0x020f9524 end:0x020f9538
+    .bss        start:0x021ac62c end:0x021ac638
+
+jogo/0202f47c.cpp:
+    .text       start:0x0202f47c end:0x0202f980
+    .bss        start:0x021ac638 end:0x021ac644
+
+jogo/VisualEffectManager_0202fa2c.cpp:
+    .text       start:0x0202fa2c end:0x0202fa70
+    .bss        start:0x021ac644 end:0x021ac650
+
+jogo/GameMode_0202fbdc.cpp:
+    .text       start:0x0202fbdc end:0x02030280
+    .bss        start:0x021ac650 end:0x021ac674
+
+jogo/RealTimeElementsManager_020305a4.cpp:
+    .text       start:0x020305a4 end:0x020313e0
+    .bss        start:0x021ac690 end:0x021ac780
+
+jogo/CGameSquad_020315f8.cpp:
+    .text       start:0x020315f8 end:0x02034310
+    .data       start:0x020f9b88 end:0x020f9bd8
+    .bss        start:0x021ac79c end:0x021ac7f0
+
+jogo/CGamePlayerSquad_020345ec.cpp:
+    .text       start:0x020345ec end:0x02039538
+    .data       start:0x020f9d54 end:0x020f9d90
+    .bss        start:0x021ac7f4 end:0x021ac848
+
+jogo/GameModeCombat_02039af4.cpp:
+    .text       start:0x02039af4 end:0x0204968c
+    .data       start:0x020f9e48 end:0x020fa150
+    .bss        start:0x021ac84c end:0x021ac924
+
+jogo/GameModeExplore_02049ba8.cpp:
+    .text       start:0x02049ba8 end:0x0205557c
+    .data       start:0x020fa6b8 end:0x020fa9a8
+    .bss        start:0x021ac928 end:0x021ac9dc
+
+jogo/GameModeConversation_02055884.cpp:
+    .text       start:0x02055884 end:0x02056488
+    .data       start:0x020faa54 end:0x020faa70
+    .bss        start:0x021ac9dc end:0x021aca3c
+
+jogo/GameModeInventory_020564ac.cpp:
+    .text       start:0x020564ac end:0x02059400
+    .bss        start:0x021aca3c end:0x021acac0
+
+jogo/CGameObjectPathfind_020597e0.cpp:
+    .text       start:0x020597e0 end:0x02059ccc
+    .bss        start:0x021acacc end:0x021acad8
+
+jogo/Animation_0205a068.cpp:
+    .text       start:0x0205a068 end:0x0205a410
+    .bss        start:0x021acad8 end:0x021acae4
+
+jogo/AnimationDataSource_0205a488.cpp:
+    .text       start:0x0205a488 end:0x0205a518
+    .data       start:0x020fb0b0 end:0x020fb0d0
+
+jogo/0205a7c4.cpp:
+    .text       start:0x0205a7c4 end:0x0205a8dc
+    .data       start:0x020fb0d0 end:0x020fb0e4
+
+jogo/0205a8dc.cpp:
+    .text       start:0x0205a8dc end:0x0205aaa8
+    .bss        start:0x021acae4 end:0x021acaf0
+
+jogo/GuiFloaty_0205bad8.cpp:
+    .text       start:0x0205bad8 end:0x020619e4
+    .data       start:0x020fb1c8 end:0x020fb45c
+    .bss        start:0x021acb04 end:0x021acb4c
+
+jogo/GuiPanel_020620ac.cpp:
+    .text       start:0x020620ac end:0x02062908
+    .bss        start:0x021acb4c end:0x021acb64
+
+jogo/GuiPanel_020629fc.cpp:
+    .text       start:0x020629fc end:0x02062ad0
+    .bss        start:0x021acb64 end:0x021acb70
+
+jogo/02062b00.cpp:
+    .text       start:0x02062b00 end:0x02063168
+    .bss        start:0x021acbb8 end:0x021acbdc
+
+jogo/02063194.cpp:
+    .text       start:0x02063194 end:0x020631d0
+    .bss        start:0x021acbdc end:0x021acbe8
+
+jogo/02063238.cpp:
+    .text       start:0x02063238 end:0x02063274
+    .bss        start:0x021acbe8 end:0x021acbf4
+
+jogo/020632a0.cpp:
+    .text       start:0x020632a0 end:0x020632dc
+    .bss        start:0x021acbf4 end:0x021acc00
+
+jogo/CGUIConversation_020633cc.cpp:
+    .text       start:0x020633cc end:0x02063540
+    .bss        start:0x021acc00 end:0x021acc0c
+
+jogo/GuiPanel_02063798.cpp:
+    .text       start:0x02063798 end:0x02063938
+    .bss        start:0x021acc0c end:0x021acc24
+
+jogo/GuiButton_020639d4.cpp:
+    .text       start:0x020639d4 end:0x02063ac0
+    .bss        start:0x021acc24 end:0x021acc30
+
+jogo/GuiButton_02063ac0.cpp:
+    .text       start:0x02063ac0 end:0x02063d5c
+    .bss        start:0x021acc30 end:0x021acc3c
+
+jogo/GuiButton_02063fbc.cpp:
+    .text       start:0x02063fbc end:0x0206551c
+    .bss        start:0x021acc3c end:0x021acc60
+
+jogo/ExploreHUDGui_0206559c.cpp:
+    .text       start:0x0206559c end:0x020658cc
+    .data       start:0x020fbb5c end:0x020fbbcc
+    .bss        start:0x021acc60 end:0x021acc78
+
+jogo/ExploreHUDGui_020658cc.cpp:
+    .text       start:0x020658cc end:0x02065ee0
+    .data       start:0x020fbbcc end:0x020fbbdc
+    .bss        start:0x021acc78 end:0x021acc90
+
+jogo/02065eec.cpp:
+    .text       start:0x02065eec end:0x0206600c
+    .bss        start:0x021acc90 end:0x021acc9c
+
+jogo/020660c4.cpp:
+    .text       start:0x020660c4 end:0x02066268
+    .data       start:0x020fc514 end:0x020fc55c
+
+jogo/020662d4.cpp:
+    .text       start:0x020662d4 end:0x02066310
+    .bss        start:0x021acca0 end:0x021accac
+
+jogo/CombatActionGui_02066574.cpp:
+    .text       start:0x02066574 end:0x02069ca8
+    .bss        start:0x021accb8 end:0x021acd0c
+
+jogo/PortraitGUI_02069fc0.cpp:
+    .text       start:0x02069fc0 end:0x0206b270
+    .data       start:0x020fc9f8 end:0x020fcac8
+    .bss        start:0x021acd0c end:0x021acd48
+
+jogo/CGameTrigger_0206b484.cpp:
+    .text       start:0x0206b484 end:0x0206c6fc
+    .bss        start:0x021acd48 end:0x021acd6c
+
+jogo/GuiText_0206c760.cpp:
+    .text       start:0x0206c760 end:0x0206d150
+    .data       start:0x020fcd1c end:0x020fcd20
+    .bss        start:0x021acd6c end:0x021acd84
+
+jogo/GuiRadioButtonGroup_0206d1f8.cpp:
+    .text       start:0x0206d1f8 end:0x0206d6f4
+    .bss        start:0x021acd84 end:0x021acd90
+
+jogo/CGameObjectAI_0206da44.cpp:
+    .text       start:0x0206da44 end:0x0206dc30
+    .bss        start:0x021acd90 end:0x021acd9c
+
+jogo/GuiWidget_0206dca0.cpp:
+    .text       start:0x0206dca0 end:0x0206e260
+    .bss        start:0x021acd9c end:0x021acdc0
+
+jogo/GameActionRealTime_0206e27c.cpp:
+    .text       start:0x0206e27c end:0x0206e3d4
+    .bss        start:0x021acdc0 end:0x021acdcc
+
+jogo/0206eec0.cpp:
+    .text       start:0x0206eec0 end:0x020772d4
+    .data       start:0x020fd8d4 end:0x020fd928
+    .bss        start:0x021acddc end:0x021ace30
+
+jogo/ModelManager_02077ad8.cpp:
+    .text       start:0x02077ad8 end:0x02078080
+    .data       start:0x020fd9bc end:0x020fd9fc
+
+jogo/02078208.cpp:
+    .text       start:0x02078208 end:0x020783a0
+    .bss        start:0x021ace48 end:0x021ace54
+
+jogo/02078754.cpp:
+    .text       start:0x02078754 end:0x02078c18
+    .data       start:0x020fda2c end:0x020fda7c
+    .bss        start:0x021ace54 end:0x021ace84
+
+jogo/Texture_02078ce8.cpp:
+    .text       start:0x02078ce8 end:0x02078e88
+    .data       start:0x020fdb00 end:0x020fdb20
+    .bss        start:0x021ace84 end:0x021ace90
+
+jogo/TextureManager_02078ee4.cpp:
+    .text       start:0x02078ee4 end:0x02078f54
+    .data       start:0x020fdb20 end:0x020fdb64
+
+jogo/CombatRealTimeGui_020791f4.cpp:
+    .text       start:0x020791f4 end:0x0207b290
+    .data       start:0x020fdd18 end:0x020fdd20
+    .bss        start:0x021ace90 end:0x021acee4
+
+jogo/GuiWidget_0207b654.cpp:
+    .text       start:0x0207b654 end:0x0207e860
+    .data       start:0x020fdd28 end:0x020fdd64
+    .bss        start:0x021acee4 end:0x021acf50
+
+jogo/0207e92c.cpp:
+    .text       start:0x0207e92c end:0x0207eb0c
+    .bss        start:0x021acf50 end:0x021acf5c
+
+jogo/0207ed38.cpp:
+    .text       start:0x0207ed38 end:0x0207fe48
+    .data       start:0x020fdf90 end:0x020fdff8
+    .bss        start:0x021acf5c end:0x021acf98
+
+jogo/0207ffd8.cpp:
+    .text       start:0x0207ffd8 end:0x0208a118
+    .data       start:0x021031f0 end:0x02103320
+    .bss        start:0x021acf98 end:0x021acfec
+
+jogo/0208a904.cpp:
+    .text       start:0x0208a904 end:0x0208ab20
+    .bss        start:0x021acfec end:0x021acff8
+
+jogo/0208ab90.cpp:
+    .text       start:0x0208ab90 end:0x0208bdb8
+    .bss        start:0x021acff8 end:0x021ad040
+
+jogo/0208c060.cpp:
+    .text       start:0x0208c060 end:0x0208c0f4
+    .data       start:0x021033a8 end:0x021033b4
+
+jogo/CombatRunAwayGui_0208c12c.cpp:
+    .text       start:0x0208c12c end:0x0208c30c
+    .data       start:0x02103474 end:0x0210348c
+    .bss        start:0x021ad040 end:0x021ad058
+
+jogo/GameModeSplashScreens_0208c370.cpp:
+    .text       start:0x0208c370 end:0x0208d2d0
+    .data       start:0x021035dc end:0x021035fc
+    .bss        start:0x021ad058 end:0x021ad0ac
+
+jogo/CGameProjectile_0208d438.cpp:
+    .text       start:0x0208d438 end:0x0208e0cc
+    .bss        start:0x021ad0ac end:0x021ad0e8
+
+jogo/0208eb64.cpp:
+    .text       start:0x0208eb64 end:0x0208ebe0
+    .bss        start:0x021ad0e8 end:0x021ad0f4
+
+jogo/GameModeLevelUp_0208fc80.cpp:
+    .text       start:0x0208fc80 end:0x02092180
+    .data       start:0x021038b0 end:0x02103ad0
+    .bss        start:0x021ad0f4 end:0x021ad160
+
+jogo/CreatureStatsDisplay_02092304.cpp:
+    .text       start:0x02092304 end:0x02093070
+    .data       start:0x02103bac end:0x02103cd4
+    .bss        start:0x021ad160 end:0x021ad178
+
+jogo/TechniqueUpgradeDisplay_020936fc.cpp:
+    .text       start:0x020936fc end:0x02094b54
+    .data       start:0x02103dd4 end:0x02103e6c
+    .bss        start:0x021ad178 end:0x021ad1e4
+
+jogo/02094f70.cpp:
+    .text       start:0x02094f70 end:0x02095d58
+
+jogo/GameModeQuestLog_020961a8.cpp:
+    .text       start:0x020961a8 end:0x020977b0
+    .data       start:0x021041bc end:0x021042ec
+    .bss        start:0x021ad214 end:0x021ad280
+
+jogo/GuiPanelButton_020980dc.cpp:
+    .text       start:0x020980dc end:0x020988f0
+    .data       start:0x02104488 end:0x021044a0
+    .bss        start:0x021ad280 end:0x021ad298
+
+jogo/020989fc.cpp:
+    .text       start:0x020989fc end:0x02098e7c
+    .bss        start:0x021ad298 end:0x021ad2a4
+
+jogo/02098f30.cpp:
+    .text       start:0x02098f30 end:0x02099178
+    .data       start:0x021044f8 end:0x02104518
+
+jogo/GameModeStartUp_02099508.cpp:
+    .text       start:0x02099508 end:0x0209cef0
+    .data       start:0x021046c4 end:0x021048fc
+    .bss        start:0x021ad2b0 end:0x021ad304
+
+jogo/UniversalToolGui_0209d09c.cpp:
+    .text       start:0x0209d09c end:0x0209e150
+    .data       start:0x021049d0 end:0x02104b64
+    .bss        start:0x021ad304 end:0x021ad334
+
+jogo/GuiAnimatedImage_0209e470.cpp:
+    .text       start:0x0209e470 end:0x0209ea44
+    .data       start:0x02104c38 end:0x02104c50
+    .bss        start:0x021ad334 end:0x021ad358
+
+jogo/GameModeMovieSequence_0209eb68.cpp:
+    .text       start:0x0209eb68 end:0x0209f364
+    .bss        start:0x021ad358 end:0x021ad394
+
+jogo/GameModeMovieSequence_0209f4d0.cpp:
+    .text       start:0x0209f4d0 end:0x0209fa64
+    .bss        start:0x021ad394 end:0x021ad3a0
+
+jogo/GuiList_0209fc00.cpp:
+    .text       start:0x0209fc00 end:0x020a0078
+    .data       start:0x02104e9c end:0x02104ea4
+    .bss        start:0x021ad3a0 end:0x021ad3b8
+
+jogo/020a04f4.cpp:
+    .text       start:0x020a04f4 end:0x020a05b0
+    .data       start:0x02104f74 end:0x02104f88
+    .bss        start:0x021ad3b8 end:0x021ad3c4
+
+jogo/GameModeChaoGarden_020a0ad4.cpp:
+    .text       start:0x020a0ad4 end:0x020a9cb8
+    .data       start:0x02105174 end:0x021056b4
+    .bss        start:0x021ad3c4 end:0x021ad454
+
+jogo/GameModeWorldMap_020aa370.cpp:
+    .text       start:0x020aa370 end:0x020b16bc
+    .bss        start:0x021ad458 end:0x021ad50c
+
+jogo/GameModeStore_020b19ac.cpp:
+    .text       start:0x020b19ac end:0x020b3040
+    .data       start:0x02105e4c end:0x02105f5c
+    .bss        start:0x021ad50c end:0x021ad560
+
+jogo/CGameStore_020b330c.cpp:
+    .text       start:0x020b330c end:0x020b3c08
+    .data       start:0x02105fdc end:0x02105ffc
+    .bss        start:0x021ad56c end:0x021ad590
+
+jogo/GameModeReward_020b3df0.cpp:
+    .text       start:0x020b3df0 end:0x020b56ac
+    .data       start:0x021061e4 end:0x021062e8
+    .bss        start:0x021ad590 end:0x021ad614
+
+jogo/GameModeProfile_020b5d94.cpp:
+    .text       start:0x020b5d94 end:0x020b5e6c
+    .bss        start:0x021ad650 end:0x021ad65c
+
+jogo/GameModeProfile_020b5e6c.cpp:
+    .text       start:0x020b5e6c end:0x020b773c
+    .data       start:0x021065e0 end:0x021067ac
+    .bss        start:0x021ad65c end:0x021ad6a4
+
+jogo/GameModeMenu_020b7ef8.cpp:
+    .text       start:0x020b7ef8 end:0x020b8d14
+    .data       start:0x02106938 end:0x021069f8
+    .bss        start:0x021adad4 end:0x021adb10
+
+jogo/020b8ec4.cpp:
+    .text       start:0x020b8ec4 end:0x020b9204
+    .data       start:0x02106ac8 end:0x02106b24
+    .bss        start:0x021adb10 end:0x021adb1c
+
+jogo/020b92a0.cpp:
+    .text       start:0x020b92a0 end:0x020b990c
+    .data       start:0x02106b24 end:0x02106b50
+    .bss        start:0x021adb34 end:0x021adb40
+
+jogo/020b990c.cpp:
+    .text       start:0x020b990c end:0x020b9960
+    .data       start:0x02106b7c end:0x02106b88
+
+jogo/020b9980.cpp:
+    .text       start:0x020b9980 end:0x020b9d04
+    .data       start:0x02106b88 end:0x02106c10
+    .bss        start:0x021adb44 end:0x021adb68
+
+jogo/GameModeStronghold_020b9f68.cpp:
+    .text       start:0x020b9f68 end:0x020bbce0
+    .data       start:0x02106f54 end:0x02107114
+    .bss        start:0x021adb68 end:0x021adb98
+
+jogo/GameModeStronghold_020bbce0.cpp:
+    .text       start:0x020bbce0 end:0x020bbd7c
+    .data       start:0x02107114 end:0x02107128
+
+jogo/020bbf2c.cpp:
+    .text       start:0x020bbf2c end:0x020bce60
+    .data       start:0x0210715c end:0x02107194
+    .bss        start:0x021adb98 end:0x021adbbc
+
+jogo/GuiTabbedCreatureStatsDisplay_020bcec8.cpp:
+    .text       start:0x020bcec8 end:0x020be0c0
+    .data       start:0x0210725c end:0x021073d0
+    .bss        start:0x021adbbc end:0x021adbc8
+
+jogo/CreatureStatsPanelDisplay_020be3ac.cpp:
+    .text       start:0x020be3ac end:0x020bee4c
+    .data       start:0x021074d8 end:0x0210754c
+    .bss        start:0x021adbd4 end:0x021adbf8
+
+jogo/020bee4c.cpp:
+    .text       start:0x020bee4c end:0x020bef70
+    .bss        start:0x021adbf8 end:0x021adc04
+
+jogo/020bf040.cpp:
+    .text       start:0x020bf040 end:0x020bf104
+    .data       start:0x02107600 end:0x02107610
+    .bss        start:0x021adc04 end:0x021adc10
+
+jogo/020bf130.cpp:
+    .text       start:0x020bf130 end:0x020bf228
+    .data       start:0x02107610 end:0x02107628
+
+jogo/GuiAnimManager_020bf258.cpp:
+    .text       start:0x020bf258 end:0x020bf308
+    .data       start:0x02107718 end:0x02107728
+
+jogo/020bf8a8.cpp:
+    .text       start:0x020bf8a8 end:0x020bf954
+    .data       start:0x02107728 end:0x02107738
+
+jogo/020bfa44.cpp:
+    .text       start:0x020bfa44 end:0x020bfd4c
+    .bss        start:0x021adc10 end:0x021adc1c
+
+jogo/CombatVictoryGui_020c0008.cpp:
+    .text       start:0x020c0008 end:0x020c0068
+    .data       start:0x021077f4 end:0x02107800
+
+jogo/020c0068.cpp:
+    .text       start:0x020c0068 end:0x020c0248
+    .bss        start:0x021adc1c end:0x021adc34
+
+jogo/CombatQueueItemGUI_020c0270.cpp:
+    .text       start:0x020c0270 end:0x020c0464
+    .data       start:0x021078b8 end:0x021078ec
+    .bss        start:0x021adc34 end:0x021adc40
+
+jogo/020c0480.cpp:
+    .text       start:0x020c0480 end:0x020c05e8
+    .data       start:0x021078ec end:0x02107900
+    .bss        start:0x021adc40 end:0x021adc4c
+
+jogo/020c06c8.cpp:
+    .text       start:0x020c06c8 end:0x020c09dc
+    .data       start:0x02107930 end:0x02107940
+    .bss        start:0x021adc4c end:0x021adc64
+
+jogo/FireAndForgetEmitterVisualEffect_020c1600.cpp:
+    .text       start:0x020c1600 end:0x020c2cfc
+    .data       start:0x021079ec end:0x021079fc
+    .bss        start:0x021adc64 end:0x021adc94
+
+jogo/020c2d7c.cpp:
+    .text       start:0x020c2d7c end:0x020c2f38
+    .bss        start:0x021adc94 end:0x021adca0
+
+jogo/020c3000.cpp:
+    .text       start:0x020c3000 end:0x020c3190
+    .data       start:0x02107a64 end:0x02107a84
+    .bss        start:0x021adca0 end:0x021adcac
+
+jogo/020c31cc.cpp:
+    .text       start:0x020c31cc end:0x020c32a4
+    .bss        start:0x021adcac end:0x021adcb8
+
+jogo/020c3c84.cpp:
+    .text       start:0x020c3c84 end:0x020c3e24
+    .bss        start:0x021adcbc end:0x021adcc8
+
+jogo/GameModeInventory_020c3f6c.cpp:
+    .text       start:0x020c3f6c end:0x020c4c08
+    .data       start:0x02107d04 end:0x02107d24
+    .bss        start:0x021adcc8 end:0x021add10
+
+jogo/020c4ca8.cpp:
+    .text       start:0x020c4ca8 end:0x020c4ed8
+    .data       start:0x02107d4c end:0x02107d68
+    .bss        start:0x021add10 end:0x021add28
+
+jogo/020c4fe4.cpp:
+    .text       start:0x020c4fe4 end:0x020c5554
+    .bss        start:0x021add28 end:0x021add34
+
+jogo/020c57e8.cpp:
+    .text       start:0x020c57e8 end:0x020c598c
+    .bss        start:0x021add34 end:0x021add40
+
+jogo/LevelUpStats_020c5a30.cpp:
+    .text       start:0x020c5a30 end:0x020c6788
+    .data       start:0x02107e5c end:0x02107e90
+    .bss        start:0x021add40 end:0x021add7c
+
+jogo/020c6788.cpp:
+    .text       start:0x020c6788 end:0x020c6940
+    .data       start:0x02107f30 end:0x02107f3c
+
+jogo/020c6a4c.cpp:
+    .text       start:0x020c6a4c end:0x020c6b50
+    .bss        start:0x021add7c end:0x021add88
+
+NitroSystem/libraries/fnd/src/list.c:
+    complete
+    .text       start:0x020c8278 end:0x020c838c
+
+NitroSystem/libraries/fnd/src/heapcommon.c:
+    complete
+    .text       start:0x020c838c end:0x020c8454
+    .bss        start:0x021add8c end:0x021add9c
+
+NitroSystem/libraries/fnd/src/expheap.c:
+    complete
+    .text       start:0x020c8454 end:0x020c8800
+
+NitroSystem/libraries/fnd/src/frameheap.c:
+    complete
+    .text       start:0x020c8800 end:0x020c89c4
+
+NitroSystem/libraries/fnd/src/unitheap.c:
+    complete
+    .text       start:0x020c89c4 end:0x020c8a0c
+
+NitroSystem/libraries/fnd/src/allocator.c:
+    complete
+    .text       start:0x020c8a0c end:0x020c8aa8
+    .rodata     start:0x020efc9c end:0x020efcbc
+
+NitroSystem/libraries/gfd/src/VramManager/gfd_TexVramMan.c:
+    complete
+    .text       start:0x020c8aa8 end:0x020c8ab4
+    .data       start:0x02107fa8 end:0x02107fb0
+
+NitroSystem/libraries/gfd/src/VramManager/gfd_PlttVramMan.c:
+    complete
+    .text       start:0x020c8ab4 end:0x020c8ac0
+    .data       start:0x02107fb0 end:0x02107fb8
+
+NitroSystem/libraries/gfd/src/VramManager/gfdi_LinkedListVramMan_Common.c:
+    complete
+    .text       start:0x020c8ac0 end:0x020c8d40
+
+NitroSystem/libraries/gfd/src/VramManager/gfd_LinkedListTexVramMan.c:
+    complete
+    .text       start:0x020c8d40 end:0x020c8f64
+    .rodata     start:0x020efcbc end:0x020efcec
+    .bss        start:0x021add9c end:0x021addb8
+
+NitroSystem/libraries/gfd/src/VramManager/gfd_LinkedListPlttVramMan.c:
+    complete
+    .text       start:0x020c8f64 end:0x020c9090
+    .bss        start:0x021addb8 end:0x021addcc
+
+NitroSystem/libraries/g2d/src/load/g2d_NAN_load.c:
+    complete
+    .text       start:0x020c9090 end:0x020c918c
+
+NitroSystem/libraries/g2d/src/load/g2d_NOB_load.c:
+    complete
+    .text       start:0x020c918c end:0x020c9250
+
+NitroSystem/libraries/g2d/src/load/g2d_NCG_load.c:
+    complete
+    .text       start:0x020c9250 end:0x020c92b0
+
+NitroSystem/libraries/g2d/src/load/g2d_NCL_load.c:
+    complete
+    .text       start:0x020c92b0 end:0x020c92e0
+
+NitroSystem/libraries/g2d/src/load/g2d_Load.c:
+    complete
+    .text       start:0x020c92e0 end:0x020c933c
+
+NitroSystem/libraries/g2d/src/g2d_Animation.c:
+    complete
+    .text       start:0x020c933c end:0x020c95a0
+
+NitroSystem/libraries/g2d/src/g2d_SRTControl.c:
+    complete
+    .text       start:0x020c95a0 end:0x020c9608
+
+NitroSystem/libraries/g2d/src/g2d_CellAnimation.c:
+    complete
+    .text       start:0x020c9608 end:0x020c9730
+
+NitroSystem/libraries/g2d/src/g2d_CellTransferManager.c:
+    complete
+    .text       start:0x020c9730 end:0x020c9758
+    .bss        start:0x021addcc end:0x021addd8
+
+NitroSystem/libraries/g2d/src/g2d_Font.c:
+    complete
+    .text       start:0x020c9758 end:0x020c9944
+    .rodata     start:0x020efd1c end:0x020efd2c
+
+NitroSystem/libraries/g2d/src/g2d_CharCanvas.c:
+    complete
+    .text       start:0x020c9944 end:0x020ca6d0
+    .rodata     start:0x020efd2c end:0x020efdbc
+
+NitroSystem/libraries/g2d/src/g2d_TextCanvas.c:
+    complete
+    .text       start:0x020ca6d0 end:0x020ca74c
+
+NitroSystem/libraries/g2d/src/load/g2d_NFT_load.c:
+    complete
+    .text       start:0x020ca74c end:0x020ca8b4
+
+NitroSystem/libraries/g2d/src/internal/g2di_BitReader.c:
+    complete
+    .text       start:0x020ca8b4 end:0x020ca8f4
+
+NitroSystem/libraries/g2d/src/internal/g2di_SplitChar.c:
+    complete
+    .text       start:0x020ca8f4 end:0x020ca98c
+
+NitroSystem/libraries/g3d/src/kernel.c:
+    complete
+    .text       start:0x020ca98c end:0x020cb198
+
+NitroSystem/libraries/g3d/src/glbstate.c:
+    complete
+    .text       start:0x020cb198 end:0x020cb66c
+    .bss        start:0x021addd8 end:0x021ae03c
+
+NitroSystem/libraries/g3d/src/anm.c:
+    complete
+    .text       start:0x020cb66c end:0x020cbb58
+    .data       start:0x02107fb8 end:0x0210802c
+
+NitroSystem/libraries/g3d/src/sbc.c:
+    complete
+    .text       start:0x020cbb58 end:0x020cd564
+    .rodata     start:0x020efdbc end:0x020efe00
+    .data       start:0x02108054 end:0x021081d4
+    .bss        start:0x021ae03c end:0x021b0d40
+
+NitroSystem/libraries/g3d/src/1mat1shp.c:
+    complete
+    .text       start:0x020cd564 end:0x020cd714
+
+NitroSystem/libraries/g3d/src/gecom.c:
+    complete
+    .text       start:0x020cd714 end:0x020cd85c
+    .bss        start:0x021b0d40 end:0x021b0d4c
+
+NitroSystem/libraries/g3d/src/util.c:
+    complete
+    .text       start:0x020cd85c end:0x020cdeec
+
+NitroSystem/libraries/g3d/src/mem.c:
+    complete
+    .text       start:0x020cdeec end:0x020cdf0c
+
+NitroSystem/libraries/g3d/src/model.c:
+    complete
+    .text       start:0x020cdf0c end:0x020ce058
+
+NitroSystem/libraries/g3d/src/binres/res_struct_accessor.c:
+    complete
+    .text       start:0x020ce058 end:0x020ce2a4
+
+NitroSystem/libraries/g3d/src/binres/res_struct_accessor_anm.c:
+    complete
+    .text       start:0x020ce2a4 end:0x020ce3f8
+
+NitroSystem/libraries/g3d/src/anm/nsbca.c:
+    complete
+    .text       start:0x020ce3f8 end:0x020cf3a0
+    .rodata     start:0x020efe00 end:0x020efe24
+
+NitroSystem/libraries/g3d/src/anm/nsbma.c:
+    complete
+    .text       start:0x020cf3a0 end:0x020cf6ac
+
+NitroSystem/libraries/g3d/src/anm/nsbta.c:
+    complete
+    .text       start:0x020cf6ac end:0x020cf9bc
+
+NitroSystem/libraries/g3d/src/anm/nsbtp.c:
+    complete
+    .text       start:0x020cf9bc end:0x020cfb78
+
+NitroSystem/libraries/g3d/src/anm/nsbva.c:
+    complete
+    .text       start:0x020cfb78 end:0x020cfbd4
+
+NitroSystem/libraries/g3d/src/cgtool/basic.c:
+    complete
+    .text       start:0x020cfbd4 end:0x020cfc50
+
+NitroSystem/libraries/g3d/src/cgtool/maya.c:
+    complete
+    .text       start:0x020cfc50 end:0x020d03a8
+    .data       start:0x021081d4 end:0x021081f4
+
+NitroSystem/libraries/g3d/src/cgtool/si3d.c:
+    complete
+    .text       start:0x020d03a8 end:0x020d08bc
+
+NitroSystem/libraries/g3d/src/cgtool/3dsmax.c:
+    complete
+    .text       start:0x020d08bc end:0x020d0f00
+    .data       start:0x021081f4 end:0x02108214
+
+NitroSystem/libraries/g3d/src/cgtool/xsi.c:
+    complete
+    .text       start:0x020d0f00 end:0x020d1568
+    .data       start:0x02108214 end:0x02108234
+
+NitroSystem/libraries/snd/src/main.c:
+    complete
+    .text       start:0x020d1568 end:0x020d1618
+    .bss        start:0x021b0d60 end:0x021b3160
+
+NitroSystem/libraries/snd/src/resource_mgr.c:
+    complete
+    .text       start:0x020d1618 end:0x020d16c0
+    .bss        start:0x021b3160 end:0x021b316c
+
+NitroSystem/libraries/snd/src/player.c:
+    complete
+    .text       start:0x020d16c0 end:0x020d1cb8
+    .bss        start:0x021b316c end:0x021b3a44
+
+NitroSystem/libraries/snd/src/stream.c:
+    complete
+    .text       start:0x020d1cb8 end:0x020d2070
+    .bss        start:0x021b3a44 end:0x021b3b14
+
+NitroSystem/libraries/snd/src/capture.c:
+    complete
+    .text       start:0x020d2070 end:0x020d2210
+    .bss        start:0x021b3b14 end:0x021b4110
+
+NitroSystem/libraries/snd/src/sndarc.c:
+    complete
+    .text       start:0x020d2210 end:0x020d2744
+    .bss        start:0x021b4110 end:0x021b4114
+
+NitroSystem/libraries/snd/src/heap.c:
+    complete
+    .text       start:0x020d2744 end:0x020d29a8
+
+NitroSystem/libraries/snd/src/sndarc_loader.c:
+    complete
+    .text       start:0x020d29a8 end:0x020d2fb8
+    .bss        start:0x021b4114 end:0x021b4150
+
+NitroSystem/libraries/snd/src/sndarc_player.c:
+    complete
+    .text       start:0x020d2fb8 end:0x020d31b4
+
+NitroSystem/libraries/snd/src/sndarc_stream.c:
+    complete
+    .text       start:0x020d31b4 end:0x020d4304
+    .rodata     start:0x020efe24 end:0x020efee8
+    .bss        start:0x021b4150 end:0x021b4fc0
+
+NitroSystem/libraries/snd/src/seqdata.c:
+    complete
+    .text       start:0x020d4304 end:0x020d4330
+
+NitroSystem/libraries/snd/src/fader.c:
+    complete
+    .text       start:0x020d4330 end:0x020d4394
+
+NitroSDK/libraries/fx/src/fx_mtx22.c:
+    complete
+    .text       start:0x020d4394 end:0x020d4520
+
+NitroSDK/libraries/fx/src/fx_mtx33.c:
+    complete
+    .text       start:0x020d4520 end:0x020d4a30
+
+NitroSDK/libraries/fx/src/fx_mtx43.c:
+    complete
+    .text       start:0x020d4a30 end:0x020d52e4
+
+NitroSDK/libraries/fx/src/fx_mtx44.c:
+    complete
+    .text       start:0x020d52e4 end:0x020d5cfc
+
+NitroSDK/libraries/fx/src/fx_cp.c:
+    complete
+    .text       start:0x020d5cfc end:0x020d5dfc
+
+NitroSDK/libraries/fx/src/fx_vec.c:
+    complete
+    .text       start:0x020d5dfc end:0x020d60d0
+
+NitroSDK/libraries/fx/src/fx.c:
+    complete
+    .text       start:0x020d60d0 end:0x020d610c
+
+NitroSDK/libraries/gx/src/gx.c:
+    complete
+    .text       start:0x020d610c end:0x020d6374
+    .data       start:0x02108234 end:0x0210823c
+    .bss        start:0x021b4fc0 end:0x021b4fc4
+
+NitroSDK/libraries/gx/src/gxstate.c:
+    complete
+    .text       start:0x020d6374 end:0x020d63a8
+    .bss        start:0x021b4fc4 end:0x021b4fe0
+
+NitroSDK/libraries/gx/src/gx_bgcnt.c:
+    complete
+    .text       start:0x020d6c20 end:0x020d6eb4
+
+NitroSDK/libraries/gx/src/g2.c:
+    complete
+    .text       start:0x020d6eb4 end:0x020d6f9c
+
+NitroSDK/libraries/gx/src/g3imm.c:
+    complete
+    .text       start:0x020d6f9c end:0x020d6fd8
+
+NitroSDK/libraries/gx/src/g3x.c:
+    complete
+    .text       start:0x020d6fd8 end:0x020d72dc
+
+NitroSDK/libraries/gx/src/gx_load2d.c:
+    complete
+    .text       start:0x020d72dc end:0x020d7774
+    .bss        start:0x021b4fe0 end:0x021b4ffc
+
+NitroSDK/libraries/gx/src/gx_load3d.c:
+    complete
+    .text       start:0x020d7774 end:0x020d79b8
+    .rodata     start:0x020f3ee8 end:0x020f3f58
+    .bss        start:0x021b4ffc end:0x021b501c
+
+NitroSDK/libraries/gx/src/gxasm.c:
+    complete
+    .text       start:0x020d79b8 end:0x020d79dc
+
+NitroSDK/libraries/os/src/os_irqHandler.c:
+    complete
+    .text       start:0x020d79dc end:0x020d7a50
+
+NitroSDK/libraries/os/src/os_irqTable.c:
+    complete
+    .text       start:0x020d7a50 end:0x020d7b0c
+    .data       start:0x0210823c end:0x0210824c
+    .bss        start:0x021b501c end:0x021b507c
+
+NitroSDK/libraries/os/src/os_interrupt.c:
+    complete
+    .text       start:0x020d7b0c end:0x020d7cec
+
+NitroSDK/libraries/os/src/os_spinLock.c:
+    complete
+    .text       start:0x020d7cec end:0x020d7f9c
+    .bss        start:0x021b507c end:0x021b5080
+
+NitroSDK/libraries/os/src/os_thread.c:
+    complete
+    .text       start:0x020d7f9c end:0x020d8604
+    .bss        start:0x021b5080 end:0x021b52fc
+
+NitroSDK/libraries/os/src/os_context.c:
+    complete
+    .text       start:0x020d8604 end:0x020d8718
+
+NitroSDK/libraries/os/src/os_emulator.c:
+    complete
+    .text       start:0x020d8718 end:0x020d872c
+    .data       start:0x0210824c end:0x02108250
+
+NitroSDK/libraries/os/src/os_message.c:
+    complete
+    .text       start:0x020d872c end:0x020d8864
+
+NitroSDK/libraries/os/src/os_mutex.c:
+    complete
+    .text       start:0x020d8864 end:0x020d89ac
+
+NitroSDK/libraries/os/src/os_cache.c:
+    complete
+    .text       start:0x020d89ac end:0x020d8aa8
+
+NitroSDK/libraries/os/src/os_init.c:
+    complete
+    .text       start:0x020d8aa8 end:0x020d8b0c
+
+NitroSDK/libraries/os/src/os_arena.c:
+    complete
+    .text       start:0x020d8b0c end:0x020d8d80
+    .bss        start:0x021b52fc end:0x021b5304
+
+NitroSDK/libraries/os/src/os_alloc.c:
+    complete
+    .text       start:0x020d8d80 end:0x020d8fdc
+    .bss        start:0x021b5304 end:0x021b5328
+
+NitroSDK/libraries/os/src/os_tcm.c:
+    complete
+    .text       start:0x020d8fdc end:0x020d8ff0
+
+NitroSDK/libraries/os/src/os_protectionUnit.c:
+    complete
+    .text       start:0x020d8ff0 end:0x020d9010
+
+NitroSDK/libraries/os/src/os_protectionRegion.c:
+    complete
+    .text       start:0x020d9010 end:0x020d9034
+
+NitroSDK/libraries/os/src/os_exception.c:
+    complete
+    .text       start:0x020d9034 end:0x020d9224
+    .bss        start:0x021b5328 end:0x021b53d4
+
+NitroSDK/libraries/os/src/os_timer.c:
+    complete
+    .text       start:0x020d9224 end:0x020d9238
+    .bss        start:0x021b53d4 end:0x021b53d8
+
+NitroSDK/libraries/os/src/os_tick.c:
+    complete
+    .text       start:0x020d9238 end:0x020d9344
+    .bss        start:0x021b53d8 end:0x021b53e8
+
+NitroSDK/libraries/os/src/os_alarm.c:
+    complete
+    .text       start:0x020d9344 end:0x020d9644
+    .bss        start:0x021b53e8 end:0x021b53f4
+
+NitroSDK/libraries/os/src/os_valarm.c:
+    complete
+    .text       start:0x020d9644 end:0x020d966c
+    .bss        start:0x021b53f4 end:0x021b5408
+
+NitroSDK/libraries/os/src/os_system.c:
+    complete
+    .text       start:0x020d966c end:0x020d9710
+
+NitroSDK/libraries/os/src/os_reset.c:
+    complete
+    .text       start:0x020d9710 end:0x020d9880
+    .bss        start:0x021b5408 end:0x021b540c
+
+NitroSDK/libraries/os/src/os_ownerInfo.c:
+    complete
+    .text       start:0x020d9880 end:0x020d98ec
+
+NitroSDK/libraries/os/src/os_vramExclusive.c:
+    complete
+    .text       start:0x020d98ec end:0x020d996c
+    .bss        start:0x021b540c end:0x021b5424
+
+NitroSDK/libraries/os/src/os_terminate_proc.c:
+    complete
+    .text       start:0x020d996c end:0x020d9984
+
+NitroSDK/libraries/mi/src/mi_wram.c:
+    complete
+    .text       start:0x020d9984 end:0x020d9990
+
+NitroSDK/libraries/mi/src/mi_dma.c:
+    complete
+    .text       start:0x020d9990 end:0x020d9d30
+
+NitroSDK/libraries/mi/src/mi_dma_gxcommand.c:
+    complete
+    .text       start:0x020d9d30 end:0x020d9f28
+    .bss        start:0x021b5424 end:0x021b5444
+
+NitroSDK/libraries/mi/src/mi_memory.c:
+    complete
+    .text       start:0x020d9f28 end:0x020da35c
+
+NitroSDK/libraries/mi/src/mi_swap.c:
+    complete
+    .text       start:0x020da35c end:0x020da364
+
+NitroSDK/libraries/mi/src/mi_uncompress.c:
+    complete
+    .text       start:0x020da364 end:0x020da5c8
+
+NitroSDK/libraries/mi/src/mi_dma_card.c:
+    complete
+    .text       start:0x020da5c8 end:0x020da618
+
+NitroSDK/libraries/mi/src/mi_init.c:
+    complete
+    .text       start:0x020da618 end:0x020da628
+
+NitroSDK/libraries/snd/src/snd_interface.c:
+    complete
+    .text       start:0x020da628 end:0x020da8a0
+
+NitroSDK/libraries/snd/src/snd_main.c:
+    complete
+    .text       start:0x020da8a0 end:0x020da8e8
+    .bss        start:0x021b5444 end:0x021b5460
+
+NitroSDK/libraries/snd/src/snd_command.c:
+    complete
+    .text       start:0x020da8e8 end:0x020dad80
+    .bss        start:0x021b5460 end:0x021b6f40
+
+NitroSDK/libraries/snd/src/snd_alarm.c:
+    complete
+    .text       start:0x020dad80 end:0x020dadfc
+    .bss        start:0x021b6f40 end:0x021b6fa0
+
+NitroSDK/libraries/snd/src/snd_work.c:
+    complete
+    .text       start:0x020dadfc end:0x020dae78
+    .bss        start:0x021b6fa0 end:0x021b6fa4
+
+NitroSDK/libraries/snd/src/snd_util.c:
+    complete
+    .text       start:0x020dae78 end:0x020daecc
+    .rodata     start:0x020f3f58 end:0x020f4a2c
+
+NitroSDK/libraries/snd/src/snd_bank.c:
+    complete
+    .text       start:0x020daecc end:0x020db124
+
+NitroSDK/libraries/pxi/src/pxi_init.c:
+    complete
+    .text       start:0x020db124 end:0x020db12c
+
+NitroSDK/libraries/pxi/src/pxi_fifo.c:
+    complete
+    .text       start:0x020db12c end:0x020db378
+    .bss        start:0x021b6fa4 end:0x021b7028
+
+NitroSDK/libraries/fs/src/fs_command.c:
+    complete
+    .text       start:0x020db378 end:0x020db4cc
+
+NitroSDK/libraries/fs/src/fs_command_default.c:
+    complete
+    .text       start:0x020db4cc end:0x020dbaf4
+    .rodata     start:0x020f4a2c end:0x020f4a50
+    .data       start:0x02108250 end:0x02108254
+
+NitroSDK/libraries/fs/src/fs_archive.c:
+    complete
+    .text       start:0x020dbaf4 end:0x020dc24c
+    .bss        start:0x021b7028 end:0x021b7038
+
+NitroSDK/libraries/fs/src/fs_file.c:
+    complete
+    .text       start:0x020dc24c end:0x020dc5ec
+    .bss        start:0x021b7038 end:0x021b703c
+
+NitroSDK/libraries/fs/src/fs_rom.c:
+    complete
+    .text       start:0x020dc5ec end:0x020dc7a0
+    .data       start:0x02108254 end:0x02108258
+    .bss        start:0x021b703c end:0x021b70b0
+
+NitroSDK/libraries/cp/src/cp_context.c:
+    complete
+    .text       start:0x020dc7a0 end:0x020dc81c
+
+NitroSDK/libraries/spi/src/tp.c:
+    complete
+    .text       start:0x020dc81c end:0x020dcdc4
+    .bss        start:0x021b70b0 end:0x021b70ec
+
+NitroSDK/libraries/spi/src/pm.c:
+    complete
+    .text       start:0x020dcdc4 end:0x020dd550
+    .bss        start:0x021b70ec end:0x021b7158
+
+NitroSDK/libraries/rtc/src/external.c:
+    complete
+    .text       start:0x020dd550 end:0x020dd9f0
+    .bss        start:0x021b7158 end:0x021b7188
+
+NitroSDK/libraries/rtc/src/internal.c:
+    complete
+    .text       start:0x020dd9f0 end:0x020dda34
+
+NitroSDK/libraries/rtc/src/convert.c:
+    complete
+    .text       start:0x020dda34 end:0x020ddc90
+    .data       start:0x02108258 end:0x02108288
+
+NitroSDK/libraries/card/src/card_common.c:
+    complete
+    .text       start:0x020ddc90 end:0x020ddf18
+    .bss        start:0x021b71a0 end:0x021b7840
+
+NitroSDK/libraries/card/src/card_spi.c:
+    complete
+    .text       start:0x020ddf18 end:0x020de18c
+
+NitroSDK/libraries/card/src/card_backup.c:
+    complete
+    .text       start:0x020de18c end:0x020de4ec
+
+NitroSDK/libraries/card/src/card_rom.c:
+    complete
+    .text       start:0x020de4ec end:0x020dea14
+    .data       start:0x02108288 end:0x0210828c
+    .bss        start:0x021b7840 end:0x021b7a80
+
+NitroSDK/libraries/card/src/card_request.c:
+    complete
+    .text       start:0x020dea14 end:0x020deb54
+
+NitroSDK/libraries/card/src/card_pullOut.c:
+    complete
+    .text       start:0x020deb54 end:0x020dec90
+    .bss        start:0x021b7a80 end:0x021b7a88
+
+NitroSDK/libraries/wm/src/wm_system.c:
+    complete
+    .text       start:0x020dec90 end:0x020df2d0
+    .bss        start:0x021b7aa0 end:0x021b8540
+
+NitroSDK/libraries/wm/src/wm_sync.c:
+    complete
+    .text       start:0x020df2d0 end:0x020df524
+
+NitroSDK/libraries/wm/src/wm_standard.c:
+    complete
+    .text       start:0x020df524 end:0x020df894
+
+NitroSDK/libraries/wm/src/wm_mp.c:
+    complete
+    .text       start:0x020df894 end:0x020dfa9c
+
+NitroSDK/libraries/wm/src/wm_ds.c:
+    complete
+    .text       start:0x020dfa9c end:0x020e002c
+
+NitroSDK/libraries/wm/src/wm_etc.c:
+    complete
+    .text       start:0x020e002c end:0x020e00e4
+    .bss        start:0x021b8540 end:0x021b85c0
+
+NitroSDK/libraries/ctrdg/src/ctrdg.c:
+    complete
+    .text       start:0x020e00e4 end:0x020e02fc
+    .bss        start:0x021b85c0 end:0x021b85c8
+
+NitroSDK/libraries/ctrdg/src/ctrdg_proc.c:
+    complete
+    .text       start:0x020e02fc end:0x020e0534
+    .bss        start:0x021b85e0 end:0x021b87a8
+
+NitroSDK/libraries/ctrdg/src/ctrdg_task.c:
+    complete
+    .text       start:0x020e0534 end:0x020e063c
+    .bss        start:0x021b87a8 end:0x021b8bd0
+
+NitroSDK/libraries/math/src/math.c:
+    complete
+    .text       start:0x020e063c end:0x020e067c
+
+NitroSDK/libraries/card/src/card_backup.version.c:
+    complete
+    .text       start:0x02000bd4 end:0x02000bec
+
+MSL/C_abort_exit_arm.c:
+    complete
+    .text       start:0x020e09d0 end:0x020e0ac0
+    .exceptix   start:0x020ed01c end:0x020ed040
+    .bss        start:0x021b8bd0 end:0x021b8ce0
+
+MSL/C_ansi_files.c:
+    complete
+    .text       start:0x020e0adc end:0x020e0b18
+    .exceptix   start:0x020ed058 end:0x020ed064
+    .data       start:0x0210828c end:0x02108370
+    .bss        start:0x021b8e00 end:0x021b9100
+
+MSL/C_arith.c:
+    complete
+    .text       start:0x020e0b18 end:0x020e0b28
+
+MSL/C_buffer_io.c:
+    complete
+    .text       start:0x020e0b28 end:0x020e0bec
+    .exceptix   start:0x020ed064 end:0x020ed07c
+
+MSL/C_char_io.c:
+    complete
+    .text       start:0x020e0bec end:0x020e0db4
+    .exceptix   start:0x020ed07c end:0x020ed0a0
+
+MSL/C_direct_io.c:
+    complete
+    .text       start:0x020e0db4 end:0x020e1024
+    .exceptix   start:0x020ed0a0 end:0x020ed0b8
+
+MSL/C_file_io.c:
+    complete
+    .text       start:0x020e1024 end:0x020e10b0
+    .exceptix   start:0x020ed0b8 end:0x020ed0c4
+
+MSL/C_mbstring.c:
+    complete
+    .text       start:0x020e10b0 end:0x020e1158
+    .exceptix   start:0x020ed0c4 end:0x020ed0e8
+
+MSL/C_mem.c:
+    complete
+    .text       start:0x020e1158 end:0x020e1228
+    .exceptix   start:0x020ed0e8 end:0x020ed0f4
+
+MSL/C_mem_funcs.c:
+    complete
+    .text       start:0x020e1228 end:0x020e129c
+
+MSL/C_printf.c:
+    complete
+    .text       start:0x020e129c end:0x020e293c
+    .exception  start:0x020eccb4 end:0x020eccc4
+    .exceptix   start:0x020ed0f4 end:0x020ed154
+    .data       start:0x0210859c end:0x021085dc
+
+MSL/C_qsort.c:
+    complete
+    .text       start:0x020e293c end:0x020e2a38
+    .exceptix   start:0x020ed154 end:0x020ed160
+
+MSL/C_rand.c:
+    complete
+    .text       start:0x020e2a38 end:0x020e2a6c
+    .data       start:0x021085dc end:0x021085e0
+
+MSL/C_scanf.c:
+    complete
+    .text       start:0x020e2a6c end:0x020e368c
+    .exception  start:0x020eccc4 end:0x020ecccc
+    .exceptix   start:0x020ed160 end:0x020ed184
+    .rodata     start:0x020f4c50 end:0x020f4c78
+
+MSL/C_signal.c:
+    complete
+    .text       start:0x020e368c end:0x020e3740
+    .exceptix   start:0x020ed184 end:0x020ed190
+    .bss        start:0x021b9104 end:0x021b9120
+
+MSL/C_string.c:
+    complete
+    .text       start:0x020e3740 end:0x020e3988
+
+MSL/C_strtold.c:
+    complete
+    .text       start:0x020e3988 end:0x020e4564
+    .exception  start:0x020ecccc end:0x020eccd4
+    .exceptix   start:0x020ed190 end:0x020ed1b4
+    .rodata     start:0x020f4c78 end:0x020f4c88
+
+MSL/C_strtoul.c:
+    complete
+    .text       start:0x020e4564 end:0x020e4ac8
+    .exceptix   start:0x020ed1b4 end:0x020ed1e4
+
+MSL/C_wchar_io.c:
+    complete
+    .text       start:0x020e4ac8 end:0x020e4b1c
+
+MSL/C_wmem.c:
+    complete
+    .text       start:0x020e4b1c end:0x020e4b28
+    .exceptix   start:0x020ed1e4 end:0x020ed1f0
+
+MSL/C_e_exp.c:
+    complete
+    .text       start:0x020e4b28 end:0x020e4e70
+    .exceptix   start:0x020ed1f0 end:0x020ed1fc
+    .rodata     start:0x020f4f88 end:0x020f4fb8
+
+MSL/C_e_pow.c:
+    complete
+    .text       start:0x020e4e70 end:0x020e5a2c
+    .exception  start:0x020eccd4 end:0x020eccdc
+    .exceptix   start:0x020ed1fc end:0x020ed208
+    .rodata     start:0x020f4fb8 end:0x020f4fe8
+
+MSL/C_s_copysign.c:
+    complete
+    .text       start:0x020e5a2c end:0x020e5a4c
+
+MSL/C_s_fabs.c:
+    complete
+    .text       start:0x020e5a4c end:0x020e5a64
+
+MSL/C_s_frexp.c:
+    complete
+    .text       start:0x020e5a64 end:0x020e5ae4
+    .exceptix   start:0x020ed208 end:0x020ed214
+
+MSL/C_s_ldexp.c:
+    complete
+    .text       start:0x020e5ae4 end:0x020e5c5c
+    .exceptix   start:0x020ed214 end:0x020ed220
+
+MSL/C_w_exp.c:
+    complete
+    .text       start:0x020e5c5c end:0x020e5c64
+    .exceptix   start:0x020ed220 end:0x020ed22c
+
+MSL/C_w_pow.c:
+    complete
+    .text       start:0x020e5c64 end:0x020e5c6c
+    .exceptix   start:0x020ed22c end:0x020ed238
+
+MSL/C_math_api.c:
+    complete
+    .text       start:0x020e6918 end:0x020e69ec
+
+MSL/C_math_sun.c:
+    complete
+    .text       start:0x020e69ec end:0x020e6a08
+    .exceptix   start:0x020ed298 end:0x020ed2a4
+
+MSL/C_pool_alloc_2.c:
+    complete
+    .text       start:0x020e6a08 end:0x020e6a18
+    .exceptix   start:0x020ed2a4 end:0x020ed2b0
+
+MSL/Math__d_add.c:
+    complete
+    .text       start:0x020e8fd8 end:0x020e92f0
+
+MSL/Math__d_dtof.c:
+    complete
+    .text       start:0x020e92f0 end:0x020e93f4
+
+MSL/Math__d_dtoi.c:
+    complete
+    .text       start:0x020e93f4 end:0x020e9440
+
+MSL/Math__d_dtoull.c:
+    complete
+    .text       start:0x020e9440 end:0x020e94cc
+
+MSL/Math__d_itod.c:
+    complete
+    .text       start:0x020e94cc end:0x020e9548
+
+MSL/Math__d_mul.c:
+    complete
+    .text       start:0x020e9548 end:0x020e98ac
+
+MSL/Math__d_sqrt.c:
+    complete
+    .text       start:0x020e98ac end:0x020e9a48
+
+MSL/Math__d_sub.c:
+    complete
+    .text       start:0x020e9a48 end:0x020e9e14
+
+MSL/Math__f_add.c:
+    complete
+    .text       start:0x020e9e14 end:0x020ea038
+
+MSL/Math__f_cmp.c:
+    complete
+    .text       start:0x020ea038 end:0x020ea384
+
+MSL/Math__f_div.c:
+    complete
+    .text       start:0x020ea384 end:0x020ea748
+
+MSL/Math__f_ftod.c:
+    complete
+    .text       start:0x020ea748 end:0x020ea7cc
+
+MSL/Math__f_ftoi.c:
+    complete
+    .text       start:0x020ea7cc end:0x020ea800
+
+MSL/Math__f_ftou.c:
+    complete
+    .text       start:0x020ea800 end:0x020ea840
+
+MSL/Math__f_itof.c:
+    complete
+    .text       start:0x020ea840 end:0x020ea8d0
+
+MSL/Math__f_mul.c:
+    complete
+    .text       start:0x020ea8d0 end:0x020eaab0
+
+MSL/Math__f_sub.c:
+    complete
+    .text       start:0x020eaab0 end:0x020ead34
+
+MSL/Math__ll_div.c:
+    complete
+    .text       start:0x020ead34 end:0x020eaf3c
+
+MSL/Math__ll_mul.c:
+    complete
+    .text       start:0x020eaf3c end:0x020eaf5c
+
+MSL/Math__s32_div_f.c:
+    complete
+    .text       start:0x020eaf5c end:0x020eb168
+
+MSL/Math__u32_div_f.c:
+    complete
+    .text       start:0x020eb168 end:0x020eb34c
+
+MSL/Math__d_div.c:
+    complete
+    .text       start:0x020eb34c end:0x020eb8a8
+
+MSL/Runtime_semihosted_conso.c:
+    complete
+    .text       start:0x020eb8ac end:0x020eb91c
+    .exceptix   start:0x020ed814 end:0x020ed82c
+
+MSL/Runtime_compressednumber.c:
+    complete
+    .text       start:0x020eb91c end:0x020eb9d8
+
+MSL/Runtime_exceptionhandler.c:
+    complete
+    .text       start:0x020eb9d8 end:0x020ec6d4
+    .exception  start:0x020ecf60 end:0x020ecfa4
+    .exceptix   start:0x020ed82c end:0x020ed8b0
+    .data       start:0x02108f58 end:0x02108fdc
+
+MSL/Runtime_staticinitialize.c:
+    complete
+    .text       start:0x020ec6d4 end:0x020ec718
+    .exceptix   start:0x020ed8b0 end:0x020ed8c8
+    .bss        start:0x021b94fc end:0x021b9500
+
+MSL/Runtime_cxxabi_alloc.c:
+    complete
+    .text       start:0x020ec718 end:0x020ec918
+    .exception  start:0x020ecfa4 end:0x020ed01c
+    .exceptix   start:0x020ed8c8 end:0x020ed910
+
+MSL/Runtime_cxxabi_rtti.c:
+    complete
+    .text       start:0x020ec918 end:0x020ec9a4
+    .exceptix   start:0x020ed910 end:0x020ed970
+    .data       start:0x02109028 end:0x02109094
+
+MSL/Runtime_mwexception.c:
+    complete
+    .text       start:0x020ec9a4 end:0x020ecb0c
+    .exceptix   start:0x020ed970 end:0x020ed9a0
+    .data       start:0x021090bc end:0x021090c4
+
+MSL/Runtime_exceptionhandler_2.c:
+    complete
+    .text       start:0x020ecb0c end:0x020eccac
+    .exceptix   start:0x020ed9a0 end:0x020ed9b8
+
+MSL/Runtime___nitro_eabi_ini.c:
+    complete
+    .text       start:0x020eccac end:0x020eccb4
+    .exceptix   start:0x020ed9b8 end:0x020ed9c4

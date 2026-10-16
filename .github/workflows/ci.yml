@@ -1,34 +1,48 @@
-# CI: compila e testa tudo que não precisa da ROM.
-# (Os testes com a ROM real rodam localmente: SONIC_ROM=rom.nds cargo test.)
+# CI: builds and tests everything that does not need the game image.
+# (The tests against the real game files run locally: make -C decomp test / arquivos.)
 name: ci
 on: [push, pull_request]
 jobs:
-  rust:
+  c-and-python:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      # versão fixa: o mesmo Rust do desenvolvimento (lints novos não quebram a CI de surpresa)
-      - uses: dtolnay/rust-toolchain@master
-        with: { toolchain: "1.97.0", components: clippy }
-      - name: compilar (engine)
-        working-directory: engine
-        run: cargo build --release --locked
-      - name: clippy (engine)
-        working-directory: engine
-        run: cargo clippy --release -- -D warnings
-      - name: testes (engine)
-        working-directory: engine
-        run: cargo test --release
-      - name: exemplo mínimo
-        working-directory: exemplos/rust-minimo
-        run: cargo test --release
-  c-e-python:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: compilar as funções em C
-        run: make -C decomp build/test_hash build/test_language && ./decomp/build/test_language
-      - name: sintaxe dos scripts
+      - name: build the C functions
+        # test_arquivos: the game's C++ (src/Aurora) built for the PC; running it needs the game
+        # files (make -C decomp arquivos PASTA=../work/extract/files), here it is only compiled
+        run: make -C decomp build/test_hash build/test_language build/test_arquivos && ./decomp/build/test_language
+      - name: script syntax
         run: |
-          python3 -m py_compile analise/tools/*.py
+          python3 -m py_compile analise/tools/*.py decomp/tools/*.py
           bash -n analise/run_all.sh
+          for f in decomp/tools/*.sh; do bash -n "$f"; done
+      - name: decompilation progress
+        # share of code bytes that come from source, read from config/YWSE/ (no game image needed)
+        run: |
+          python3 decomp/tools/progresso.py
+          { echo '```'; python3 decomp/tools/progresso.py; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: progress report (objdiff format)
+        # the same metric as an objdiff report.json; progress trackers (recomp.fyi) read
+        # the YWSE_report artifact from runs on the default branch
+        run: python3 decomp/tools/progress_report.py -o build/report.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: YWSE_report
+          path: build/report.json
+  decomp-matching:
+    # Checks, without the game image, that the C++ in src/ still compiles to the game's
+    # bytes (decomp/compilador/esperado.txt only stores their SHA-1).
+    # The full build, with the game image, is decomp/tools/montar_rom.sh.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: work/ferramentas
+          key: ferramentas-${{ hashFiles('decomp/tools/ferramentas.sh') }}
+      - name: tools (dsd, wibo, mwccarm)
+        run: decomp/tools/ferramentas.sh
+      - name: Python dependencies
+        run: python3 -m pip install --user --break-system-packages pyelftools capstone
+      - name: decompiled functions match the game
+        run: python3 decomp/tools/conferir_sem_rom.py

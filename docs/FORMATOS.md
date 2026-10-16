@@ -1,79 +1,97 @@
-# Referência dos formatos
+# Format reference
 
-Tudo little-endian. "Validado" = lido e reescrito byte a byte idêntico com a ROM real,
-ou conferido contra o comportamento do jogo.
+Everything is little-endian. "Validated" = read and rewritten byte-identical with the real
+ROM, or checked against the game's behavior.
 
 ## ROM (`.nds`)
-Cabeçalho padrão do DS. Usados: ARM9 em `0x20`, ARM7 em `0x30`, FNT `0x40`, FAT `0x48`,
-tamanho usado `0x80`, capacidade `0x14` (128 KB << n), **CRC16 do cabeçalho** em
-`0x15E` (polinômio 0xA001, início 0xFFFF, bytes `0x000..0x15D`). Arquivos alinhados
-em `0x200`; o resto do cartucho é `0xFF`. ARM9 sem compressão e sem overlays;
-autoload para ITCM (`0x01FF8000`, 0x6DE0 bytes) e DTCM (`0x027E0000`). *Validado.*
+Standard DS header. Used: ARM9 at `0x20`, ARM7 at `0x30`, FNT `0x40`, FAT `0x48`, used size
+`0x80`, capacity `0x14` (128 KB << n), **header CRC16** at `0x15E` (polynomial 0xA001, start
+0xFFFF, bytes `0x000..0x15D`). Files aligned to `0x200`; the rest of the cartridge is `0xFF`.
+ARM9 uncompressed and without overlays; autoload to ITCM (`0x01FF8000`, 0x6DE0 bytes) and
+DTCM (`0x027E0000`). *Validated.*
 
-## HERF (pacote de recursos)
-`u32 0x00F1A5C0, u32 n, n × {u32 hash, u32 tamanho, u32 offset}`. Índice **ordenado
-por hash** (busca binária); dados na mesma ordem, alinhados em 4 com zeros, e o fim
-também. Hash = DJB2 do nome com tabela de minúsculas e caractere **com sinal**
-(função `0x02009b78`). *Validado (6 pacotes).*
+## HERF (resource pack)
+`u32 0x00F1A5C0, u32 n, n × {u32 hash, u32 size, u32 offset}`. Index **sorted by hash**
+(binary search); data in the same order, aligned to 4 with zeros, and the end too. Hash =
+DJB2 of the name with a lowercase table and a **signed** char (function `0x02009b78`).
+*Validated (6 packs).*
 
-**`erf.dict`** (dentro do `test.herf`): `u32 magic, u32 n, n × {u32 hash, char nome[128]}`,
-ordenado por hash: os nomes oficiais de todos os recursos.
+**`erf.dict`** (inside `test.herf`): `u32 magic, u32 n, n × {u32 hash, char name[128]}`,
+sorted by hash: the official names of every resource.
 
 ## `.small`
-`u32 = tipo | tamanho << 8`. Tipo `0x00`: sem compressão. Tipo `0x10`: **LZ10** da
-BIOS (flags de 8 itens, bit 1 = referência `3 + (b0>>4)` bytes a
-`((b0&0xF)<<8 | b1) + 1` atrás). Ao comprimir, evite distância 1 (a rotina da
-BIOS que escreve na VRAM grava 16 bits por vez). *Validado.*
+`u32 = type | size << 8`. Type `0x00`: uncompressed. Type `0x10`: the BIOS's **LZ10** (flags
+for 8 items, bit 1 = a reference of `3 + (b0>>4)` bytes at `((b0&0xF)<<8 | b1) + 1` back).
+When compressing, avoid distance 1 (the BIOS routine that writes to VRAM writes 16 bits at a
+time). *Validated.*
 
-## GFF V4.0 (contêiner BioWare)
-`"GFF " "V4.0" plataforma tipo versão, u32 n_templates, u32 data_offset`; templates
-`{label, n_campos, offset_campos, tamanho}`; campos `{u32 label, u32 tipo|flags<<16, u32 offset}`.
-Flags: `0x8000` lista, `0x4000` struct, `0x2000` referência. Tipos: 0 u8, 1 s8,
-2 u16, 3 s16, 4 u32, 5 s32, 6 u64, 7 s64, 8 f32, 9 f64, 10 vec3, 12 vec4, 13 quat,
-14 ECString, 15 cor, 16 matriz, 17 TlkString `{id, rel}`, **18 ponto fixo 20.12
-(Sonic)**, **20 string ASCII inline (Sonic)**, `0xFFFF` genérico `{tipo|flags, rel}`.
-ECString: `u32 n` + texto, em 8 bits no TLK e em UTF-16 em DLG/ARE.
-Usado por: TLK, GDA, DLG (`CONV`), ARE, GUI, PLO...
+## GFF V4.0 (BioWare container)
+`"GFF " "V4.0" platform type version, u32 n_templates, u32 data_offset`; templates
+`{label, n_fields, fields_offset, size}`; fields `{u32 label, u32 type|flags<<16, u32 offset}`.
+Flags: `0x8000` list, `0x4000` struct, `0x2000` reference. Types: 0 u8, 1 s8, 2 u16, 3 s16,
+4 u32, 5 s32, 6 u64, 7 s64, 8 f32, 9 f64, 10 vec3, 12 vec4, 13 quat, 14 ECString, 15 color,
+16 matrix, 17 TlkString `{id, rel}`, **18 fixed point 20.12 (Sonic)**, **20 inline ASCII
+string (Sonic)**, `0xFFFF` generic `{type|flags, rel}`.
+ECString: `u32 n` + text, 8-bit in TLK and UTF-16 in DLG/ARE.
+Used by: TLK, GDA, DLG (`CONV`), ARE, GUI, PLO...
 
-## TLK (textos)
-Raiz → lista de `STRN {19002 id, 19003 texto}`. A lista é uma **tabela hash** com
-sondagem linear (função `0x020989fc`): posição = `h(id) % n`, onde
+## TLK (texts)
+Root → list of `STRN {19002 id, 19003 text}`. The list is a **hash table** with linear
+probing (function `0x020989fc`): slot = `h(id) % n`, where
 ```
 u = (id << 15) - id - 1;  u = ((u >> 12) ^ u) * 5;  u = (u ^ (u >> 4)) * 0x809;  h = (u >> 16) ^ u
 ```
-`id = 0xFFFFFFFF` é posição vazia. Textos em cp1252, com `\0` incluído no tamanho,
-sem repetição, na ordem da primeira posição que os usa, alinhados em 4 com `0xFF`.
-*Validado (5 idiomas).*
+`id = 0xFFFFFFFF` is an empty slot. Texts in cp1252, with the `\0` included in the size,
+without repeats, in the order of the first slot that uses them, aligned to 4 with `0xFF`.
+*Validated (5 languages).*
+An id whose text position is `0xFFFFFFFF` has no text in that language (6,579 of the 14,134
+in English); the game's lookup does not check this (DIARIO 28).
 
-## GDA (tabelas)
-GFF4 `G2DA`: `gtop {10002 colunas, 10003 linhas}`; coluna = `{u32 CRC32(nome.lower()
-em UTF-16LE), u8 tipo, 3 × 0xFF}`; linhas de tamanho fixo (bytes livres `0xFF`).
-Tipos de campo usados: 5 (s32), 0 (u8), 18 (ponto fixo), 20 por referência
-(ASCII com `\0`, sem repetição, alinhado em 4 com `0xFF`). Nomes de coluna
-conhecidos: 534 de 845 (tabela do xoreos). *Validado (229 tabelas).*
+## GDA (tables)
+GFF4 `G2DA`: `gtop {10002 columns, 10003 rows}`; column = `{u32 CRC32(name.lower() in
+UTF-16LE), u8 type, 3 × 0xFF}`; fixed-size rows (free bytes `0xFF`). Field types used: 5
+(s32), 0 (u8), 18 (fixed point), 20 by reference (ASCII with `\0`, without repeats, aligned
+to 4 with `0xFF`). Known column names: 534 of 845 (xoreos table). *Validated (229 tables).*
+In the 229 tables, cells are of only four types: 5 (s32), 0 (u8), 18 (fixed point) and 20 by
+reference (type `0x20000014`, with the flag); none has a float (8) or UTF-16 text (14). The
+row is found by id (the value of column 0) and the column by hash (label 10001). Read by the
+game's C++ in `decomp/tests/test_arquivos.cpp` (DIARIO 29).
 
-## 2DA (texto)
-`2DA V2.0`, linha de padrão, cabeçalho e linhas separados por TAB. Usado por
-`.ITM` (efeitos de itens), `.SPL` (golpes), mapas de paleta dos cenários.
+## 2DA (text)
+`2DA V2.0`, a default line, header and rows separated by TAB. Used by `.ITM` (item effects),
+`.SPL` (moves), and the backgrounds' palette maps.
+How the game reads it (`C2DA`, `src/Aurora/C2DA.cpp`): after the 8 header bytes, blank lines
+and the spaces at the start of each line are skipped; a first line `DEFAULT: value` (or
+`DEFAULT :value`) gives the value of a missing cell; the next line has the column names; each
+of the others has the row name and the cells, separated by space or TAB (a quoted text may
+contain spaces). `****` is an empty cell, and row and column names are lowercased. There is
+also the binary form `2DA V2.b`: the column names separated by TAB or `\0`, one byte, the
+number of rows (u32), the row names, one u16 position per cell, 2 bytes and the texts.
+*Validated (370 tables, all `V2.0` with CRLF: 219 `.itm`/`.ITM` and 151 `.spl`/`.SPL` in
+`test.herf`; 12,376 cells read by the game's C++, DIARIO 30).* None uses `DEFAULT`, quotes or
+the binary form. The empty cell in the files is `***`, which the game does **not** treat as
+empty: it keeps the text `"***"`, which gives 0 as an integer.
 
-## Cenários
-- `.cbgt`: índice de 4096 × `{u16 tamanho, u16 offset/512}` + tiles LZ10 de
-  64×64 a 8 bpp, organizados em blocos de 8×8; tiles linha a linha.
-- `.pal`: paletas de 256 cores BGR555 (512 bytes); o índice 0 (magenta) é transparente.
-- `.2da`: grade com `paletteNN.pal` por tile; as paletas pertencem a blocos de 2×2, numerados coluna a coluna.
-- `.cdpth`: mesmo índice; tiles LZ10 de 64×64 × u16 **lineares**; `0x7FFF` = sem objeto.
+## Backgrounds
+- `.cbgt`: index of 4096 × `{u16 size, u16 offset/512}` + LZ10 tiles of 64×64 at 8 bpp,
+  arranged in 8×8 blocks; tiles row by row.
+- `.pal`: palettes of 256 BGR555 colors (512 bytes); index 0 (magenta) is transparent.
+- `.2da`: grid with `paletteNN.pal` per tile; palettes belong to 2×2 blocks, numbered column
+  by column.
+- `.cdpth`: same index; LZ10 tiles of 64×64 × u16, **linear**; `0x7FFF` = no object.
 
-*Validado visualmente (62 áreas), com a ordem escolhida pela continuidade das bordas.*
+*Validated visually (62 areas), with the order chosen by edge continuity.*
 
-## Gráficos Nitro
-NCLR (`RLCN`/`TTLP`) e NCGR (`RGCN`/`RAHC`), formatos padrão do NitroSDK. Retratos
-e ícones vêm em 4 peças 64×64 (`_0`..`_3`, em 2×2). Paleta de cada imagem: struct
-`IMG` das telas `.gui` (60004 = ncgr, 60015 = nclr) ou linhas de GDA.
+## Nitro graphics
+NCLR (`RLCN`/`TTLP`) and NCGR (`RGCN`/`RAHC`), standard NitroSDK formats. Portraits and icons
+come in 4 pieces of 64×64 (`_0`..`_3`, in 2×2). Palette of each image: the `IMG` struct of the
+`.gui` screens (60004 = ncgr, 60015 = nclr) or GDA rows.
 
-## Diálogos (`.dlg`, GFF4 `CONV`)
-`12002` nós `NTRY`: `12201` texto (TlkString), `12202` retrato (`prtl_<personagem><emoção>`),
-`12208`/`12209` condição e ação (`PLOT`), `12400` links. `12000` entradas `STRT`.
+## Dialogs (`.dlg`, GFF4 `CONV`)
+`12002` `NTRY` nodes: `12201` text (TlkString), `12202` portrait
+(`prtl_<character><emotion>`), `12208`/`12209` condition and action (`PLOT`), `12400` links.
+`12000` `STRT` entries.
 
-## Ainda não decifrados
-Vídeos `.vx` (Actimagine), layout das telas `.gui` (peças esticadas/repetidas),
-paletas dos Chao, 311 nomes de colunas GDA.
+## Not decoded yet
+`.vx` videos (Actimagine), the layout of the `.gui` screens (stretched/repeated pieces), the
+Chao palettes, 311 GDA column names.

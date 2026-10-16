@@ -53,6 +53,10 @@ em UTF-16LE), u8 tipo, 3 × 0xFF}`; linhas de tamanho fixo (bytes livres `0xFF`)
 Tipos de campo usados: 5 (s32), 0 (u8), 18 (ponto fixo), 20 por referência
 (ASCII com `\0`, sem repetição, alinhado em 4 com `0xFF`). Nomes de coluna
 conhecidos: 534 de 845 (tabela do xoreos). *Validado (229 tabelas).*
+Nas 229 tabelas, as células são só de quatro tipos: 5 (s32), 0 (u8), 18 (ponto fixo) e 20
+por referência (tipo `0x20000014`, com a flag); nenhuma tem float (8) nem texto UTF-16 (14).
+A linha é achada pelo id (o valor da coluna 0) e a coluna pelo hash (rótulo 10001). Lidas
+pelo C++ do jogo em `decomp/tests/test_arquivos.cpp` (DIARIO 29).
 
 ## 2DA (texto)
 `2DA V2.0`, linha de padrão, cabeçalho e linhas separados por TAB. Usado por

@@ -13,6 +13,9 @@
 //     segundo plano (ReadFileAsync + Update + callback);
 //  4. o pacote do idioma: para cada idioma do console, LoadTables abre o test_X.herf
 //     certo (inglês para japonês, inglês e qualquer outro).
+//  5. as tabelas GDA (src/Aurora/G2DA.cpp): cada .gda do erf.dict é aberto pelo nome, e
+//     linhas, colunas, o hash e o tipo de cada coluna, o id de cada linha e o valor de
+//     cada célula (pela posição e pela chave) batem com uma leitura independente do GFF4.
 // Tudo isso com o alocador do jogo (src/Aurora/Memory.cpp) atendendo cada new e delete.
 //
 // Uso: decomp/build/test_arquivos work/extract/files   (depois do montar_rom.sh)
@@ -20,6 +23,7 @@
 #include <string>
 #include <vector>
 #include "Aurora/CErfMan.h"
+#include "Aurora/G2DA.h"
 #include "msl.h"
 
 extern const char* g_pastaPC;
@@ -61,6 +65,37 @@ struct Pacote {
         return Palavra(0) == 0x00f1a5c0;
     }
     u32 Palavra(u32 p) const { return dados[p] | dados[p + 1] << 8 | dados[p + 2] << 16 | (u32)dados[p + 3] << 24; }
+};
+
+// Leitura independente de um GFF4, sem o código do jogo: os campos de cada modelo são
+// procurados um por um (o jogo faz busca binária).
+struct Gff {
+    const u8* d;
+    u32 P(u32 pos) const { return d[pos] | d[pos + 1] << 8 | d[pos + 2] << 16 | (u32)d[pos + 3] << 24; }
+    u32 Dados() const { return P(0x18); }
+    u32 Tamanho(u32 modelo) const { return P(0x1c + 16 * modelo + 12); }
+    bool Campo(u32 modelo, u32 rotulo, u32* tipo, u32* pos) const
+    {
+        u32 n = P(0x1c + 16 * modelo + 4), campos = P(0x1c + 16 * modelo + 8);
+        for (u32 i = 0; i < n; i++) {
+            if (P(campos + 12 * i) == rotulo) {
+                *tipo = P(campos + 12 * i + 4);
+                *pos = P(campos + 12 * i + 8);
+                return true;
+            }
+        }
+        return false;
+    }
+    // Uma lista de structs da raiz: posição do primeiro elemento, quantos, modelo e tamanho.
+    u32 Lista(u32 rotulo, u32* modelo, u32* tamanho) const
+    {
+        u32 tipo, pos;
+        if (!Campo(0, rotulo, &tipo, &pos) || P(Dados() + pos) == 0xffffffff)
+            return 0;
+        *modelo = tipo & 0xffff;
+        *tamanho = Tamanho(*modelo);
+        return Dados() + P(Dados() + pos);
+    }
 };
 
 // O nome do arquivo aberto com este id (o ResName do CDSFileSystem, em maiúsculas).
@@ -124,6 +159,7 @@ int main(int argc, char** argv)
         return 1;
 
     // 2. cada recurso pelo nome
+    std::vector<std::string> tabelas;
     u32 lidos = 0, comprimidos = 0, crus = 0, fora = 0, vazias = 0;
     for (u32 i = 0; i < n; i++) {
         const u8* e = bytes + 8 + 132 * i;
@@ -134,6 +170,8 @@ int main(int argc, char** argv)
             continue;
         }
         CONFERE(HashResourceName(CExoString(nome.c_str())) == hash, "hash de %s", nome.c_str());
+        if (nome.size() > 4 && strcasecmp(nome.c_str() + nome.size() - 4, ".gda") == 0)
+            tabelas.push_back(nome);
 
         const Pacote* p = comum.indice.count(hash) ? &comum : ingles.indice.count(hash) ? &ingles : NULL;
         if (p == NULL) {
@@ -208,6 +246,99 @@ int main(int argc, char** argv)
         CONFERE(aberto == esperados[idioma], "idioma %d abriu %s", idioma, aberto.c_str());
     }
     printf("idiomas 0 a 6: o pacote certo\n");
+
+    // 5. as tabelas GDA
+    g_idiomaPC = 1;
+    CErfMan::Instance().LoadTables();
+    u32 nLinhas = 0, nCelulas = 0, nTipoFalso = 0;
+    for (size_t k = 0; k < tabelas.size(); k++) {
+        const char* nome = tabelas[k].c_str();
+        G2DA tabela((CExoString(nome)));
+        CONFERE(tabela.IsLoaded(), "%s não carregou", nome);
+        if (!tabela.IsLoaded())
+            continue;
+        Gff g = {tabela.m_data};
+        u32 mc = 0, tc = 0, ml = 0, tl = 0;
+        u32 colunas = g.Lista(10002, &mc, &tc), linhas = g.Lista(10003, &ml, &tl);
+        u32 nc = colunas ? g.P(colunas) : 0, nl = linhas ? g.P(linhas) : 0;
+        CONFERE(tabela.GetColumnCount() == (int)nc && tabela.GetRowCount() == (int)nl,
+                "%s: %d x %d, o arquivo diz %u x %u", nome, tabela.GetRowCount(), tabela.GetColumnCount(), nl, nc);
+        // as colunas pelo hash: a primeira com aquele hash
+        std::vector<u32> hashes;
+        for (u32 c = 0; c < nc; c++) {
+            u32 tipo, pos;
+            u32 coluna = colunas + 4 + c * tc;
+            hashes.push_back(g.Campo(mc, 10001, &tipo, &pos) ? g.P(coluna + pos) : 0);
+            u32 primeira = 0;
+            while (hashes[primeira] != hashes[c])
+                primeira++;
+            CONFERE(tabela.GetColumnIndex(hashes[c]) == (int)primeira, "%s: coluna %u pelo hash", nome, c);
+        }
+        for (u32 r = 0; r < nl; r++) {
+            u32 linha = linhas + 4 + r * tl;
+            for (u32 c = 0; c < nc; c++) {
+                u32 tipo, pos;
+                if (!g.Campo(ml, 10005 + c, &tipo, &pos))
+                    continue;
+                u32 v = g.P(linha + pos);
+                if (tipo == 5 || tipo == 18) {
+                    // nenhuma tabela tem coluna float (tipo 8); a leitura de float só copia os 4
+                    // bytes do campo, então ela é conferida aqui, nas células de 32 bits
+                    float bits = 0;
+                    CONFERE(tabela.GetFloat(r, c, &bits) && memcmp(&bits, &v, 4) == 0, "%s[%u][%u] como float", nome, r, c);
+                }
+                int tipoColuna = -1;
+                BOOL temTipo = tabela.GetColumnType(r, c, &tipoColuna);
+                if (tipo == 5) {
+                    int lido = 0;
+                    CONFERE(tabela.GetInt(r, c, &lido) && lido == (int)v, "%s[%u][%u]: %d, devia ser %d", nome, r, c, lido, (int)v);
+                    CONFERE(temTipo && tipoColuna == 1, "%s: tipo da coluna %u", nome, c);
+                } else if (tipo == 8) {
+                    float lido = 0;
+                    CONFERE(tabela.GetFloat(r, c, &lido) && memcmp(&lido, &v, 4) == 0, "%s[%u][%u] (float)", nome, r, c);
+                    CONFERE(temTipo && tipoColuna == 2, "%s: tipo da coluna %u", nome, c);
+                } else if (tipo == 18) {
+                    CFixed lido(0);
+                    CONFERE(tabela.GetFixed(r, c, &lido) && lido.m_value == (fx32)v, "%s[%u][%u] (fixo)", nome, r, c);
+                    CONFERE(temTipo && tipoColuna == 2, "%s: tipo da coluna %u", nome, c);
+                } else if (tipo == 0) {
+                    BOOL lido = 2;
+                    CONFERE(tabela.GetBool(r, c, &lido) && lido == ((v & 0xff) != 0), "%s[%u][%u] (bool)", nome, r, c);
+                    CONFERE(temTipo && tipoColuna == 3, "%s: tipo da coluna %u", nome, c);
+                } else if (tipo == 0x20000014) {
+                    // texto ASCII por referência: o tipo, com as flags, não está no switch do
+                    // jogo, e a GetColumnType devolve FALSE
+                    CExoString lido;
+                    const char* esperado = v == 0xffffffff ? "" : (const char*)tabela.m_data + g.Dados() + v + 4;
+                    CONFERE(tabela.GetString(r, c, lido) && strcmp(lido.CStr(), esperado) == 0,
+                            "%s[%u][%u]: \"%s\", devia ser \"%s\"", nome, r, c, lido.CStr(), esperado);
+                    CONFERE(!temTipo, "%s: tipo da coluna %u (texto)", nome, c);
+                    nTipoFalso++;
+                } else {
+                    CONFERE(false, "%s[%u][%u]: tipo 0x%x não esperado", nome, r, c, tipo);
+                }
+                nCelulas++;
+            }
+            // a linha pelo id (o valor da coluna 0): a primeira com aquele id; e um valor
+            // pela chave (id, hash da coluna) é o mesmo que pela posição
+            u32 tipo0, pos0;
+            if (nc > 0 && g.Campo(ml, 10005, &tipo0, &pos0) && tipo0 == 5) {
+                int id = (int)g.P(linha + pos0);
+                u32 primeira = 0;
+                while ((int)g.P(linhas + 4 + primeira * tl + pos0) != id)
+                    primeira++;
+                CONFERE(tabela.GetRowIndex(id) == (int)primeira, "%s: linha %u pelo id %d", nome, r, id);
+                int a = 0, b = 0;
+                if (primeira == r && hashes[0] != 0) {
+                    CONFERE(tabela.GetIntByKey(id, hashes[0], &a) && tabela.GetInt(r, 0, &b) && a == b,
+                            "%s: linha %u pela chave", nome, r);
+                }
+            }
+            nLinhas++;
+        }
+    }
+    printf("tabelas GDA: %u, %u linhas, %u células (%u de texto, cuja GetColumnType dá FALSE)\n",
+           (u32)tabelas.size(), nLinhas, nCelulas, nTipoFalso);
 
     printf(falhas ? "%d FALHA(S)\n" : "OK\n", falhas);
     return falhas ? 1 : 0;

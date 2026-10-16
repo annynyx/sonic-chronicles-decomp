@@ -98,6 +98,13 @@ jogo/02019f34.cpp:
     .data       start:0x020f6224 end:0x020f622c
     .bss        start:0x021a49a8 end:0x021a49c0
 
+src/Aurora/G2DA.cpp:
+    complete
+    .text       start:0x0201ae10 end:0x0201b918
+    .init       start:0x020edeec end:0x020edf08
+    .ctor       start:0x020f5070 end:0x020f5074
+    .data       start:0x020f6270 end:0x020f6300
+
 jogo/CPlotEntry_0201bb84.cpp:
     .text       start:0x0201bb84 end:0x0201c78c
     .data       start:0x020f63d4 end:0x020f63e0

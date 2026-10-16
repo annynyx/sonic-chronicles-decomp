@@ -741,6 +741,56 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   `CGameBaseComponent` (a árvore do RTTI em `hierarquia_classes.md`): é um componente de
   objeto de jogo, e vai para a Fase 4.
 
+## 29. As tabelas GDA e a leitura de GFF4 (Fase 3.4)
+- **O que o arquivo tem.** `src/Aurora/G2DA.cpp` (`0x0201ae10-0x0201b918`) é a `G2DA`, a
+  tabela GDA (o nome vem do RTTI, como o da base, `C2DASource`): abre um `.gda` pelo nome,
+  confere o cabeçalho e lê células pela posição (linha, coluna) ou pela chave (o id da
+  linha, que é o valor da coluna 0, e o hash do nome da coluna), como texto, inteiro,
+  float, booleano ou ponto fixo. No fim do arquivo estão as 13 funções que leem GFF4
+  (`include/Aurora/GFF4.h`, nomes nossos): o arquivo, o modelo de uma struct (com a busca
+  binária do campo), a struct, a lista. **O jogo inteiro usa estas**: a busca do campo tem
+  50 chamadores, 41 de fora da `G2DA`. São 52 funções, mais o `__sinit`, a `.ctor` e a
+  `.data` (typeinfos, vtable de 21 entradas e um `""`).
+- **ROM idêntica na primeira ligação**, e o progresso foi de 14,32% para **14,60%** (o
+  código do jogo, de 1,00% para 1,34%). O CI confere 185 funções (eram 132), entre elas 4
+  cópias que o jogo guardou em outros arquivos: `IsLoaded` e `GetRowCount` (inline na
+  classe, `0x0200f800` e `0x0200c458`), `Get<int>` e a leitura de inteiro (`0x02019348`).
+- **O que fez bater** (o COMPILADOR.md tem as lições, que valem para o resto do jogo):
+  - toda struct ou lista nova recebe o arquivo **montado de novo**,
+    `GFF4File(dados, tamanho)`: o jogo lê o tamanho antes dos dados, porque os argumentos
+    são calculados da direita para a esquerda; uma cópia de struct lê na outra ordem;
+  - o índice do modelo (16 bits do tipo do campo) é **cortado dentro do construtor**, na
+    hora de gravar; cortado no argumento, o corte sai antes;
+  - os leitores de valor `Get<T>` são templates de função, e o compilador põe cada
+    instância **logo depois da primeira função que a usa**, e não no fim do arquivo como os
+    métodos de uma classe template;
+  - o `""` devolvido quando um texto falta está numa **função inline**: assim o compilador
+    lhe dá um nome, ele vai para o bloco das variáveis da `.data` (antes do marcador 2/π,
+    como no jogo) e o linker fica com uma cópia só; a de 16 bits é de outro arquivo
+    (`0x020f585c`) e é usada por três;
+  - o valor padrão do ponto fixo vai **por ponteiro**: a classe tem construtor de cópia;
+  - os acessores por rótulo (`cells.GetInt(10005 + coluna)`) são inline e mudam a ordem dos
+    temporários na pilha; com eles, 51 das 52 bateram. A `GetColumnType` só bateu com as
+    chamadas escritas direto e com o padrão `flag_found` do `parse_format` do MSL (uma
+    variável que vale 1 antes do `switch` e 0 no `default`). Achei o padrão procurando no
+    jogo a mesma sequência de instruções: ela só aparece nesta função e no `parse_format`,
+    cujo fonte é conhecido.
+- **Erro nº 19: um rótulo lido errado.** Escrevi 11000 para o rótulo do tipo de coluna; a
+  constante do jogo é `0x2af7`, 10999. A comparação mostrou a diferença no pool de
+  constantes (`0x2af8` contra `0x2af7`), e o número foi corrigido antes do commit.
+- **Teste com dados reais** (parte 5 do `test_arquivos.cpp`): cada um dos **229 `.gda`** do
+  `erf.dict` é aberto pelo nome com o nosso C++, e linhas, colunas, o hash e o tipo de cada
+  coluna, o id de cada linha e o valor de cada uma das **122.741 células** (9.560 linhas)
+  batem com uma leitura independente do GFF4 feita no teste (que procura os campos um por
+  um, sem a busca binária). Quatro erros plantados foram pegos. O primeiro, numa leitura de
+  float, não foi: **nenhuma tabela do jogo tem coluna float** (só inteiro, byte, ponto fixo
+  e texto ASCII por referência), e o teste passou a conferir essa leitura nas células de
+  32 bits.
+- **Dois achados sobre o jogo.** A `GetColumnType` devolve FALSE para as 17.556 células de
+  texto: o `switch` compara o tipo com as flags (`0x20000014`, texto por referência), e os
+  casos são 14 e 20, sem elas. E o caminho das tabelas "V0.2" nunca roda: ele confere a
+  versão no mesmo lugar onde a `Load` exige "V4.0".
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

@@ -175,6 +175,39 @@ E da tabela de textos ([`src/Aurora/CTlkTable.cpp`](../src/Aurora/CTlkTable.cpp)
   (`r5`); com uma `struct` de um campo, a ordem e os registradores se invertem. O jogo tem
   as duas formas, e isso diz o tipo.
 
+E das tabelas GDA e da leitura de GFF4 ([`src/Aurora/G2DA.cpp`](../src/Aurora/G2DA.cpp), 52
+funções, DIARIO 29):
+
+- **Os argumentos são calculados da direita para a esquerda.** Um objeto montado com
+  `GFF4File(m_data, m_size)` lê o tamanho antes dos dados; a cópia do mesmo objeto
+  (`m_file`) lê os dados primeiro. Quando o jogo lê os campos "de trás para a frente", é um
+  construtor.
+- **Onde fica um corte de tipo.** `(u16)x` passado a um parâmetro `u16` corta na chamada;
+  um parâmetro `u32` guardado com `m_campo((u16)x)` corta na hora de gravar, depois das
+  outras leituras. O jogo tem os dois, e a posição do `lsls`/`lsrs` diz qual.
+- **Templates de função saem logo depois de quem os usa.** Os métodos de uma classe
+  template saem no fim do arquivo, na ordem da declaração; uma função template (ou um
+  método template, como `Get<T>`) sai logo depois da primeira função do arquivo que a
+  instancia, seguida das que ela mesma instancia. É o padrão "função, auxiliar, auxiliar"
+  no meio de um arquivo.
+- **Um literal dentro de uma função inline ganha nome.** O `""` de uma função inline vira
+  um dado com nome (`_ZZ...Es`), multidef, que vai para o bloco das variáveis da `.data`,
+  ordenado por tamanho; numa função comum, ele é local e vai para o fim, junto das strings.
+  Um literal compartilhado entre arquivos do jogo é desse tipo.
+- **Uma classe com construtor de cópia vai por ponteiro.** Passada por valor, uma struct de
+  4 bytes vai num registrador; com construtor de cópia escrito à mão, o compilador passa o
+  endereço de uma cópia.
+- **Funções inline mudam a pilha e os registradores.** O valor devolvido por uma função
+  inline vira um temporário, e os temporários dela entram na pilha depois dos da função de
+  fora. Na mesma função, escrever `s.GetTemplate().FindField(x)->type` ou chamar uma
+  inline que faz isso dá alocações diferentes; os dois aparecem no jogo.
+- **O padrão `flag_found` do MSL.** Uma variável que vale 1 antes de um `switch` e 0 no
+  `default` fica pronta em `r0` antes da árvore de comparações, e cada caso ganha o seu
+  fim de função. Com `return TRUE` em cada caso, o 1 sai repetido em cada um.
+- **Procurar a sequência no jogo.** Quando uma forma não aparece, vale procurar no ARM9 a
+  mesma sequência de instruções: se ela estiver numa função de biblioteca (MSL, NitroSDK),
+  o fonte dela mostra a construção.
+
 ## Registradores e pilha: quem fica onde
 
 Quando uma função tem mais valores vivos do que registradores, o compilador escolhe quais

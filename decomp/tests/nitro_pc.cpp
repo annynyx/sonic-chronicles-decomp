@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include "Aurora/Comum.h"
 #include "Aurora/CExoString.h"
+#include "Aurora/CFixed.h"
 #include "msl.h"
 
 const char* g_pastaPC = ".";
@@ -68,6 +69,10 @@ u32 Crc32(const CExoString& string, u32 length)
         crc = tabela[(crc ^ p[i]) & 0xff] ^ (crc >> 8);
     return crc;
 }
+
+// 0x020c0a0c (de outro arquivo do jogo): o ponto fixo a partir de um float, valor * 4096
+// truncado (o _f_ftoi do jogo corta para zero, como o cast do C).
+CFixed::CFixed(float value) : m_value((fx32)(value * 4096.0f)) {}
 
 // --- NitroSDK: matemática, sistema e memória ---------------------------------------------
 extern "C" fx32 FX_Div(fx32 numer, fx32 denom)

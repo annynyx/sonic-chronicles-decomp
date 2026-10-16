@@ -10,11 +10,10 @@ REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 F="${FERRAMENTAS:-$REPO/work/ferramentas}"
 # 2.0/sp2: o MSL e o Runtime ligados no jogo são os da 2.0 sp2 (docs/COMPILADOR.md)
 VERSAO="${MWCC_VERSAO:-2.0/sp2}"
-SRC="$1"; OUT="$2"; shift 2
-FLAGS=(
-    -c
+# The flags that decide the generated code. `compilar.sh --flags` prints them, for
+# decomp.me scratches (objdiff_config.py), which add -c and -proc arm946e on their own.
+CODE_FLAGS=(
     -O4,p               # otimização máxima, priorizando velocidade
-    -proc arm946e       # a CPU principal do DS
     -thumb              # o código do jogo é Thumb (o NitroSDK é ARM)
     -interworking       # chamadas entre ARM e Thumb
     -enum int -char signed
@@ -24,6 +23,13 @@ FLAGS=(
     -ipa file           # só assim o nome de cada classe (_ZTS) vem antes das strings
                         # do arquivo na .data, como no jogo (conferir_ipa.py)
     -w off
+)
+if [ "${1:-}" = --flags ]; then echo "${CODE_FLAGS[*]}"; exit 0; fi
+SRC="$1"; OUT="$2"; shift 2
+FLAGS=(
+    -c
+    -proc arm946e       # a CPU principal do DS
+    "${CODE_FLAGS[@]}"
     -gccinc -i "$REPO/include"
 )
 mkdir -p "$(dirname "$OUT")"

@@ -7,6 +7,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # on a pull request, HEAD is the merge commit and HEAD^1 the base: the format check
+          # below needs both
+          fetch-depth: 2
+      - name: format of the changed C/C++ lines
+        # .clang-format; only the lines the pull request changes, so older files stay as they are
+        if: github.event_name == 'pull_request'
+        run: |
+          command -v git-clang-format-18 >/dev/null || sudo apt-get install -y clang-format-18
+          git clang-format-18 --binary clang-format-18 --diff HEAD^1 HEAD -- src include decomp/src decomp/tests
       - name: build the C functions
         # test_arquivos: the game's C++ (src/Aurora) built for the PC; running it needs the game
         # files (make -C decomp arquivos PASTA=../work/extract/files), here it is only compiled

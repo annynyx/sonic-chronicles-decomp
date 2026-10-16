@@ -12,13 +12,19 @@
   },
   "project": "Sonic Chronicles: The Dark Brotherhood decompilation",
   "status": "in-progress",
-  "toolchain": "dsd",
+  "toolchain": "Ds-decomp",
+  "targets": ["NDS"],
   "approach": "Matching decompilation of the ARM9 (BioWare Aurora engine) with mwccarm 2.0 sp2, rebuilt byte-identical",
   "maintainers": [{ "name": "annynyx", "link": "https://github.com/annynyx" }],
+  "links": [
+    { "label": "Build guide", "url": "https://github.com/annynyx/sonic-chronicles-decomp/blob/main/docs/BUILD.md" },
+    { "label": "Decompilation plan", "url": "https://github.com/annynyx/sonic-chronicles-decomp/blob/main/docs/PLANO-DECOMPILACAO.md" },
+    { "label": "Technologies", "url": "https://github.com/annynyx/sonic-chronicles-decomp/blob/main/docs/TECHNOLOGY.md" }
+  ],
   "help": [
     "Matching C++ for the Aurora engine classes",
     "Aurora GFF4 and map script formats"
   ],
   "tags": ["matching", "nitrosdk", "bioware", "aurora", "ai-assisted"],
-  "notes": "NitroSystem, most of NitroSDK and the MSL are compiled out of their own source; game code is starting (CExoString, allocator, file system, GDA/2DA/TLK tables). Every file counts only when the rebuild is byte-identical. AI-assisted: most matching work is done by a Claude Code agent and checked by the rebuild. Progress: decomp/tools/progress_report.py."
+  "notes": "NitroSystem, most of NitroSDK and the MSL are compiled out of their own source; game code is in Phase 3, the Aurora engine core (CExoString, allocator, file system, GDA and 2DA tables done; TLK and CRules in progress). Every file counts only when the rebuild is byte-identical. AI-assisted: most matching work is done by a Claude Code agent and checked by the rebuild. Progress: decomp/tools/progress_report.py."
 }

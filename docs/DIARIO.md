@@ -851,6 +851,22 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   `DEFAULT:` existem no código, mas nenhum arquivo da ROM os usa. A `Parse` tem um defeito
   no `DEFAULT` sem dois-pontos: ela desconta o tamanho da linha sem avançar o texto.
 
+## 31. O `ResourcePool<T>` é do inventário (Fase 3.2)
+- **O que o jogo tem.** O RTTI tem uma instância só, `ResourcePool<InventoryData>`. A
+  vtable dela (`0x020fabac`, 2 entradas) aponta para as duas únicas funções compiladas do
+  template, os destrutores: o D1 (`0x02056a0c`) e o D0 (`0x020594fc`). Cada um destrói
+  duas listas de ponteiros (`CExoArrayList<T*>`, em `+0x10` e em `+4`, nessa ordem), e o
+  D0 ainda chama o `delete`. As duas cópias ficam em arquivos diferentes do modo de
+  inventário, como as cópias do destrutor das listas que elas chamam (`0x0201466c`,
+  `0x0205957c`).
+- **O resto é inline.** A função de `0x020565d8` (0x428 bytes) grava a vtable do pool e
+  monta as listas; o mesmo código cria os objetos `InventoryData` (0x94 bytes; pelo RTTI,
+  derivam de `ListData`, em `+0`, e de `Poolable`, em `+0xc`) e os põe nas listas.
+- **Decisão.** Como o `FileReference` (seção 28), o `ResourcePool<T>` sai da Fase 3: sem o
+  código do inventário não há como saber o papel de cada lista nem conferir o template.
+  Ele vai para a Fase 5, junto do modo de inventário. A Fase 3.2 fica com o alocador, o
+  `Singleton<T>` e a `CExoArrayList<T>`.
+
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
 colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de

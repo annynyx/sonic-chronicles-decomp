@@ -27,7 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: compilar as funções em C
-        run: make -C decomp build/test_hash build/test_language && ./decomp/build/test_language
+        # test_arquivos: o C++ do jogo (src/Aurora) compilado no PC; rodar precisa da ROM
+        # (make -C decomp arquivos PASTA=../work/extract/files), aqui só compila
+        run: make -C decomp build/test_hash build/test_language build/test_arquivos && ./decomp/build/test_language
       - name: sintaxe dos scripts
         run: |
           python3 -m py_compile analise/tools/*.py decomp/tools/*.py

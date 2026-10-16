@@ -140,6 +140,17 @@ Quando todas as funções de um pedaço batem no `comparar.py`, ele entra no bui
    `python3 decomp/tools/conferir_sem_rom.py --gerar work/extract/arm9/arm9.bin`
    regrava os hashes, para o CI conferir sem a ROM.
 4. `montar_rom.sh` tem de dizer IDÊNTICA, e `progresso.py` mostra o número novo.
+5. Se o arquivo é do motor (Fase 3), ele entra no teste com dados reais: o
+   `decomp/tests/test_arquivos.cpp` compila o C++ de `src/Aurora` no PC, sem mudar nada,
+   com as funções do NitroSDK e do MSL feitas para o PC em `decomp/tests/nitro_pc.cpp`, e
+   o roda sobre os arquivos que o `montar_rom.sh` extraiu:
+
+   ```
+   make -C decomp arquivos            # usa work/extract/files
+   ```
+
+   O fonte do jogo vale para os dois lados por causa do `include/msl.h`, que tem um ramo
+   para o `mwccarm` (que define `__MWERKS__`) e outro para o PC.
 
 ---
 

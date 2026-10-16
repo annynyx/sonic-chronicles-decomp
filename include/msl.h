@@ -3,6 +3,7 @@
 #ifndef MSL_H
 #define MSL_H
 
+#ifdef __MWERKS__
 typedef unsigned long size_t;
 
 // stdarg do MSL no ARM: o va_list aponta para a pilha, logo depois do último
@@ -36,5 +37,19 @@ int stricmp(const char* a, const char* b);
 // campo do índice HERF); com tamanho variável, vira a chamada a memcpy de sempre. O
 // jogo tem as duas formas, então o memcpy do header que ele usava era este.
 #define memcpy(dst, src, n) __memcpy(dst, src, n)
+
+#else
+// No PC (o teste com dados reais, decomp/tests/test_arquivos.cpp): a biblioteca C do
+// sistema, mais as funções do MSL_Extras que ela não tem (em decomp/tests/nitro_pc.cpp).
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+extern "C" {
+char* strlwr(char* s);
+char* strupr(char* s);
+int stricmp(const char* a, const char* b);
+}
+#endif
 
 #endif

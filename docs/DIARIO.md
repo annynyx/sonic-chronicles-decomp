@@ -504,7 +504,8 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   é uma constante de header, local a cada arquivo.
 - **Um erro do jogo.** Quem devolve um bloco ao pool grava o índice dele na lista, mas
   não diminui o contador de blocos usados. O bloco nunca é reaproveitado, e quando um pool
-  enche, os pedidos vão para o heap. Ficou no C++ como está, com um comentário.
+  enche, os pedidos vão para o heap. Ficou no C++ como está, com um comentário. *(A frase
+  "o bloco nunca é reaproveitado" está errada: Erro nº 18, seção 27.)*
 - **As pontas continuam abertas.** As duas funções vazias depois do `NitroStartUp`
   (`0x020034ec` e `0x020034f0`) e as que vêm antes do destrutor podem ser deste arquivo ou
   dos vizinhos; ficaram no assembly.
@@ -604,6 +605,42 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   o `__sinit`, a `.ctor`, a `.data` (typeinfos, vtables e 21 strings) e a `.bss`; o
   `HashResourceName`, que estava isolado, entrou nele. 119 funções conferidas no CI
   (eram 50) e o progresso foi de 13,76% para **14,32%**.
+
+## 27. O C++ do jogo rodando sobre os dados da ROM (Fase 3)
+- **O teste.** A Fase 3 pede, para cada parte, um teste que leia dados reais. O mais forte
+  é rodar o próprio C++ que gera os bytes do jogo, sem reescrever nada: o
+  `decomp/tests/test_arquivos.cpp` compila `src/Aurora/Memory.cpp`, `CExoString.cpp` e
+  `CDSFileSystem.cpp` com o `g++`, junto com `decomp/tests/nitro_pc.cpp`, que faz para o PC
+  as funções do NitroSDK e do MSL que eles chamam (o cartucho vira a pasta
+  `work/extract/files`, sem diferenciar maiúsculas; as três descompressões da BIOS; o heap).
+  O `include/msl.h` ganhou um ramo para o PC, separado por `__MWERKS__` (o `mwccarm` o
+  define); os bytes do DS não mudam (119 de 119 no `conferir_sem_rom.py`).
+- **O que ele confere:** o `erf.dict` sai pela cadeia inteira do jogo (`CErfResource` →
+  `CErfMan` → `CErfTable` → `CDSFileSystem`); para cada um dos nomes, o hash confere, o
+  recurso é achado e lido, e os bytes batem com uma leitura do índice feita à parte; os
+  `.small` saem descomprimidos com o tamanho do cabeçalho; a leitura de um pedaço, a fila em
+  segundo plano (`ReadFileAsync`, `Update` e o callback) e o pacote de cada idioma do
+  console. Tudo com o alocador do jogo atendendo cada `new` e `delete`.
+- **Resultado:** os **8.689 recursos** do `test.herf` (5.111 `.small` em LZ, 200 sem
+  compressão) saem certos; os idiomas 0 a 6 abrem o pacote certo (inglês para japonês,
+  inglês e o resto). O `erf.dict` diz ter 8.691 nomes: os 2 últimos são entradas zeradas.
+- **Testado ao contrário:** três erros plantados no fonte (a posição dentro do índice, o
+  teste do tipo de compressão, a busca binária) foram todos pegos.
+- **Erro nº 18: o comentário do alocador estava errado.** Eu tinha escrito que um bloco
+  devolvido ao pool "nunca volta a ser usado". Rodando o código do jogo: o `Free` grava o
+  bloco na vaga seguinte da lista de livres, então ele é o **próximo** a sair; o que se
+  perde é o bloco que ocupava aquela vaga, e o contador só sobe, então o pool atende no
+  máximo `m_nCount` pedidos na vida do jogo. O teste agora confere isso (pede, devolve e
+  pede de novo: sai o mesmo bloco; o vizinho de cima nunca sai), e o comentário foi
+  corrigido.
+- **Um achado sobre o jogo.** Com o pool esgotado, devolver um bloco grava 2 bytes logo
+  depois do fim da lista de livres. No PC isso estragou o heap na saída do programa. No DS
+  é inofensivo por sorte: o heap do NitroSDK arredonda cada bloco para 32 bytes, e as
+  listas dos 5 pools têm de 8 a 24 bytes de folga. O `OS_AllocFromHeap` de PC passou a
+  arredondar do mesmo jeito.
+- **Como rodar:** `make -C decomp arquivos` depois do `montar_rom.sh`. O CI compila o
+  teste (assim pega se o C++ do jogo deixar de compilar fora do DS), mas não o roda: não
+  tem a ROM.
 
 ## O que ainda não sabemos
 Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de

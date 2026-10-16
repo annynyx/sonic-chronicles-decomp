@@ -103,8 +103,12 @@ BOOL MemoryPool::Owns(void* p)
     return FALSE;
 }
 
-// 0x02003308. Um erro do jogo: m_nUsed não diminui. O bloco devolvido nunca volta a
-// ser usado, e quando um pool enche os pedidos seguintes vão para o heap.
+// 0x02003308. Um erro do jogo: m_nUsed não diminui. O bloco devolvido vai para a vaga
+// seguinte da lista de livres, então é o próximo a sair; o bloco que ocupava essa vaga
+// nunca mais sai, e o contador só sobe: o pool atende m_nCount pedidos na vida do jogo,
+// e depois tudo vai para o heap. Com o pool esgotado, devolver um bloco grava 2 bytes
+// logo depois do fim da lista, que caem na folga do bloco do heap (o NitroSDK arredonda
+// cada bloco para 32 bytes). Conferido rodando este código: decomp/tests/test_arquivos.cpp.
 void MemoryPool::Free(void* p)
 {
     m_pFree[(u16)m_nUsed] = ((char*)p - m_pData) / m_nBlockSize;

@@ -39,6 +39,39 @@ git push -u origin phase0/delink   # PR into dev; when dev is ready, PR dev -> m
   ```
 - Mistakes and discarded hypotheses are contributions too: write them down in the
   [journal](docs/DIARIO.md).
+- To see a file you are writing next to the game's code, use objdiff:
+  `python3 decomp/tools/objdiff_config.py` after a `montar_rom.sh`, then open the repository
+  folder in [objdiff](https://github.com/encounter/objdiff). See
+  [BUILD.md](docs/BUILD.md#comparing-with-objdiff).
+
+## Naming
+A name is a claim about the game, so it follows the same rule as everything else: it needs
+evidence. A neutral name is better than a wrong one.
+
+- **Unknown functions and data keep the names `dsd` gives them**: `func_0201ef68`,
+  `data_020f5404` (the address in 8 lowercase hex digits).
+- **Classes are named as the game's RTTI spells them** (`CExoString`, `CRules`, `ActionQueue`;
+  the 290 classes are in [hierarquia_classes.md](docs/hierarquia_classes.md)). Don't invent a
+  class the RTTI doesn't have without evidence for it.
+- **Names found automatically** by `analise/tools/rtti.py` keep the address as a suffix, so
+  two of them never collide, and say how they were found: `Class__vfuncNN_<address>` (slot
+  NN of the class's vtable), `Class__dtor_<address>`, `Class__ctor_<address>`, and
+  `constructs_Class_<address>` for a function that builds the object inline (a singleton's
+  `Instance()`, for example), which is not the constructor itself.
+- **A name given by hand** goes in `analise/symbols_manual.txt` as `Class_Method`, or a
+  verb phrase for a free function (`HashResourceName`), with the evidence in the comment.
+  Method names taken from what is known about other Aurora games (Neverwinter Nights) are
+  hypotheses until the code agrees.
+- **Library functions keep their real names** (`OS_GetOwnerInfo`, `FX_Div`), the ones in the
+  NitroSDK, NitroSystem and MSL sources.
+- **Decompiled functions use the compiler's names.** When a file matches,
+  `nomes_do_fonte.py` writes the mangled names (`_ZN10CExoStringC1EPKc`) into `symbols.txt`,
+  because that is the name the rest of the game calls ([BUILD.md](docs/BUILD.md#a-decompiled-file-enters-the-build)).
+- **In the C++**, members start with `m_`; the Aurora-style type letter (`m_bLoaded`,
+  `m_nNumRows`, `m_pBuffer`, `m_sString`) is welcome but not required.
+- **Files**: an engine class goes in `src/Aurora/<Class>.cpp` with its header in
+  `include/Aurora/<Class>.h`. A game file not decompiled yet is named in `delinks.txt` as
+  `jogo/<Class>_<address>.cpp` (its most cited class and first address) or `jogo/<address>.cpp`.
 
 ## Style
 - Documentation, comments and commit messages in English, explaining the *why* (formats:
@@ -46,3 +79,6 @@ git push -u origin phase0/delink   # PR into dev; when dev is ready, PR dev -> m
   Portuguese; translate a comment when you touch it, but don't rename files or scripts in
   unrelated PRs, because the build and the decompilation agent depend on those names.
 - Commit messages in the imperative mood.
+- C and C++ follow [`.clang-format`](.clang-format), the style the code already has. Format
+  only what you change: `git clang-format` formats the lines changed since the last commit,
+  and CI checks the lines a pull request changes, the same way.

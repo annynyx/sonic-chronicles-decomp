@@ -368,6 +368,43 @@ uploads it as the `YWSE_report` artifact, which is what progress trackers such a
 [recomp.fyi](https://recomp.fyi) read from the default branch. Since only `complete` files
 count, "matched" and "fuzzy" are the same number: there is no partial credit.
 
+## Comparing with objdiff
+
+`comparar.py` answers "does this function match?" from the command line.
+[objdiff](https://github.com/encounter/objdiff) is the graphical tool most decompilations
+use for the same question: it shows each function of the game next to what our C++ compiles
+to, marks the instructions that differ, and recompiles the file every time it is saved.
+
+```
+decomp/tools/montar_rom.sh rom.nds            # extracts and delinks the game (work/build/)
+python3 decomp/tools/objdiff_config.py        # writes objdiff.json
+```
+
+Then choose the repository folder as the project directory in objdiff.
+`objdiff.json` is generated from `delinks.txt` and stays out of Git: run the script again
+after changing `delinks.txt`.
+
+What the script sets up, on top of `dsd objdiff`:
+
+- Each file in `delinks.txt` is a unit. The game's side is the `.o` that `dsd delink` cut
+  (`work/build/delinks/`); ours is compiled by `decomp/tools/objdiff_build.sh`, which calls
+  `compilar.sh`, so objdiff uses the same compiler and flags as the real build.
+- A game file not decompiled yet (`jogo/...`) has only the game's side: it is there to read,
+  and to start a decomp.me scratch from.
+- Scratches use decomp.me's `mwcc_30_136`, which is `mwccarm` 2.0 sp2 (its `mwccarm.exe`
+  reports "FileVersion 3.0 build 136"), the flags `compilar.sh --flags` prints, and the
+  preprocessed headers as context. The libraries get no scratch: they are already linked
+  from source, with other flags.
+- objdiff pairs functions by name. A file still in progress shows both sides when its entry
+  in `delinks.txt` is named after its source (`src/Aurora/CRules.cpp` instead of
+  `jogo/0201ef68.cpp`) and `symbols.txt` has the names the compiler gives its functions.
+  Without `complete`, the build still links the game's code, so the ROM stays identical.
+
+The check that it works: with objdiff-cli 3.4.0, `objdiff-cli report generate` on this
+`objdiff.json` gives 100% for each of the 5 decompiled game files. A few library files
+(MSL's floating-point routines, 4 others at 99.99%) come out below 100% in objdiff although
+the ROM is identical; the SHA-1 is what decides.
+
 ## The tools and their versions
 
 | Tool | Version | Where from |

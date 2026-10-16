@@ -62,6 +62,6 @@ writes counts only when CI says its bytes match and the rebuilt ROM is identical
 |---|---|
 | Wine | wibo does the same job for these compilers, smaller and faster |
 | A modern compiler (GCC, Clang) for the game code | it can't produce the original bytes; it is used only for the PC test |
-| splat / decomp-toolkit | made for other consoles (N64, PS2, GameCube/Wii); dsd is the DS equivalent |
+| splat / decomp-toolkit | made for other consoles (N64, PS2, GameCube/Wii); dsd is the DS equivalent, also used by other DS decomps such as Phantom Hourglass, Spirit Tracks and Advance Wars: Dual Strike |
 | Committing assembly, pseudo-C or game files | they are the game's code and data; everything derived from the ROM is generated locally from your own copy |
 | AI or decompiler output as proof | both are guesses; only the compiler and the SHA-1 decide |

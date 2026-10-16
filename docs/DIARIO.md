@@ -1,680 +1,683 @@
-# Diário das descobertas
+# Journal of findings
 
-A história do projeto, em ordem, com as hipóteses que deram certo e as que deram errado.
-Cada entrada diz **como** a coisa foi descoberta e **como** foi confirmada.
+The story of the project, in order, with the hypotheses that worked and the ones that didn't.
+Each entry says **how** the thing was found and **how** it was confirmed.
+
+(*Diário* is Portuguese for journal; the file keeps its original name because other
+documents and tools point to it. Mistakes are numbered "Erro nº N", mistake no. N.)
 
 ---
 
-## 1. Abrindo a ROM
-- Código do jogo `YWSE`, ARM9 de 1,1 MB **sem compressão e sem overlays** (raro: facilita
-  muito), NitroSDK 4.2 (`0x04027531`, achado no bloco de parâmetros do módulo, assinatura
+## 1. Opening the ROM
+- Game code `YWSE`, a 1.1 MB ARM9 **without compression and without overlays** (rare: it
+  helps a lot), NitroSDK 4.2 (`0x04027531`, found in the module's parameter block, signature
   `0xDEC00621`).
-- 303 arquivos na raiz do NitroFS. As extensões `2DA`, `GFF`, `TLK` denunciaram o motor:
-  **Aurora, da BioWare**, o mesmo de NWN/KotOR/Dragon Age, adaptado para o DS.
-- O xoreos (reimplementação livre dos motores BioWare) já tinha estudado o jogo, mas só
-  como visualizador.
+- 303 files at the root of NitroFS. The `2DA`, `GFF`, `TLK` extensions gave away the engine:
+  **BioWare's Aurora**, the same as NWN/KotOR/Dragon Age, adapted to the DS.
+- xoreos (a free reimplementation of the BioWare engines) had already studied the game, but
+  only as a viewer.
 
-## 2. Mapeando o código
-- O `dsd` (ds-decomp) achou as funções seguindo as chamadas. Travou em `0x020ecc3c`: uma
-  função **escrita à mão em assembly** que salva todos os registradores (estilo
-  `setjmp`), logo após outra que termina num incomum `bx r2`. Solução: permitir
-  chamadas para funções desconhecidas. Resultado: **6.820 funções**.
-- Tentativa que não deu em nada: uma tabela com **98 tags de profiling**
-  (`"Creat:UpdtGamepl"`, `"BG:SetFocusPoint"`...). Procurei a função `Begin` do profiler
-  estatisticamente e não achei: o profiler foi **desligado** na versão final (a função de
-  relatório, `0x020660c4`, não tem chamador). Ainda assim, os nomes revelam os subsistemas.
+## 2. Mapping the code
+- `dsd` (ds-decomp) found the functions by following the calls. It got stuck at
+  `0x020ecc3c`: a function **written by hand in assembly** that saves every register
+  (`setjmp` style), right after another that ends in an unusual `bx r2`. Solution: allow
+  calls to unknown functions. Result: **6,820 functions**.
+- An attempt that led nowhere: a table with **98 profiling tags** (`"Creat:UpdtGamepl"`,
+  `"BG:SetFocusPoint"`...). I looked for the profiler's `Begin` function statistically and
+  didn't find it: the profiler was **turned off** in the final version (the report function,
+  `0x020660c4`, has no caller). Still, the names reveal the subsystems.
 
-## 3. O RTTI: os nomes reais das classes
-- Strings como `13CGameCreature` são nomes C++ "mangled", guardados para
-  `dynamic_cast` e exceções. Seguindo `nome → typeinfo → vtable → funções`:
-  **290 classes com herança, 351 vtables**.
-- **Erro nº 1:** marquei como construtor toda função que lia o endereço de uma vtable.
-  O assembly mostrou funções que só *registravam um singleton* (`static` local com o
-  construtor inlinado). Correção: construtor é quem **grava** a vtable no offset 0, e
-  quem faz isso dentro de outra tarefa vira `constructs_<Classe>`.
-- **Erro nº 2:** supus o layout da ABI Itanium (destrutores nos slots 0 e 1 da vtable).
-  O pseudo-C do Ghidra mostrou que os slots 0 e 1 eram métodos comuns. No CodeWarrior,
-  o destrutor fica na ordem em que foi declarado. Correção: destrutor é **o método
-  virtual que grava a vtable da própria classe em `this`**. 151 encontrados.
+## 3. RTTI: the real class names
+- Strings like `13CGameCreature` are "mangled" C++ names, kept for `dynamic_cast` and
+  exceptions. Following `name → typeinfo → vtable → functions`: **290 classes with
+  inheritance, 351 vtables**.
+- **Erro nº 1:** I marked as a constructor every function that read a vtable's address. The
+  assembly showed functions that only *registered a singleton* (a local `static` with the
+  constructor inlined). Fix: a constructor is whoever **writes** the vtable at offset 0, and
+  whoever does that inside another task becomes `constructs_<Class>`.
+- **Erro nº 2:** I assumed the Itanium ABI layout (destructors in vtable slots 0 and 1).
+  Ghidra's pseudo-C showed slots 0 and 1 were ordinary methods. In CodeWarrior, the
+  destructor sits in the order it was declared. Fix: a destructor is **the virtual method
+  that writes its own class's vtable into `this`**. 151 found.
 
-## 4. Uma função do começo ao fim: o hash dos nomes
-O pacote `test.herf` guarda só hashes dos nomes. Testei candidatos (DJB2, CRC32, FNV) e
-o DJB2 do nome em minúsculas bateu. Depois achei **a função do jogo** que calcula isso,
-pela constante 5381 (`0x1505`):
+## 4. One function from start to end: the name hash
+The `test.herf` pack only keeps hashes of the names. I tested candidates (DJB2, CRC32, FNV)
+and the DJB2 of the lowercase name matched. Then I found **the game's function** that
+computes it, through the constant 5381 (`0x1505`):
 
 ```asm
-ldr   r4, =0x1505          ; hash = 5381          <- assinatura do DJB2
+ldr   r4, =0x1505          ; hash = 5381          <- DJB2's signature
 bl    CExoString__CStr     ; s = name.CStr()
-ldrsb r5, [r0, r1]         ; c = (signed char)*s   <- COM sinal!
-ldrb  r5, [r0, r5]         ; se 0<=c<0x80: c = tabela_minusculas[c]
+ldrsb r5, [r0, r1]         ; c = (signed char)*s   <- SIGNED!
+ldrb  r5, [r0, r5]         ; if 0<=c<0x80: c = lowercase_table[c]
 lsl   r7, r4, #5 ; add r4, r7 ; add r4, r5, r4      ; hash = hash*33 + c
 ```
-Reescrita em C (`decomp/src/resource_hash.c`) e em Rust. Detalhe que só o assembly
-revela: o caractere é lido **com sinal**. O teste em C recalcula todos os nomes do jogo.
+Rewritten in C (`decomp/src/resource_hash.c`) and in Rust. A detail only the assembly
+reveals: the character is read **signed**. The C test recomputes every name in the game.
 
-**Erro nº 3:** o teste em C pegou **4 nomes falsos** que o ataque de dicionário tinha
-aceitado: colisões de hash com "palavras" tiradas de bytes aleatórios.
+**Erro nº 3:** the C test caught **4 false names** the dictionary attack had accepted: hash
+collisions with "words" taken from random bytes.
 
-## 5. Os formatos de dados
-- **`.small`**: primeiro achei só LZ10 (byte `0x10`). Sobravam 185 arquivos começando com
-  `00 28 02 00`. O cabeçalho é `tipo | tamanho << 8`, e o **tipo 0 é sem compressão**.
-- **GFF4**: o mesmo do Dragon Age, mas o TLK usa texto de **8 bits** (no PC é UTF-16),
-  enquanto os diálogos usam UTF-16. Há dois tipos de campo só do Sonic: 18 (ponto fixo
-  20.12 do DS) e 20 (ASCII inline).
-- **GDA**: os nomes de coluna são `CRC32(nome.lower() em UTF-16)`. 534 de 845 são
-  conhecidos (os mesmos 63% do xoreos).
-- **Diálogos**: o campo "quem fala" vale sempre `PLAYER`. Quem fala de verdade, e com
-  que **emoção**, está no nome do retrato: `tailssca` = Tails assustado.
+## 5. The data formats
+- **`.small`**: at first I only found LZ10 (byte `0x10`). 185 files starting with
+  `00 28 02 00` were left. The header is `type | size << 8`, and **type 0 is uncompressed**.
+- **GFF4**: the same as Dragon Age's, but the TLK uses **8-bit** text (on PC it is UTF-16),
+  while dialogs use UTF-16. There are two field types unique to Sonic: 18 (DS 20.12 fixed
+  point) and 20 (inline ASCII).
+- **GDA**: column names are `CRC32(name.lower() in UTF-16)`. 534 of 845 are known (the same
+  63% as xoreos).
+- **Dialogs**: the "who speaks" field is always `PLAYER`. Who really speaks, and with what
+  **emotion**, is in the portrait's name: `tailssca` = Tails scared.
 
-## 6. Os cenários (formato que ninguém tinha decifrado)
-1. `.pal` com 136.192 bytes = 1.064 × 128? Primeira hipótese: paleta de 64 cores por
-   tile. Os índices chegavam a 215, então estava errada.
-2. Os tiles são LZ10 de 4.096 bytes (64×64). Desenhados linha a linha, saíam listrados;
-   em **blocos de 8×8**, apareceram folhas e pedras.
-3. Ainda havia ruído: 136.192 = 266 × 512 = **266 paletas de 256 cores**, e
-   38 × 28 tiles / 4 = 266. Ou seja, uma paleta por bloco de 2×2 tiles.
-4. A posição dos tiles ainda estava errada. Em vez de chutar, **medi** a diferença de
-   cor nas bordas entre vizinhos para cada hipótese de ordem. A melhor deu 35, ainda
-   ruim. O `.2da` da área era um **mapa de paletas** (paletas numeradas coluna a coluna).
-   Com ele: **4,8**. Green Hill apareceu inteira.
-5. Profundidade (`.cdpth`): mesmo índice, mas valores de 16 bits em ordem **linear**
-   (diferente da cor!), com `0x7FFF` = vazio. Ela mostra os pilares e as estátuas que
-   ficam na frente dos personagens.
+## 6. The backgrounds (a format nobody had decoded)
+1. `.pal` with 136,192 bytes = 1,064 × 128? First hypothesis: a 64-color palette per tile.
+   The indices went up to 215, so it was wrong.
+2. The tiles are 4,096-byte LZ10 (64×64). Drawn row by row, they came out striped; in **8×8
+   blocks**, leaves and rocks appeared.
+3. There was still noise: 136,192 = 266 × 512 = **266 palettes of 256 colors**, and 38 × 28
+   tiles / 4 = 266. In other words, one palette per 2×2 block of tiles.
+4. The tile positions were still wrong. Instead of guessing, I **measured** the color
+   difference at the edges between neighbors for each ordering hypothesis. The best gave 35,
+   still bad. The area's `.2da` was a **palette map** (palettes numbered column by column).
+   With it: **4.8**. Green Hill appeared whole.
+5. Depth (`.cdpth`): the same index, but 16-bit values in **linear** order (unlike the
+   color!), with `0x7FFF` = empty. It shows the pillars and statues that stand in front of
+   the characters.
 
-## 7. O dicionário oficial
-Dentro do próprio pacote havia um `erf.dict` com **todos os nomes** dos recursos. Ele
-levou a recuperação a 100% e revelou mais **12 nomes falsos** do ataque de dicionário
-(ex.: `1_c.emit`, que na verdade é `BTN_PUZZ_ON.NCGR`). Lição: um método esperto que
-acerta 91% ainda erra; a fonte oficial, quando existe, vale mais.
+## 7. The official dictionary
+Inside the pack itself there was an `erf.dict` with **every resource name**. It took the
+recovery to 100% and revealed **12 more false names** from the dictionary attack (e.g.
+`1_c.emit`, which is really `BTN_PUZZ_ON.NCGR`). Lesson: a clever method that gets 91% right
+still gets things wrong; the official source, when there is one, is worth more.
 
-## 8. Paletas dos sprites
-**Erro nº 4:** a regra "paleta mais comum do mesmo prefixo" pintou **555 retratos com a
-paleta do Tails**. Correção: as tabelas dizem a paleta de cada personagem
-(`creatures.gda`: `PRTL_TAILS` → `PRTL_Tal.nclr`), e as telas `.gui` dizem a de cada
-elemento. 1.747 imagens passaram a ter a paleta confirmada pelo jogo.
+## 8. Sprite palettes
+**Erro nº 4:** the rule "most common palette of the same prefix" painted **555 portraits with
+Tails' palette**. Fix: the tables give each character's palette (`creatures.gda`:
+`PRTL_TAILS` → `PRTL_Tal.nclr`), and the `.gui` screens give each element's. 1,747 images now
+have their palette confirmed by the game.
 
-## 9. Escrevendo de volta: o caminho do modding
-Para modificar, é preciso **escrever** os formatos. O critério foi ler e reescrever sem
-mudanças e obter o arquivo original byte a byte:
-- GDA: 137 de 229 na primeira tentativa. O preenchimento entre textos é `0xFF`, não
-  zero. Depois disso, 229 de 229.
-- HERF: faltava alinhar também o fim do arquivo. Depois, 6 de 6 (incluindo o de 49 MB).
-- **TLK: é uma tabela hash.** Das 18.845 entradas, 4.711 estavam vazias (id
-  `0xFFFFFFFF`) e os ids não tinham ordem. Hashes comuns não explicavam as posições.
-  Fui ao **código do jogo**: a função `0x020989fc` (a busca de textos) mostrou a fórmula,
-  uma variante do hash de inteiros de Thomas Wang, com sondagem linear. Conferida:
-  14.134 de 14.134 posições corretas. Sem isso, um texto novo ficaria numa posição
-  onde o jogo nunca o procuraria.
-- Compressor LZ10 **sem referências de distância 1**: a rotina da BIOS que escreve na
-  VRAM grava 16 bits por vez e quebraria com elas.
+## 9. Writing back: the road to modding
+To modify, you need to **write** the formats. The criterion was to read and rewrite without
+changes and get the original file byte for byte:
+- GDA: 137 of 229 on the first try. The padding between texts is `0xFF`, not zero. After
+  that, 229 of 229.
+- HERF: the end of the file had to be aligned too. After that, 6 of 6 (including the 49 MB
+  one).
+- **TLK: it is a hash table.** Of the 18,845 entries, 4,711 were empty (id `0xFFFFFFFF`) and
+  the ids had no order. Common hashes didn't explain the positions. I went to **the game's
+  code**: function `0x020989fc` (the text lookup) showed the formula, a variant of Thomas
+  Wang's integer hash, with linear probing. Checked: 14,134 of 14,134 positions right.
+  Without it, a new text would land in a position where the game would never look for it.
+- LZ10 compressor **without distance-1 references**: the BIOS routine that writes to VRAM
+  writes 16 bits at a time and would break with them.
 
-## 10. No emulador
-- O DeSmuME roda sem janela (`py-desmume` com `SDL_VIDEODRIVER=dummy`) a ~110 fps. Um
-  roteiro de toques chega à tela de título e à citação de abertura.
-- Teste 1: trocar o texto da citação (TLK). Funcionou.
-- Teste 2, pelo `sonic-mod`: editar a tabela `Chapter0` para apontar para um **texto novo**
-  (id 990001) que não existia. A tela mostrou o texto novo. Isso prova a edição de
-  tabela, a inserção na tabela hash do TLK e a gravação de arquivo maior no fim do
-  cartucho, tudo ao mesmo tempo.
+## 10. In the emulator
+- DeSmuME runs without a window (`py-desmume` with `SDL_VIDEODRIVER=dummy`) at ~110 fps. A
+  script of touches reaches the title screen and the opening quote.
+- Test 1: change the quote's text (TLK). It worked.
+- Test 2, through `sonic-mod`: edit the `Chapter0` table to point to a **new text** (id
+  990001) that didn't exist. The screen showed the new text. That proves the table edit, the
+  insertion into the TLK hash table and writing a larger file at the end of the cartridge,
+  all at once.
 
-## 11. O combate
-O resultado está em [`COMBATE.md`](COMBATE.md). O caminho:
+## 11. Combat
+The result is in [`COMBATE.md`](COMBATE.md). The road:
 
-- **Das regras para o código.** `combatrules.gda` tem 74 números sem nome. A função que
-  a carrega (0x0201f270) copia cada linha para uma variável global; cruzando cada global
-  com as funções que a leem, cada regra ganhou um "dono" (ex.: as regras 7, 8 e 11 só
-  aparecem no `Defend`). Foi assim que as fórmulas foram achadas: pelos números que elas
-  usam, não pelos nomes.
-- **Funções pequenas executadas de verdade.** O dano usa ponto flutuante por software
-  (`0x020ea840`, `0x020ea8d0`...). Em vez de adivinhar pelo nome, cada uma foi executada
-  no Unicorn com entradas conhecidas (`3 → 3.0`, `6.0 / 4.0 → 1.5`). O mesmo para o
-  `RollDice` (0x02008550).
-- **Erro nº 5:** o Ghidra mostrou `func_020d5cfc(x)` com **um** argumento e eu a tratei
-  como uma função de uma entrada (raiz? inverso?). No Unicorn ela travava. O assembly
-  mostrou que é o **divisor de hardware** do DS (registradores 0x4000280) e que o segundo
-  argumento (`r1 = 0x64000`, ou 100,0 em ponto fixo) existe, só o Ghidra o perdeu. Lição:
-  quando o pseudo-C parece estranho, o assembly decide.
-- **Os nomes das colunas mentem às vezes.** A coluna `GUITypeAggressive` de `combo.gda`
-  (nome vindo do dicionário do xoreos) guarda 0,3/0,5/0,8: a chance do status por nível.
-- **O texto do próprio jogo como prova.** As habilidades especiais têm só um código
-  numérico. As descrições dos Chao e dos acessórios ("Increases the team's chances of
-  Ambushing...") deram o significado de cada código, e o código da emboscada confirmou
-  os de número 21 e 22. O diário de regras do jogo (`journalrules.gda`) confirmou a
-  ligação entre Armor/Grit, Power/dano e os pares de status e curas.
-- **Uma descoberta que contradiz o texto.** O diário do jogo diz que o Clover Juice cura
-  Cursed; o `.ITM` dele não tem a linha de remoção. Ficou registrado como está.
-- O gerador `analise/tools/combate_tabelas.py` transforma as tabelas e os arquivos de
-  efeito em Markdown legível, para conferir tudo isto na sua cópia.
+- **From the rules to the code.** `combatrules.gda` has 74 unnamed numbers. The function
+  that loads it (0x0201f270) copies each row into a global variable; cross-referencing each
+  global with the functions that read it, each rule got an "owner" (e.g. rules 7, 8 and 11
+  only appear in `Defend`). That is how the formulas were found: through the numbers they
+  use, not through names.
+- **Small functions actually executed.** The damage uses software floating point
+  (`0x020ea840`, `0x020ea8d0`...). Instead of guessing by name, each one was run in Unicorn
+  with known inputs (`3 → 3.0`, `6.0 / 4.0 → 1.5`). The same for `RollDice` (0x02008550).
+- **Erro nº 5:** Ghidra showed `func_020d5cfc(x)` with **one** argument and I treated it as a
+  one-input function (square root? inverse?). In Unicorn it hung. The assembly showed it is
+  the DS's **hardware divider** (registers 0x4000280) and that the second argument (`r1 =
+  0x64000`, or 100.0 in fixed point) exists, Ghidra just lost it. Lesson: when the pseudo-C
+  looks odd, the assembly decides.
+- **Column names lie sometimes.** The `GUITypeAggressive` column of `combo.gda` (a name from
+  xoreos' dictionary) holds 0.3/0.5/0.8: the status chance per level.
+- **The game's own text as proof.** Special abilities only have a numeric code. The
+  descriptions of the Chao and accessories ("Increases the team's chances of Ambushing...")
+  gave each code's meaning, and the ambush code confirmed numbers 21 and 22. The game's rules
+  journal (`journalrules.gda`) confirmed the link between Armor/Grit, Power/damage and the
+  pairs of statuses and cures.
+- **A finding that contradicts the text.** The game's journal says Clover Juice cures
+  Cursed; its `.ITM` has no removal row. It was recorded as it is.
+- The generator `analise/tools/combate_tabelas.py` turns the tables and the effect files into
+  readable Markdown, so you can check all of this on your copy.
 
-## 14. A ROM reconstruída (Fase 0)
-O guia está em [`BUILD.md`](BUILD.md). O caminho:
+## 14. The rebuilt ROM (Phase 0)
+The guide is in [`BUILD.md`](BUILD.md). The road:
 
-- **Ferramentas sem Windows.** Os compiladores da Metrowerks são `.exe` de 32 bits. O
-  `wibo`, um carregador mínimo feito pela comunidade de decompilação, roda eles no
-  Linux sem Wine. O pacote de compiladores é o mesmo que o decomp.me usa.
-- **Desmontar e montar de novo.** `dsd delink` corta o ARM9 em `.o` com as
-  relocações no lugar dos endereços; o `mwldarm` (o linker original) junta tudo. O
-  ARM9, o ITCM e o DTCM saíram idênticos na primeira tentativa: as 60 mil relocações
-  achadas pelo `dsd init` estão certas.
-- **Os 20 bytes teimosos.** A ROM inteira ainda tinha 20 bytes diferentes, nenhum de
-  código. 16 eram do ícone: a paleta tem duas cores iguais e o PNG intermediário do
-  `dsd` não guarda qual índice era qual. Os outros eram o CRC da área segura, que
-  depende da chave da BIOS do ARM7. Os dois foram resolvidos sem a BIOS, e o SHA-1
-  bateu: `f4ff8291...`.
-- **Erro nº 7:** primeiro li as diferenças do ícone como "índice 8 virou 6" (olhando
-  os bytes em octal do `cmp`). Comparando nibble a nibble, todas eram 4 → 2: as duas
-  entradas com a mesma cor. A causa certa só apareceu quando li o código do `ds-rom`
-  que converte o PNG.
-- **Uma falha da ferramenta.** Compilado do código mais novo, o `dsd` recusava
-  qualquer divisão do ARM9 em arquivos ("nome duplicado" nos buracos sem fonte). O
-  binário da release 0.12.1 não tem o problema; ficamos com ele.
+- **Tools without Windows.** Metrowerks' compilers are 32-bit `.exe` files. `wibo`, a
+  minimal loader made by the decompilation community, runs them on Linux without Wine. The
+  compiler package is the same one decomp.me uses.
+- **Taking it apart and putting it back together.** `dsd delink` cuts the ARM9 into `.o`
+  files with relocations in place of the addresses; `mwldarm` (the original linker) joins
+  everything. The ARM9, ITCM and DTCM came out identical on the first try: the 60 thousand
+  relocations found by `dsd init` are right.
+- **The 20 stubborn bytes.** The whole ROM still had 20 different bytes, none of them code.
+  16 were the icon's: the palette has two equal colors and `dsd`'s intermediate PNG doesn't
+  keep which index was which. The others were the secure area CRC, which depends on the ARM7
+  BIOS key. Both were solved without the BIOS, and the SHA-1 matched: `f4ff8291...`.
+- **Erro nº 7:** at first I read the icon differences as "index 8 became 6" (looking at
+  `cmp`'s bytes in octal). Comparing nibble by nibble, they were all 4 → 2: the two entries
+  with the same color. The real cause only showed up when I read the `ds-rom` code that
+  converts the PNG.
+- **A tool bug.** Built from the newest code, `dsd` refused any split of the ARM9 into files
+  ("duplicate name" in the holes without source). The 0.12.1 release binary doesn't have the
+  problem; we stuck with it.
 
-## 15. O compilador (Fase 1)
-O resultado está em [`COMPILADOR.md`](COMPILADOR.md): **mwccarm 2.0, `-O4,p`, Thumb**.
+## 15. The compiler (Phase 1)
+The result is in [`COMPILADOR.md`](COMPILADOR.md): **mwccarm 2.0, `-O4,p`, Thumb**.
 
-- **Comparar sem o linker.** `decomp/tools/comparar.py` põe lado a lado a função do
-  jogo e a do `.o`, ignorando os bytes que só o linker preenche (o destino de um
-  `bl`, os ponteiros do pool de constantes).
-- **CExoString::CStr** bateu de primeira em todas as versões 2.0: é pequena demais para
-  dizer qual. **HashResourceName** precisou de 3 rodadas: o `tolower` inline com `||`
-  explicou o registrador-bandeira, e uma variável temporária acertou a ordem dos
-  operandos da última soma.
-- **Procurando uma função que separe as versões.** Compilei ~30 construções de C++
-  com todas as versões: só três famílias geram código diferente (1.2, 2.0 e DSi).
-  Uma diferença da DSi é alocar `r4-r7` onde a 2.0 usa `r3-r6`; procurando funções do
-  jogo com esse padrão, a remoção de item de uma lista (`0x0202d428`) bateu com toda a
-  2.0 e com nenhuma DSi.
-- **Exceções desligadas.** Com exceções ligadas o hash ganhava uma entrada no
-  `.exceptix`; as do jogo são todas da biblioteca MSL. O jogo foi compilado sem.
-- **Erro nº 8:** o `comparar.py` media as relocações pela primeira seção `.text` do
-  `.o`. Com uma função de template (que o compilador põe numa seção própria), as
-  relocações erradas eram mascaradas e uma função idêntica aparecia como diferente. A
-  seção certa é a que o campo `sh_info` da seção de relocações aponta.
-- **O service pack pelas bibliotecas.** O código do jogo não separava as versões 2.0,
-  mas o MSL que vem pronto com cada CodeWarrior sim. Procurando no jogo as funções das
-  bibliotecas de 7 versões, só a 2.0 sp2 achou todas as 283 (as outras, de 274 a 280).
-  De quebra, 171 funções do MSL ganharam o nome verdadeiro (`memcpy`, `fwrite`...).
-- **Do teste para o jogo.** CStr e o hash viraram `src/Aurora/*.cpp`, marcados
-  `complete` no `delinks.txt`. O build passou a usar o nosso `.o` no lugar do código
-  original, e o SHA-1 continuou o mesmo. Para provar que a verificação funciona,
-  desfiz a variável temporária do hash: o build falhou apontando o byte
-  `0x02009ba6`, a soma com os operandos trocados.
+- **Comparing without the linker.** `decomp/tools/comparar.py` puts the game's function and
+  the `.o`'s side by side, ignoring the bytes only the linker fills in (a `bl`'s target, the
+  constant pool pointers).
+- **CExoString::CStr** matched on the first try with every 2.0 version: it is too small to
+  tell which. **HashResourceName** needed 3 rounds: the inline `tolower` with `||` explained
+  the flag register, and a temporary variable got the order of the last addition's operands
+  right.
+- **Looking for a function that tells the versions apart.** I compiled ~30 C++ constructs
+  with every version: only three families produce different code (1.2, 2.0 and DSi). One DSi
+  difference is allocating `r4-r7` where 2.0 uses `r3-r6`; searching the game for functions
+  with that pattern, the list item removal (`0x0202d428`) matched every 2.0 and no DSi.
+- **Exceptions off.** With exceptions on, the hash got an `.exceptix` entry; the game's are
+  all from the MSL library. The game was compiled without them.
+- **Erro nº 8:** `comparar.py` measured relocations against the `.o`'s first `.text`
+  section. With a template function (which the compiler puts in its own section), the wrong
+  relocations were masked and an identical function showed up as different. The right
+  section is the one the relocation section's `sh_info` field points to.
+- **The service pack from the libraries.** The game's code didn't tell the 2.0 versions
+  apart, but the MSL that comes prebuilt with each CodeWarrior did. Searching the game for the
+  functions of the libraries of 7 versions, only 2.0 sp2 found all 283 (the others, from 274
+  to 280). As a bonus, 171 MSL functions got their real names (`memcpy`, `fwrite`...).
+- **From the test to the game.** CStr and the hash became `src/Aurora/*.cpp`, marked
+  `complete` in `delinks.txt`. The build started using our `.o` in place of the original
+  code, and the SHA-1 stayed the same. To prove the check works, I undid the hash's
+  temporary variable: the build failed pointing at byte `0x02009ba6`, the addition with the
+  operands swapped.
 
-## 16. O NitroSDK pelo fonte (começo da Fase 2)
-- **A mesma versão, decompilada.** O SDK do jogo é o 4.2.30001, o mesmo que a
-  comunidade decompilou para o Pokémon Platinum. Compilando aquele fonte, cada função
-  do SDK deveria aparecer no jogo com os mesmos bytes.
-- **Erro nº 9:** compilei em ARM, como o Platinum faz, e nada bateu. O assembly do
-  `OS_GetOwnerInfo` no jogo é Thumb: a BioWare usou a versão Thumb das bibliotecas.
-  Recompilado com `-thumb -DSDK_CODE_THUMB`, 562 funções ganharam nome.
-- **Como saber que não é coincidência.** Duas funções pequenas podem ter os mesmos
-  bytes. Por isso os nomes foram conferidos pelas chamadas: se `X` chama `Y` no fonte,
-  o `bl` da função `X` no jogo tem que cair na função `Y`. As 1.140 referências
-  bateram. A única que parecia errada era um ponteiro para *dentro* da própria função
-  (o endereço de retorno de `OSi_DisplayExContext`), e o erro era do conferidor, que
-  ignorava o deslocamento da relocação.
-- **O SDK não foi compilado com o compilador do jogo.** As bibliotecas da Nintendo
-  batem melhor com a 2.0 sp1 (652 funções) do que com a sp2 (649) que compilou o jogo:
-  a Nintendo entrega o SDK já compilado.
+## 16. The NitroSDK from source (start of Phase 2)
+- **The same version, decompiled.** The game's SDK is 4.2.30001, the same one the community
+  decompiled for Pokémon Platinum. Compiling that source, each SDK function should appear in
+  the game with the same bytes.
+- **Erro nº 9:** I compiled as ARM, as Platinum does, and nothing matched. The assembly of
+  `OS_GetOwnerInfo` in the game is Thumb: BioWare used the Thumb version of the libraries.
+  Recompiled with `-thumb -DSDK_CODE_THUMB`, 562 functions got names.
+- **How to know it is not a coincidence.** Two small functions can have the same bytes. So
+  the names were checked through the calls: if `X` calls `Y` in the source, function `X`'s
+  `bl` in the game must land on function `Y`. All 1,140 references matched. The only one that
+  looked wrong was a pointer *into* the function itself (the return address of
+  `OSi_DisplayExContext`), and the mistake was the checker's, which ignored the relocation's
+  offset.
+- **The SDK was not compiled with the game's compiler.** Nintendo's libraries match better
+  with 2.0 sp1 (652 functions) than with the sp2 (649) that compiled the game: Nintendo ships
+  the SDK already compiled.
 
-## 17. A NitroSystem
-- **Mesmo caminho do SDK.** Compilei a NitroSystem decompilada (versão 071126) em Thumb,
-  já sabendo do Erro nº 9, e 360 funções ganharam nome: o motor de 3D (`NNS_G3d*`), o
-  de som (`NNS_Snd*`), o 2D e os gerenciadores de memória e VRAM.
-- **Uma região inteira explicada.** As 464 funções entre `0x020c8278` e `0x020d4394`
-  batem, todas, com funções da NitroSystem. Não sobra nenhuma: é exatamente a versão
-  que o jogo usa. Isso também corrigiu o começo do SDK, que eu tinha posto em
-  `0x020d4000` só olhando por cima.
-- **Quem compilou o quê:** a NitroSystem bate melhor com a 2.0 sp2 (519 funções) do
-  que com a sp1p2 (517). O SDK é sp1, a NitroSystem e o MSL são sp2, como no Pokémon
-  Platinum.
-- **O conferidor de chamadas errou de novo, e para o lado seguro.** Acusou 3 erros em
-  `AlarmCallback`. Não era o nome: existem duas funções `static` com esse nome
-  (`stream.c` e `capture.c`), e o conferidor comparava as chamadas de uma com o endereço
-  da outra. Agora ele só usa a função do `.o` com o mesmo tamanho da do jogo: 708 de 708.
-- **Ligada do fonte.** O passo seguinte foi o build usar os `.o` compilados no lugar do
-  assembly. A primeira tentativa linkou, mas mudou 19 mil bytes. As causas, uma a uma:
-  - a `.rodata` de um arquivo terminava num endereço ímpar, e o linker alinha o próximo
-    a 4: tudo depois andou 2 bytes. O enchimento é do arquivo;
-  - o jogo aponta para campos no meio de estruturas (`NNS_G3dGlb + 0x80`), e o `.o` só
-    tem o começo; as relocações viraram "símbolo + deslocamento";
-  - funções de código idêntico (os `NNS_G3dFree*`) estavam com o nome trocado. Os bytes
-    batiam, mas o linker põe as funções na ordem do `.o`, e a ordem saiu errada.
-  Com isso, os 59 arquivos da NitroSystem entram compilados e a ROM sai idêntica.
-- **Uma "relocação" que não era.** O `dsd init` marcou o número `0x021b0fdc`, numa
-  tabela de constantes, como ponteiro para a variável `static` `sDriverInfo` do som. Uma
-  variável `static` não pode ser usada de outro arquivo, então era só um número que
-  parecia endereço. Saiu da lista de relocações.
-- **O NitroSDK também.** 73 dos 87 arquivos do SDK passaram a vir do fonte, e a ROM
-  continua idêntica. Com a NitroSystem, são 90 KB do ARM9 (9,3%) saindo de código C.
-  O último obstáculo foi o linker jogar fora `OS_DisableProtectionUnit`, que ninguém
-  chama mas o jogo tem. A opção `-force_active` resolvia com um nome e falhava com a lista
-  inteira. Testando listas de tamanhos diferentes, o limite apareceu: uns 256 caracteres. A saída foi o
-  mesmo pedido dentro do arquivo do linker (`FORCE_ACTIVE` no `.lcf`).
-- **Símbolos que nenhum `.c` define.** Cinco arquivos (`os_arena.c`, `os_thread.c`...)
-  usam `SDK_SYS_STACKSIZE`, `SDK_MAIN_ARENA_LO`... que o `.lcf` da Nintendo calculava.
-  Os valores foram lidos das constantes que o jogo tem gravadas (ex.:
-  `SDK_SECTION_ARENA_EX_START` = `0x023e0000`) e entraram em `simbolos_linker.lcf`.
-  A prova de que estão certos é a ROM: um valor errado mudaria esses bytes. Agora são 78 arquivos do SDK, 92 KB (9,7% do ARM9) de C, e
-  a ROM idêntica. A configuração gerada do zero sai igual à versionada.
-- **ITCM e DTCM.** Seis arquivos do SDK têm partes fora do ARM9 principal. Primeiro um
-  teste à mão com `os_irqHandler.c` (o `dsd` recusou o mesmo nome em dois módulos; com
-  o apelido `os_irqHandler.itcm.c` aceitou, e o mapa do linker mostrou `OS_IrqHandler`
-  vindo do `.o` compilado). Depois `ligar_bibliotecas.py` aprendeu a dividir o ITCM e a
-  achar os dados do DTCM como faz com o resto. Dois arquivos (`os_cache.c`,
-  `mi_dma_gxcommand.c`) nem precisavam disso: as funções deles no ITCM não estão no
-  jogo, o linker as descartou. Foram para 84.
-- **Erro de conta, e um empate mal resolvido.** O `os_china.c` aparecia como "não
-  liga", mas nenhuma função dele está no jogo: a checagem olhava todos os `.o`
-  compilados. E o `card_backup.c` "não batia" por engano: `PXI_Init` (8 bytes, um "pula
-  para X") é idêntica a `CARD_WaitBackupAsync`, o empate foi para o arquivo errado, e
-  quando o `card_backup` apareceu no lugar dele parecia "repetido". O desempate agora
-  olha para onde a função pula, e o `pxi_init.c` apareceu. O total certo é 87 (sem o
-  `os_china.c`, com o `pxi_init.c`), não os 87 de antes por coincidência.
-- **`.version`.** A string `[SDK+NINTENDO:BACKUP]` do `card_backup.c` está em
-  `0x02000bd4`, logo depois do crt0, como o `.lcf` da Nintendo manda. Entrou pelo mesmo
-  apelido do ITCM (`card_backup.version.c`). 86 de 87.
-- **O que falta: `gx_vramcnt.c`.** `GX_SetBankForSubBG` faz o mesmo que o fonte, mas o
-  `switch` saiu com outra árvore de comparações. Testados: as dez versões 2.0 do
-  compilador, as 24 ordens dos `case`, `case` a mais ou a menos, outras otimizações.
-  Nenhum bateu; o arquivo que a Nintendo compilou deve ser diferente do público.
+## 17. NitroSystem
+- **The same road as the SDK.** I compiled the decompiled NitroSystem (version 071126) as
+  Thumb, already knowing about Erro nº 9, and 360 functions got names: the 3D engine
+  (`NNS_G3d*`), the sound one (`NNS_Snd*`), the 2D and the memory and VRAM managers.
+- **A whole region explained.** All 464 functions between `0x020c8278` and `0x020d4394`
+  match NitroSystem functions. None is left: it is exactly the version the game uses. That
+  also fixed the start of the SDK, which I had put at `0x020d4000` from a quick look.
+- **Who compiled what:** NitroSystem matches better with 2.0 sp2 (519 functions) than with
+  sp1p2 (517). The SDK is sp1, NitroSystem and the MSL are sp2, as in Pokémon Platinum.
+- **The call checker was wrong again, and on the safe side.** It reported 3 errors in
+  `AlarmCallback`. It wasn't the name: there are two `static` functions with that name
+  (`stream.c` and `capture.c`), and the checker compared one's calls against the other's
+  address. Now it only uses the `.o` function with the same size as the game's: 708 of 708.
+- **Linked from source.** The next step was for the build to use the compiled `.o` files in
+  place of the assembly. The first attempt linked, but changed 19 thousand bytes. The
+  causes, one by one:
+  - a file's `.rodata` ended at an odd address, and the linker aligns the next one to 4:
+    everything after it moved 2 bytes. The padding belongs to the file;
+  - the game points to fields in the middle of structures (`NNS_G3dGlb + 0x80`), and the
+    `.o` only has the start; the relocations became "symbol + offset";
+  - functions with identical code (the `NNS_G3dFree*` ones) had their names swapped. The
+    bytes matched, but the linker places functions in the `.o`'s order, and the order came
+    out wrong.
+  With that, NitroSystem's 59 files go in compiled and the ROM comes out identical.
+- **A "relocation" that wasn't.** `dsd init` marked the number `0x021b0fdc`, in a constant
+  table, as a pointer to the sound's `static` variable `sDriverInfo`. A `static` variable
+  can't be used from another file, so it was just a number that looked like an address. It
+  left the relocation list.
+- **The NitroSDK too.** 73 of the SDK's 87 files started coming from source, and the ROM
+  stays identical. With NitroSystem, that is 90 KB of the ARM9 (9.3%) coming from C code. The
+  last obstacle was the linker throwing away `OS_DisableProtectionUnit`, which nobody calls
+  but the game has. The `-force_active` option worked with one name and failed with the whole
+  list. Testing lists of different sizes, the limit appeared: about 256 characters. The way
+  out was the same request inside the linker file (`FORCE_ACTIVE` in the `.lcf`).
+- **Symbols no `.c` defines.** Five files (`os_arena.c`, `os_thread.c`...) use
+  `SDK_SYS_STACKSIZE`, `SDK_MAIN_ARENA_LO`... which Nintendo's `.lcf` computed. The values
+  were read from the constants the game has written (e.g. `SDK_SECTION_ARENA_EX_START` =
+  `0x023e0000`) and went into `simbolos_linker.lcf`. The proof they are right is the ROM: a
+  wrong value would change those bytes. Now there are 78 SDK files, 92 KB (9.7% of the ARM9)
+  of C, and the ROM identical. The configuration generated from scratch comes out the same as
+  the versioned one.
+- **ITCM and DTCM.** Six SDK files have parts outside the main ARM9. First a hand test with
+  `os_irqHandler.c` (`dsd` refused the same name in two modules; with the alias
+  `os_irqHandler.itcm.c` it accepted, and the linker map showed `OS_IrqHandler` coming from
+  the compiled `.o`). Then `ligar_bibliotecas.py` learned to split the ITCM and to find the
+  DTCM data as it does with the rest. Two files (`os_cache.c`, `mi_dma_gxcommand.c`) didn't
+  even need it: their ITCM functions are not in the game, the linker discarded them. Up to 84.
+- **A counting mistake, and a badly broken tie.** `os_china.c` showed up as "doesn't link",
+  but none of its functions is in the game: the check looked at every compiled `.o`. And
+  `card_backup.c` "didn't match" by mistake: `PXI_Init` (8 bytes, a "jump to X") is identical
+  to `CARD_WaitBackupAsync`, the tie went to the wrong file, and when `card_backup` showed up
+  in its place it looked "repeated". The tie-break now looks at where the function jumps, and
+  `pxi_init.c` showed up. The right total is 87 (without `os_china.c`, with `pxi_init.c`),
+  not the earlier 87 by coincidence.
+- **`.version`.** `card_backup.c`'s `[SDK+NINTENDO:BACKUP]` string is at `0x02000bd4`, right
+  after the crt0, as Nintendo's `.lcf` says. It went in through the same alias as the ITCM
+  (`card_backup.version.c`). 86 of 87.
+- **What's missing: `gx_vramcnt.c`.** `GX_SetBankForSubBG` does the same as the source, but
+  the `switch` came out with another comparison tree. Tested: the ten 2.0 compiler versions,
+  the 24 orders of the `case`s, more or fewer `case`s, other optimizations. None matched; the
+  file Nintendo compiled must be different from the public one.
 
-## 18. O MSL ligado
-- **De onde vêm os `.o`.** O MSL não tem fonte público: vem pronto nos `.a` do
-  CodeWarrior. `msl.sh` tira de dentro deles os 204 `.o` (o C, o C++, o Runtime e a
-  matemática de ponto flutuante, que é assembly). 68 arquivos estão no jogo e 62 ligam.
-- **O primeiro link nem fechava.** O `mwldarm` quer que todo nome citado exista, mesmo
-  em código que ele vai descartar: `powf` chama `pow`, e nenhum dos dois está no jogo.
-  Ligar os `.a` inteiros dava "Internal linker error", e definir os nomes como 0 no
-  `.lcf` também. A saída foi um `.o` de funções vazias para esses nomes, gerado no build.
-- **Depois fechou, e a ROM saiu diferente.** Nove causas, achadas comparando o mapa do
-  linker com os endereços do jogo, da primeira diferença para a frente:
-  - um rótulo automático (`.L_020ead44`) que o `.o` não define: o `mwldarm` o resolveu
-    como 0, **sem erro**, e pôs um desvio de 8 bytes no meio do código. Agora o build
-    para se o código do jogo citar um nome que ninguém define;
-  - funções gêmeas com o nome trocado: `strtold` no lugar de `strtod`, os stubs de
-    8 bytes `exp`/`pow` com nomes do `math.o`, os destrutores do RTTI. Cada troca
-    mantinha viva uma função a mais;
-  - a tabela de exceções guardava a entrada de toda função, e com ela a função que o
-    jogo descartou;
-  - a `.exception` de cada função começa num múltiplo de 4 (Erro nº 10, abaixo);
-  - `__sinit__` gravado como rótulo de código: o linker criou um desvio para cada
-    ponteiro da tabela `.ctor`;
-  - o typeinfo de `std::exception` é "multidef": o jogo ficou com a cópia de um arquivo
-    dele, e a do `.o` precisava ceder o lugar;
-  - os buffers de `stdin`/`stdout` e a vtable de `__si_class_type_info` só aparecem por
-    ponteiros dentro de dados, que a ferramenta não seguia: o linker os deixou de fora e
-    pôs 0 nos ponteiros;
-  - um `b .` de 2 bytes no fim de outra função parecia o `__rt_div0` inteiro.
-  Com isso a ROM saiu idêntica: 132 KB (13,6% do código do ARM9) vêm de bibliotecas
-  ligadas. A configuração gerada do zero sai igual à versionada, e o NitroSDK e a
-  NitroSystem saem iguais aos de antes (menos o `.L_020ead44`).
-- **Erro nº 10:** a ferramenta não arredondava o fim da `.exception` de um arquivo para
-  múltiplo de 4, porque o `.o` diz alinhamento 1 e eu acreditei. O linker alinha a 4
-  mesmo assim, e o pedaço do jogo seguinte começava 3 bytes antes do que devia.
+## 18. The MSL linked
+- **Where the `.o` files come from.** The MSL has no public source: it comes prebuilt in
+  CodeWarrior's `.a` archives. `msl.sh` takes the 204 `.o` files out of them (C, C++, the
+  Runtime and the floating-point math, which is assembly). 68 files are in the game and 62
+  link.
+- **The first link didn't even close.** `mwldarm` wants every cited name to exist, even in
+  code it will discard: `powf` calls `pow`, and neither is in the game. Linking the whole
+  `.a` archives gave "Internal linker error", and so did defining the names as 0 in the
+  `.lcf`. The way out was a `.o` of empty functions for those names, generated in the build.
+- **Then it closed, and the ROM came out different.** Nine causes, found by comparing the
+  linker map with the game's addresses, from the first difference onwards:
+  - an automatic label (`.L_020ead44`) the `.o` doesn't define: `mwldarm` resolved it as 0,
+    **without an error**, and put an 8-byte detour in the middle of the code. Now the build
+    stops if the game's code cites a name nobody defines;
+  - twin functions with swapped names: `strtold` in place of `strtod`, the 8-byte
+    `exp`/`pow` stubs with `math.o`'s names, the RTTI destructors. Each swap kept one more
+    function alive;
+  - the exception table kept every function's entry, and with it the function the game
+    discarded;
+  - each function's `.exception` starts at a multiple of 4 (Erro nº 10, below);
+  - `__sinit__` recorded as a code label: the linker created a detour for each pointer of
+    the `.ctor` table;
+  - the typeinfo of `std::exception` is "multidef": the game kept the copy of one of its
+    files, and the `.o`'s had to give way;
+  - the `stdin`/`stdout` buffers and the vtable of `__si_class_type_info` only appear through
+    pointers inside data, which the tool didn't follow: the linker left them out and put 0
+    in the pointers;
+  - a 2-byte `b .` at the end of another function looked like the whole `__rt_div0`.
+  With that the ROM came out identical: 132 KB (13.6% of the ARM9 code) come from linked
+  libraries. The configuration generated from scratch comes out the same as the versioned
+  one, and the NitroSDK and NitroSystem come out the same as before (except for
+  `.L_020ead44`).
+- **Erro nº 10:** the tool didn't round a file's `.exception` end up to a multiple of 4,
+  because the `.o` says alignment 1 and I believed it. The linker aligns to 4 anyway, and the
+  next piece of the game started 3 bytes earlier than it should.
 
-## 19. Os arquivos do jogo (Fase 2.4)
-- **O que a ROM não diz.** O linker põe o código de cada `.cpp` junto, mas não marca
-  onde um acaba. Nomes de arquivo não há (nem em strings de `assert`), e todas as 4.942
-  funções do jogo começam em múltiplo de 4, então o alinhamento também não ajuda.
-- **O que o compilador mostrou.** Compilei arquivos de teste com a 2.0 e olhei o `.o`:
-  cada string literal vai numa seção `.data` própria, logo depois da função que a usa
-  primeiro, e uma string repetida no mesmo arquivo vira uma cópia só. No jogo há 105
-  strings com várias cópias (`"BackButton"` tem 9): uma por arquivo. Daí a regra:
-  quem lê a mesma cópia está no mesmo arquivo. E as funções inline vão para o fim do
-  `.text` do arquivo.
-- **A ordem do linker é uma só.** As 149 funções da tabela `.ctor` (os construtores de
-  variáveis globais, um por arquivo que tem) estão em ordem crescente de endereço, e os
-  dados que cada uma escreve também: a ordem dos arquivos é a mesma no código e nos
-  dados.
-- **O resultado:** 175 pedaços com certeza de um arquivo só, 38% dos bytes do código do
-  jogo, em `delinks.txt` com a ROM idêntica. 338 pares de cópias da mesma string
-  conferem a regra, sem nenhuma falha. O `dsd` ainda pegou um caso que eu não tinha
-  previsto: dois pedaços do `GameModeInventory` com o código numa ordem e as strings na
-  outra ("ciclo na ordem de link"). Era uma função inline no fim do arquivo, que lê
-  uma string do começo dele: os dois pedaços são o mesmo arquivo, e a ferramenta agora
-  junta pedaços assim.
-- **Erro nº 11:** no meu teste, cada arquivo tinha um bloco só de variáveis, antes das
-  strings, e eu ia cortar o `.data` em cada variável que viesse depois de uma string.
-  No jogo, os typeinfo e as vtables ficam intercalados com os nomes das classes, e 18
-  funções liam strings dos dois lados de um desses "cortes". Larguei esse corte; a
-  regra das cópias de strings não depende dele.
-- **Onde parou (pausa em 08/10/2026).** Os 175 pedaços estão em `delinks.txt` e a ROM
-  sai idêntica. O próximo passo seria achar onde cada arquivo começa e acaba de
-  verdade, juntando às pontas de cada pedaço as funções sem strings. As pistas para
-  isso são as variáveis `.bss`/`.data` que cada função usa, quem chama quem e as
-  sequências de métodos da mesma classe.
+## 19. The game's files (Phase 2.4)
+- **What the ROM doesn't say.** The linker puts each `.cpp`'s code together, but doesn't mark
+  where one ends. There are no file names (not even in `assert` strings), and all 4,942 game
+  functions start at a multiple of 4, so alignment doesn't help either.
+- **What the compiler showed.** I compiled test files with 2.0 and looked at the `.o`: each
+  string literal goes into its own `.data` section, right after the function that uses it
+  first, and a string repeated in the same file becomes a single copy. In the game there are
+  105 strings with several copies (`"BackButton"` has 9): one per file. Hence the rule:
+  whoever reads the same copy is in the same file. And inline functions go to the end of the
+  file's `.text`.
+- **The linker's order is one and the same.** The 149 functions of the `.ctor` table (the
+  constructors of global variables, one per file that has them) are in increasing address
+  order, and so is the data each one writes: the order of the files is the same in the code
+  and in the data.
+- **The result:** 175 pieces certainly from a single file, 38% of the game's code bytes, in
+  `delinks.txt` with the ROM identical. 338 pairs of copies of the same string check the
+  rule, with no failure. `dsd` still caught a case I hadn't foreseen: two pieces of
+  `GameModeInventory` with the code in one order and the strings in the other ("cycle in the
+  link order"). It was an inline function at the end of the file, which reads a string from
+  its start: the two pieces are the same file, and the tool now joins pieces like that.
+- **Erro nº 11:** in my test, each file had a single block of variables, before the strings,
+  and I was going to cut `.data` at every variable that came after a string. In the game,
+  typeinfos and vtables are interleaved with the class names, and 18 functions read strings
+  on both sides of one of those "cuts". I dropped that cut; the string-copy rule doesn't
+  depend on it.
+- **Where it stopped (paused on 2026-10-08).** The 175 pieces are in `delinks.txt` and the
+  ROM comes out identical. The next step would be finding where each file really starts and
+  ends, joining the functions without strings to the edges of each piece. The clues for that
+  are the `.bss`/`.data` variables each function uses, who calls whom and the runs of methods
+  of the same class.
 
-## 20. A métrica de progresso
-- **Um número que alguém possa cobrar.** Os "13,6%" eram uma conta feita à mão. Agora
-  `decomp/tools/progresso.py` lê `config/YWSE/` e diz quantos bytes de código o build
-  tira de um `.o` compilado de fonte: **13,48%** (135.556 de 1.005.780 bytes), 87,71% das
-  bibliotecas e 0,01% do jogo. A conta está em [BUILD.md](BUILD.md#a-métrica-de-progresso).
-- **Por que o número caiu 0,1 ponto.** Refazendo a conta antiga, só a `.text` do ARM9 e do
-  ITCM dava os mesmos 13,58%. Ficava de fora a `.init`: 7.760 bytes de `__sinit_*`, as
-  funções que o compilador gera em cada `.cpp` que tem variáveis globais com construtor.
-  São código do jogo e vão ter de sair do fonte junto com o arquivo delas, então entram.
-- **Uma conferência que pode falhar.** O script lê o mapa do linker e confere que tudo o
-  que caiu dentro de um arquivo `complete` veio do `.o` dele. O mapa só mostra o nome do
-  `.o` sem a pasta, e o pedaço cortado de `jogo/X.cpp` também se chama `X.o`; então a
-  lista de `.o` que o linker recebeu entra na conta. Testado ao contrário: um núcleo
-  marcado `complete` sem compilar e um arquivo com o fim esticado sobre o vizinho foram
-  os dois recusados.
-- **Código ARM no meio do jogo.** Procurando o que separa biblioteca de jogo, achei dois
-  blocos de funções ARM (o jogo é Thumb) dentro da região do jogo. Não são outra
-  biblioteca: são métodos do próprio jogo, do `CMoviePlayer` (`0x0208ab44`, 24 funções) e
-  do `Timer` (`0x020c70e4`, 46 funções). A BioWare compilou alguns arquivos em ARM,
-  provavelmente os que precisam de velocidade. Para decompilá-los, `compilar.sh` vai
-  precisar de um modo ARM. O começo do ITCM (`0x01ff8000`-`0x01ffe89c`, ARM, sem nome)
-  continua sem dono e fica contado como jogo.
+## 20. The progress metric
+- **A number someone can hold us to.** The "13.6%" was a count made by hand. Now
+  `decomp/tools/progresso.py` reads `config/YWSE/` and says how many code bytes the build
+  takes from a `.o` compiled from source: **13.48%** (135,556 of 1,005,780 bytes), 87.71% of
+  the libraries and 0.01% of the game. The count is in
+  [BUILD.md](BUILD.md#the-progress-metric).
+- **Why the number fell 0.1 point.** Redoing the old count, only the ARM9 and ITCM `.text`
+  gave the same 13.58%. The `.init` was left out: 7,760 bytes of `__sinit_*`, the functions
+  the compiler produces in each `.cpp` that has global variables with constructors. They are
+  game code and will have to come from source along with their file, so they count.
+- **A check that can fail.** The script reads the linker map and checks that everything that
+  fell inside a `complete` file came from its `.o`. The map only shows the `.o`'s name
+  without the folder, and the piece cut from `jogo/X.cpp` is also called `X.o`; so the list
+  of `.o` files the linker received goes into the count. Tested the other way around: a core
+  marked `complete` without being compiled and a file with its end stretched over its
+  neighbor were both refused.
+- **ARM code in the middle of the game.** Looking for what separates library from game, I
+  found two blocks of ARM functions (the game is Thumb) inside the game's region. They are
+  not another library: they are the game's own methods, of `CMoviePlayer` (`0x0208ab44`, 24
+  functions) and `Timer` (`0x020c70e4`, 46 functions). BioWare compiled some files as ARM,
+  probably the ones that need speed. To decompile them, `compilar.sh` will need an ARM mode.
+  The start of the ITCM (`0x01ff8000`-`0x01ffe89c`, ARM, unnamed) still has no owner and is
+  counted as game.
 
-## 21. Procurando as bordas dos arquivos, e a opção `-ipa file`
-O passo seguinte da Fase 2.4 era estender os 175 núcleos às funções das pontas, que não
-usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de usá-la:
+## 21. Looking for the file boundaries, and the `-ipa file` option
+The next step of Phase 2.4 was to extend the 175 cores to the functions at the edges, which
+don't use strings. I tested each clue against what is already known (the cores) before using
+it:
 
-- **O enchimento entre funções.** Se o linker enchesse com outro valor entre arquivos, a
-  borda apareceria. Não: os 2 bytes depois de uma função Thumb são sempre `0000`
-  (1.091 nos buracos, 43 dentro dos núcleos, 5 no fim de núcleos).
-- **Erro nº 12: a variável escondida do `__register_global_object`.** Num `.o` de teste,
-  cada objeto global com destrutor ganha uma variável de 12 bytes, só do arquivo, que
-  vai como 3º argumento para `__register_global_object`. Achei que isso amarraria cada
-  função à `.bss` do seu arquivo. No jogo são 3.119 chamadas, 3.076 delas em funções
-  comuns e não nos `__sinit`, e só 481 variáveis diferentes: `main` usa a mesma três
-  vezes. São `static` dentro de funções inline (o padrão `Singleton<T>`), copiadas em
-  cada lugar que as chama, e por isso compartilhadas entre arquivos. Não serve de prova.
-- **"Uma classe, um arquivo".** Falha em 9 classes: métodos do `GuiTextInterface` e do
-  `GuiAnimatedImage` estão dentro do núcleo do `GameModeCombat`, por exemplo (métodos
-  inline emitidos no arquivo que os usa).
-- **Quem chama e quem usa os dados.** Conferidas nas 604 funções dos núcleos, onde o
-  arquivo é conhecido: "só é chamada por funções do núcleo X" erra 51 de 249 vezes, e
-  "usa dados que só o núcleo X usa" erra 11 de 226. Pistas, não regras.
-- **A `.rodata`.** Em C++, uma constante `const` fora de função é local ao arquivo, e
-  achei que a `.rodata` funcionaria como as strings. Mas o começo dela são constantes
-  globais (`extern const`): a palavra `0xffffffff` em `0x020ef844` é lida por 150
-  funções do jogo todo, e `0x020ef814` é o ponteiro para a string vazia do `CStr`.
-- **O que deu certo: `-ipa file`.** Para entender a `.data`, compilei `.o` de teste e
-  comparei com o jogo. No jogo, o nome de uma classe (`"4Time"`) vem antes do typeinfo
-  dela e antes das strings do arquivo; com as nossas flags, ia para o fim. Testando
-  opções, só `-ipa file` reproduz a ordem. As três funções continuam idênticas com ela,
-  e ela entrou em `compilar.sh`. A conferência (`conferir_ipa.py`, em
-  [COMPILADOR.md](COMPILADOR.md#-ipa-file-a-ordem-dos-dados)) mede duas coisas que a
-  opção padrão não produziria: 51 nomes antes do typeinfo (49 de classes derivadas,
-  como a ordem prevê) e 266 de 270 typeinfo sem strings no meio. As 4 exceções são uma
-  string de função inline, que com `-ipa file` vai para o bloco das variáveis.
-- **Erro nº 13:** na primeira comparação usei `-ipa off` como se fosse o padrão. Não é:
-  ele até inverte a ordem das funções no `.o`. O padrão se comporta como
+- **The padding between functions.** If the linker padded with another value between files,
+  the boundary would show. No: the 2 bytes after a Thumb function are always `0000` (1,091 in
+  the holes, 43 inside the cores, 5 at the end of cores).
+- **Erro nº 12: the hidden variable of `__register_global_object`.** In a test `.o`, each
+  global object with a destructor gets a 12-byte variable, local to the file, which goes as
+  the 3rd argument to `__register_global_object`. I thought this would tie each function to
+  its file's `.bss`. In the game there are 3,119 calls, 3,076 of them in ordinary functions
+  and not in the `__sinit`s, and only 481 different variables: `main` uses the same one three
+  times. They are `static`s inside inline functions (the `Singleton<T>` pattern), copied into
+  every place that calls them, and therefore shared between files. It is no proof.
+- **"One class, one file".** It fails for 9 classes: methods of `GuiTextInterface` and
+  `GuiAnimatedImage` are inside the `GameModeCombat` core, for example (inline methods
+  emitted in the file that uses them).
+- **Who calls and who uses the data.** Checked on the 604 functions of the cores, where the
+  file is known: "only called by functions of core X" is wrong 51 of 249 times, and "uses
+  data only core X uses" is wrong 11 of 226. Clues, not rules.
+- **`.rodata`.** In C++, a `const` constant outside a function is local to the file, and I
+  thought `.rodata` would work like the strings. But its start is global constants (`extern
+  const`): the word `0xffffffff` at `0x020ef844` is read by 150 functions across the whole
+  game, and `0x020ef814` is the pointer to `CStr`'s empty string.
+- **What worked: `-ipa file`.** To understand `.data`, I compiled test `.o` files and
+  compared them with the game. In the game, a class's name (`"4Time"`) comes before its
+  typeinfo and before the file's strings; with our flags, it went to the end. Testing
+  options, only `-ipa file` reproduces the order. The three functions stay identical with
+  it, and it went into `compilar.sh`. The check (`conferir_ipa.py`, in
+  [COMPILADOR.md](COMPILADOR.md#-ipa-file-the-order-of-the-data)) measures two things the
+  default option wouldn't produce: 51 names before the typeinfo (49 of derived classes, as the
+  order predicts) and 266 of 270 typeinfos with no strings in between. The 4 exceptions are
+  a string of an inline function, which with `-ipa file` goes into the variables block.
+- **Erro nº 13:** in the first comparison I used `-ipa off` as if it were the default. It is
+  not: it even reverses the order of the functions in the `.o`. The default behaves like
   `-ipa function`.
-- **O que o `-ipa file` diz sobre um arquivo.** O `.text` tem as funções na ordem do
-  fonte e, no fim, as multidef (métodos inline e de template). A `.data` tem primeiro as
-  variáveis, vtables, typeinfo e nomes, e por último as strings do código. Então uma
-  passagem de "multidef" para "comum" no `.text`, ou de "string" para "variável" na
-  `.data`, é o começo de outro arquivo. A primeira só tem 8 funções reconhecíveis (as de
-  `Singleton<T>` e `ResourcePool<T>`, pelo nome). A segunda separa a `.data`, mas uma
-  variável pode ser lida de qualquer arquivo, então não diz onde fica uma função.
-- **A conclusão.** O binário não guarda o suficiente para provar em que arquivo cai cada
-  função sem strings. A borda de um arquivo se prova quando ele é decompilado inteiro: o
-  `.o` tem de reproduzir juntos o `.text`, as variáveis, as strings, a `.bss` e o
-  `__sinit`. Uma função a mais ou a menos na ponta, se usar strings ou variáveis do seu
-  arquivo, muda essa ordem e o build acusa. Se só usar dados globais, a borda errada não
-  muda nenhum byte: o erro fica só na organização do fonte, e não na ROM.
+- **What `-ipa file` says about a file.** `.text` has the functions in source order and, at
+  the end, the multidef ones (inline and template methods). `.data` has first the variables,
+  vtables, typeinfos and names, and last the code's strings. So a transition from "multidef"
+  to "ordinary" in `.text`, or from "string" to "variable" in `.data`, is the start of
+  another file. The first only has 8 recognizable functions (those of `Singleton<T>` and
+  `ResourcePool<T>`, by name). The second splits `.data`, but a variable can be read from any
+  file, so it doesn't say where a function goes.
+- **The conclusion.** The binary doesn't keep enough to prove which file each function
+  without strings falls in. A file's boundary is proven when it is decompiled whole: the `.o`
+  must reproduce together the `.text`, the variables, the strings, the `.bss` and the
+  `__sinit`. One function more or less at the edge, if it uses strings or variables of its
+  file, changes that order and the build reports it. If it only uses global data, the wrong
+  boundary changes no byte: the mistake stays in the organization of the source only, not in
+  the ROM.
 
-## 22. As sobras das bibliotecas (tentativa)
-- **Os dois arquivos com modelos do C++.** O `CPP_ios.c` e o `CPP_msl_thread.c` ficavam de
-  fora porque definem funções de modelo (`shared_ptr<char>`, `move_ptr`) que o jogo tem
-  em outro lugar. Elas são "multidef" no `.o`, e a ideia era deixar a cópia do `.o` ceder
-  à do jogo, como já se faz com os dados. Com a trava desligada, a configuração
-  regenerada do zero (desde o `af53d17`) saiu igual à versionada mais os dois arquivos,
-  mas o build cresceu 160 bytes: o `CPP_ios.o` trouxe a sua cópia das funções, e o jogo
-  tem outra no mesmo lugar, que não cede porque no assembly elas têm nome automático.
-  Pior, as duas cópias são diferentes: no jogo, a sequência depois do `CPP_ios` tem os
-  tamanhos 0x1a, 0x2, 0x4, 0x12..., e no `.o` 0x28, 0x14, 0xc, 0x2. As cópias que o
-  linker da Nintendo guardou vieram de outra compilação. A trava estava certa; voltou.
-- **O resto** continua como estava em [BUILD.md](BUILD.md#as-bibliotecas-da-nintendo-ligadas-do-fonte):
-  `CPP_locale` e `C_math_arm` (funções em outra ordem), `CPP_iostream` e `C_ansi_fp`
-  (uma função do meio não bate) e o `gx_vramcnt.c` do SDK. Juntos são uns 1,9% do
-  código; ficam para depois, porque o objetivo agora é o código do jogo.
+## 22. The libraries' leftovers (attempt)
+- **The two files with C++ templates.** `CPP_ios.c` and `CPP_msl_thread.c` were left out
+  because they define template functions (`shared_ptr<char>`, `move_ptr`) that the game has
+  elsewhere. They are "multidef" in the `.o`, and the idea was to let the `.o`'s copy give
+  way to the game's, as is already done with data. With the safety check off, the
+  configuration regenerated from scratch (from `af53d17`) came out the same as the versioned
+  one plus the two files, but the build grew 160 bytes: `CPP_ios.o` brought its own copy of
+  the functions, and the game has another one in the same place, which doesn't give way
+  because in the assembly they have automatic names. Worse, the two copies are different: in
+  the game, the sequence after `CPP_ios` has sizes 0x1a, 0x2, 0x4, 0x12..., and in the `.o`
+  0x28, 0x14, 0xc, 0x2. The copies Nintendo's linker kept came from another compilation. The
+  safety check was right; it came back.
+- **The rest** stays as it was in
+  [BUILD.md](BUILD.md#nintendos-libraries-linked-from-source): `CPP_locale` and `C_math_arm`
+  (functions in another order), `CPP_iostream` and `C_ansi_fp` (a function in the middle
+  doesn't match) and the SDK's `gx_vramcnt.c`. Together they are about 1.9% of the code; they
+  are left for later, because the goal now is the game's code.
 
-## 23. A `CExoString` inteira (Fase 3.1)
-- **A classe.** Doze bytes: a vtable (só o destrutor é virtual), `m_sString` e
-  `m_nBufferLength`, com os nomes da `CExoString` do Neverwinter Nights, do mesmo motor.
-  São 33 funções seguidas, de `0x02004e00` a `0x020055b8`, e a ordem do jogo é a do
-  fonte: os dois auxiliares de memória, os construtores, o destrutor, os operadores, e
-  `AsINT`, `CStr`, `Find`, `Format`, `Left`, `SubString`, `UpperCase`, `CompareNoCase`...
-  28 bateram na primeira compilação. As outras 5 ensinaram as lições que estão em
-  [COMPILADOR.md](COMPILADOR.md#o-que-aprendemos-igualando-funções): chamar uma função
-  dentro dos argumentos muda a ordem das leituras, e um valor guardado numa variável é
-  lido uma vez só.
-- **Uma biblioteca que faltava.** `LowerCase`, `UpperCase` e `CompareNoCase` chamam três
-  funções sem nome no meio do MSL. Não estavam no MSL C: estão no **MSL_Extras**
-  (`extras_string.h`), que a Fase 2.3 não tinha procurado. São `strlwr`, `strupr` e
-  `stricmp`. As duas primeiras têm o mesmo código e só diferem na tabela que leem
-  (`__lower_map` ou `__upper_mapC`), e foi assim que ganharam o nome.
-- **Os dados também saem do fonte.** O destrutor virtual é a primeira função virtual da
-  classe, então o `.o` traz a vtable, o typeinfo e o nome `"10CExoString"`, além da
-  string `"%i"` do construtor de `int`. Na ordem do `.o` eles caem exatamente nos
-  endereços do jogo (`0x020f5510` a `0x020f553c`).
-- **O que fica para depois.** O arquivo de verdade tem mais coisa: o `""` para onde o
-  `g_emptyString` aponta (`0x020f5508`), uma variável em `0x020f550c` e o `__sinit` dela
-  (`0x020edb7c`), que também constrói dois objetos da biblioteca C++ em `0x021609e8`.
-  Como no `CStr` antes, a parte provada entrou isolada; o resto continua no assembly.
-- **Um marcador em cada arquivo.** A variável de `0x020f550c` é `FX_Div(2.0, π)`,
-  calculada no `__sinit`. E os 149 `__sinit` do jogo fazem a mesma conta, cada um para a
-  sua variável: é uma constante declarada num header que quase todo arquivo inclui, e
-  cada arquivo tem a sua cópia, como as strings. São 149 marcadores, um por arquivo, na
-  `.data` e na `.init`. Não dizem onde fica cada função, mas ligam cada núcleo ao seu
-  `__sinit` e mostram quando não há arquivo nenhum entre dois núcleos. É o próximo passo
-  da Fase 2.4.
-- **Uma ferramenta para pôr arquivos no build.** `nomes_do_fonte.py` encaixa o `.o` na
-  faixa do arquivo, comparando os bytes, e troca os nomes em `symbols.txt` pelos do
-  compilador (passo a passo em [BUILD.md](BUILD.md#um-arquivo-decompilado-entra-no-build)).
-- **Erro nº 14:** a ferramenta transformava toda relocação para o meio de um símbolo em
-  "símbolo + deslocamento", inclusive os ponteiros para funções Thumb, que têm o bit 0
-  ligado (`0x02004f71` é a função de `0x02004f70`). O linker somaria 1 e ainda ligaria o
-  bit: o ponteiro andaria 1 byte. O build acusou; agora esses ficam como estavam.
-- **Erro nº 15:** o construtor padrão existe duas vezes no `.o` (`C2` e `C1`, mesmos
-  bytes) e uma vez no jogo. A ferramenta deu ao endereço o nome do primeiro, o `C2`, mas o
-  próprio `.o` chama o `C1` (`CExoString result;` no `operator+`). Com os dois citados, o
-  linker guardou os dois, e tudo depois andou 16 bytes. Agora ela prefere a cópia que o
-  `.o` usa, e depois o `C1`.
-- **Resultado:** ROM idêntica, 35 funções conferidas no CI, e o progresso foi de 13,48%
-  para **13,67%** (o código do jogo, de 84 para 2.044 bytes).
+## 23. All of `CExoString` (Phase 3.1)
+- **The class.** Twelve bytes: the vtable (only the destructor is virtual), `m_sString` and
+  `m_nBufferLength`, with the names of Neverwinter Nights' `CExoString`, from the same
+  engine. They are 33 consecutive functions, from `0x02004e00` to `0x020055b8`, and the
+  game's order is the source's: the two memory helpers, the constructors, the destructor, the
+  operators, and `AsINT`, `CStr`, `Find`, `Format`, `Left`, `SubString`, `UpperCase`,
+  `CompareNoCase`... 28 matched on the first compilation. The other 5 taught the lessons in
+  [COMPILADOR.md](COMPILADOR.md#what-we-learned-matching-functions): calling a function
+  inside the arguments changes the order of the loads, and a value kept in a variable is read
+  only once.
+- **A library that was missing.** `LowerCase`, `UpperCase` and `CompareNoCase` call three
+  unnamed functions in the middle of the MSL. They weren't in MSL C: they are in
+  **MSL_Extras** (`extras_string.h`), which Phase 2.3 hadn't searched. They are `strlwr`,
+  `strupr` and `stricmp`. The first two have the same code and only differ in the table they
+  read (`__lower_map` or `__upper_mapC`), and that is how they got their names.
+- **The data come from source too.** The virtual destructor is the class's first virtual
+  function, so the `.o` brings the vtable, the typeinfo and the name `"10CExoString"`, plus
+  the `"%i"` string of the `int` constructor. In the `.o`'s order they fall exactly on the
+  game's addresses (`0x020f5510` to `0x020f553c`).
+- **What is left for later.** The real file has more: the `""` that `g_emptyString` points to
+  (`0x020f5508`), a variable at `0x020f550c` and its `__sinit` (`0x020edb7c`), which also
+  constructs two C++ library objects at `0x021609e8`. As with `CStr` before, the proven part
+  went in alone; the rest stays in assembly.
+- **A marker in every file.** The variable at `0x020f550c` is `FX_Div(2.0, π)`, computed in
+  the `__sinit`. And the game's 149 `__sinit`s do the same calculation, each for its own
+  variable: it is a constant declared in a header that almost every file includes, and each
+  file has its own copy, like the strings. That is 149 markers, one per file, in `.data` and
+  in `.init`. They don't say where each function goes, but they tie each core to its
+  `__sinit` and show when there is no file at all between two cores. It is Phase 2.4's next
+  step.
+- **A tool to put files into the build.** `nomes_do_fonte.py` fits the `.o` into the file's
+  range, comparing the bytes, and replaces the names in `symbols.txt` with the compiler's
+  (step by step in [BUILD.md](BUILD.md#a-decompiled-file-enters-the-build)).
+- **Erro nº 14:** the tool turned every relocation into the middle of a symbol into "symbol +
+  offset", including pointers to Thumb functions, which have bit 0 set (`0x02004f71` is the
+  function at `0x02004f70`). The linker would add 1 and still set the bit: the pointer would
+  move 1 byte. The build reported it; now those stay as they were.
+- **Erro nº 15:** the default constructor exists twice in the `.o` (`C2` and `C1`, same
+  bytes) and once in the game. The tool gave the address the name of the first one, `C2`, but
+  the `.o` itself calls `C1` (`CExoString result;` in `operator+`). With both cited, the linker
+  kept both, and everything after moved 16 bytes. Now it prefers the copy the `.o` uses, and
+  then `C1`.
+- **Result:** ROM identical, 35 functions checked in CI, and progress went from 13.48% to
+  **13.67%** (the game's code, from 84 to 2,044 bytes).
 
-## 24. Os marcadores e o alocador (Fases 2.4 e 3.2)
-- **Os marcadores conferidos.** A constante `2/π` de cada arquivo (DIARIO 23) foi achada
-  nos 149 `__sinit`, um deles em ARM. As 149 variáveis são diferentes e estão, na `.data`,
-  na mesma ordem dos `__sinit` na `.init`: a conferência podia falhar e não falhou. E
-  nenhuma cai no meio das strings de um núcleo, como o modelo `[variáveis][strings]`
-  exige. Daí sai uma prova nova: **se há um marcador entre as strings de dois núcleos,
-  eles são arquivos diferentes**, porque o marcador é uma variável e não pode vir depois
-  das strings do próprio arquivo. Dos 170 núcleos com strings, 77 têm marcadores entre
-  eles e o anterior, e 34 têm dois ou mais, o que quer dizer que há pelo menos um arquivo
-  inteiro sem strings no meio.
-- **Um desses arquivos é o alocador.** Entre o núcleo `02002918` e o do som há dois
-  marcadores. O primeiro, `0x020f5424`, é do `__sinit_020eda24`, que configura 5 "pools"
-  de blocos pequenos e registra o destrutor de cada um. A `.bss` dele fecha certinho:
-  4 bytes de um sinalizador, 5 × 12 das variáveis do `__register_global_object` e
-  5 × 0x18 dos pools, de `0x02110f34` a `0x02110fec`. O código é o `new`/`delete` do
-  jogo (que pega um bloco de pool ou, se não der, do heap do NitroSDK) e uma função que
-  o crt0 do SDK chama antes do `main`: `NitroStartUp`, que monta os heaps.
-- **O primeiro arquivo do jogo com tudo.** `src/Aurora/Memory.cpp` traz o código (14
-  funções), o `__sinit`, a entrada na `.ctor`, o marcador na `.data` e a `.bss`, e a ROM
-  sai idêntica. 9 funções bateram de primeira; as lições das outras estão em
-  [COMPILADOR.md](COMPILADOR.md#o-que-aprendemos-igualando-funções). A do marcador: ele só
-  vai para a `.data` declarado `const` (`const fx32 X = FX_Div(...)`), o que confirma que
-  é uma constante de header, local a cada arquivo.
-- **Um erro do jogo.** Quem devolve um bloco ao pool grava o índice dele na lista, mas
-  não diminui o contador de blocos usados. O bloco nunca é reaproveitado, e quando um pool
-  enche, os pedidos vão para o heap. Ficou no C++ como está, com um comentário. *(A frase
-  "o bloco nunca é reaproveitado" está errada: Erro nº 18, seção 27.)*
-- **As pontas continuam abertas.** As duas funções vazias depois do `NitroStartUp`
-  (`0x020034ec` e `0x020034f0`) e as que vêm antes do destrutor podem ser deste arquivo ou
-  dos vizinhos; ficaram no assembly.
-- **Resultado:** ROM idêntica, 50 funções conferidas no CI, e o progresso foi de 13,67%
-  para **13,76%**.
+## 24. The markers and the allocator (Phases 2.4 and 3.2)
+- **The markers checked.** Each file's `2/π` constant (DIARIO 23) was found in the 149
+  `__sinit`s, one of them in ARM. The 149 variables are different and sit, in `.data`, in the
+  same order as the `__sinit`s in `.init`: the check could have failed and didn't. And none
+  falls in the middle of a core's strings, as the `[variables][strings]` model requires. From
+  that comes a new proof: **if there is a marker between the strings of two cores, they are
+  different files**, because the marker is a variable and can't come after its own file's
+  strings. Of the 170 cores with strings, 77 have markers between them and the previous one,
+  and 34 have two or more, which means there is at least one whole file without strings in
+  between.
+- **One of those files is the allocator.** Between core `02002918` and the sound one there
+  are two markers. The first, `0x020f5424`, belongs to `__sinit_020eda24`, which sets up 5
+  small-block "pools" and registers each one's destructor. Its `.bss` closes exactly: 4 bytes
+  of a flag, 5 × 12 of the `__register_global_object` variables and 5 × 0x18 of the pools,
+  from `0x02110f34` to `0x02110fec`. The code is the game's `new`/`delete` (which takes a
+  block from a pool or, failing that, from the NitroSDK heap) and a function the SDK's crt0
+  calls before `main`: `NitroStartUp`, which sets up the heaps.
+- **The first game file with everything.** `src/Aurora/Memory.cpp` brings the code (14
+  functions), the `__sinit`, the `.ctor` entry, the marker in `.data` and the `.bss`, and the
+  ROM comes out identical. 9 functions matched on the first try; the lessons from the others
+  are in [COMPILADOR.md](COMPILADOR.md#what-we-learned-matching-functions). The marker's
+  lesson: it only goes into `.data` when declared `const` (`const fx32 X = FX_Div(...)`),
+  which confirms it is a header constant, local to each file.
+- **A bug in the game.** Whoever returns a block to the pool writes its index into the list,
+  but doesn't decrease the count of used blocks. The block is never reused, and when a pool
+  fills up, the requests go to the heap. It stayed in the C++ as it is, with a comment. *(The
+  sentence "the block is never reused" is wrong: Erro nº 18, section 27.)*
+- **The edges stay open.** The two empty functions after `NitroStartUp` (`0x020034ec` and
+  `0x020034f0`) and the ones before the destructor may belong to this file or to its
+  neighbors; they stayed in assembly.
+- **Result:** ROM identical, 50 functions checked in CI, and progress went from 13.67% to
+  **13.76%**.
 
-## 25. As variáveis escondidas, de novo: 84% do código separado por arquivo (Fase 2.4)
-- **Erro nº 16: a conclusão do Erro nº 12 estava errada.** Decompilando o sistema de
-  arquivos, achei o `Singleton<CDSFileSystem>::Instance()` copiado (inline) dentro de
-  uma função: a guarda e o objeto ficam na `.bss` do `main.cpp`, mas a variável de 12
-  bytes passada ao `__register_global_object` fica na `.bss` deste arquivo. No Erro
-  nº 12 eu tinha visto o `main` usar a mesma variável três vezes e concluído que ela era
-  compartilhada entre arquivos. Três usos no mesmo arquivo não dizem nada sobre arquivos
-  diferentes. Um `.o` de teste resolve: numa função inline com um `static`, o objeto e a
-  guarda saem "multidef" (uma cópia por programa), e a variável sai **local**, uma por
-  arquivo, a mesma para todas as funções do arquivo.
-- **A regra nova.** Duas funções que passam a mesma variável ao `__register_global_object`
-  estão no mesmo arquivo, como duas funções que leem a mesma cópia de uma string. Como o
-  `Instance()` está copiado em mais de 3 mil lugares, ela alcança quase todo o código.
-  `mapa_arquivos.py` agora junta as funções pelas duas regras (990 funções passam 438
-  variáveis) e também pela ordem da `.bss`: se um pedaço de cima tem variáveis depois das
-  de um de baixo, são o mesmo arquivo (dentro de um arquivo o compilador ordena essas
-  variáveis do jeito dele, como nos pools do alocador).
-- **As conferências, todas podiam falhar:** os 337 pares de cópias da mesma string
-  continuam em pedaços diferentes; nenhum dos 149 marcadores cai no meio das strings de um
-  pedaço; e, pela contiguidade da `.bss`, 8 pedaços contêm variáveis de um `__sinit`, cada
-  um de um só, na ordem dos `__sinit`.
-- **Arquivos sem código.** O primeiro pedaço vai do `main` até `0x02002d0c`, e há três
-  marcadores antes das strings dele. Dois são arquivos sem nenhuma função no jogo. Faz
-  sentido: o linker descarta as funções que ninguém chama, mas o `__sinit` de um arquivo
-  fica sempre (a tabela `.ctor` aponta para ele), e com ele os dados que ele grava. E a
-  ordem dentro do bloco de variáveis de um arquivo mistura variáveis e typeinfo, então o
-  marcador não marca o começo do arquivo, só que o arquivo existe.
-- **Resultado:** 161 pedaços cobrem **84%** dos bytes do código do jogo (antes, 175
-  pedaços e 38%), 125 deles com a faixa da `.bss`; a ROM continua idêntica. Um pedaço que
-  atravessa um arquivo já decompilado (o `HashResourceName` no meio do sistema de
-  arquivos) fica em duas partes. O que sobra (16%) são as pontas e os arquivos que não
-  usam strings nem `Singleton`.
+## 25. The hidden variables, again: 84% of the code split into files (Phase 2.4)
+- **Erro nº 16: the conclusion of Erro nº 12 was wrong.** Decompiling the file system, I
+  found `Singleton<CDSFileSystem>::Instance()` copied (inline) inside a function: the guard
+  and the object are in `main.cpp`'s `.bss`, but the 12-byte variable passed to
+  `__register_global_object` is in this file's `.bss`. In Erro nº 12 I had seen `main` use the
+  same variable three times and concluded it was shared between files. Three uses in the same
+  file say nothing about different files. A test `.o` settles it: in an inline function with
+  a `static`, the object and the guard come out "multidef" (one copy per program), and the
+  variable comes out **local**, one per file, the same for every function of the file.
+- **The new rule.** Two functions that pass the same variable to `__register_global_object`
+  are in the same file, like two functions that read the same copy of a string. Since
+  `Instance()` is copied into more than 3 thousand places, it reaches almost all the code.
+  `mapa_arquivos.py` now joins functions by both rules (990 functions pass 438 variables) and
+  also by the order of `.bss`: if a piece above has variables after those of a piece below,
+  they are the same file (inside a file the compiler orders those variables its own way, as
+  in the allocator's pools).
+- **The checks, all of which could have failed:** the 337 pairs of copies of the same string
+  stay in different pieces; none of the 149 markers falls in the middle of a piece's strings;
+  and, by `.bss` contiguity, 8 pieces contain variables of a `__sinit`, each of a single one,
+  in `__sinit` order.
+- **Files without code.** The first piece goes from `main` to `0x02002d0c`, and there are
+  three markers before its strings. Two are files without any function in the game. It makes
+  sense: the linker discards functions nobody calls, but a file's `__sinit` always stays (the
+  `.ctor` table points to it), and with it the data it writes. And the order inside a file's
+  variables block mixes variables and typeinfos, so the marker doesn't mark the start of the
+  file, only that the file exists.
+- **Result:** 161 pieces cover **84%** of the game's code bytes (before, 175 pieces and 38%),
+  125 of them with the `.bss` range; the ROM stays identical. A piece that crosses an already
+  decompiled file (`HashResourceName` in the middle of the file system) stays in two parts.
+  What is left (16%) are the edges and the files that use neither strings nor `Singleton`.
 
-## 26. O sistema de arquivos em C++ (Fase 3.3)
-- **O que o arquivo faz.** `src/Aurora/CDSFileSystem.cpp` junta quatro classes:
-  `CDSFileSystem` abre os arquivos do cartucho (NitroFS), conta quantas vezes cada um
-  foi aberto, lê de uma vez ou em segundo plano (uma fila de pedidos, com estado e um
-  tempo-limite de 60 quadros) e descomprime LZ, RL e Huffman; `CErfTable` é um pacote
-  HERF (o índice de 12 bytes por recurso, achado por busca binária no hash); `CErfMan`
-  abre o `test.herf` e o do idioma do console (francês, italiano, alemão, espanhol; o
-  resto usa o inglês); e `CErfResource` é um recurso pedido pelo nome, que procura
-  `nome.small` (comprimido) quando pedem. São 52 funções, 0x02008bb0-0x0200a308.
-- **Erros do jogo, mantidos como estão:** o destrutor de `CErfTable` só apaga o índice
-  quando ele é NULL (`==` no lugar de `!=`); `CErfTable::Open` não apaga o cabeçalho de
-  8 bytes que leu; os 12 caminhos que `Init` guarda nunca são usados.
-- **Os templates.** O jogo tem as cópias de `CExoArrayList<T>` (a lista do motor) e dos
-  construtores inline espalhadas no fim de vários arquivos: cada `.o` gera a sua cópia
-  "multidef" e o linker fica com a primeira que vê. Das 72 funções comparadas, 20 são
-  cópias que o jogo guardou no `main.cpp` e no `CExoString.cpp`, e todas batem. O
-  compilador põe **cada função numa seção própria**, então dá para fazer a nossa cópia
-  ceder o lugar à do jogo sem sobrar byte: o `preparar_link.py`, que já fazia isso com as
-  bibliotecas, agora faz com o `src/` também, olhando os nomes de todo o código cortado
-  do jogo (não só dos `_dsd_gap`: o destrutor de `CDSFileSystem` está num pedaço `jogo/`,
-  e o linker acusou "Multiply-defined" até isso ser corrigido).
-- **`Singleton<T>` tem um destrutor virtual vazio.** Três coisas independentes mostram
-  isso, e as três só batem com ele: (1) no `Instance()` copiado, só o endereço do
-  primeiro campo sai como constante pronta (sem destrutor na base, saem os dois
-  primeiros); (2) no construtor de `CErfMan`, o endereço do objeto é carregado antes da
-  vtable; (3) na `.data`, typeinfos e vtables saem ordenados por tamanho, e os empates
-  (`CErfMan`/`CDSFileSystem`, nome de `CDSFileSystem`/vtable de `CErfTable`) só ficam na
-  ordem do jogo com ele. A vtable de `Singleton<T>` que isso cria não é usada por
-  ninguém, e o linker a descarta, no jogo e aqui.
-- **O `FSFile` do NitroSDK.** O jogo copia um `FSFile` palavra por palavra nos primeiros
-  0x20 bytes e em dois blocos depois (16 e 24 bytes): é o formato do SDK, com `prop` e
-  `arg` como `union`s. O `include/nitro.h` agora o declara assim.
-- **O `memcpy` do jogo é o intrínseco do compilador.** Com tamanho constante e pequeno
-  ele vira cópias de byte no lugar (os campos do índice HERF, o `"./"` de 3 bytes);
-  senão, uma chamada. O jogo tem as duas formas, então o `include/msl.h` manda o
-  `memcpy` para o `__memcpy`. As 50 funções de antes continuam iguais.
-- **O `DelIndex` não bateu, e ficou no assembly.** `CExoArrayList<T>::DelIndex` (tira um
-  elemento e puxa os outros) existe no jogo para vários `T`. O nosso template reproduz
-  byte a byte a cópia para um tipo de 16 bytes (`0x0202d788`), mas não as dos tipos de
-  0x18, 0x1c e 0x60 bytes: nelas o jogo calcula o endereço do elemento seguinte como
-  "deslocamento atual + tamanho" (redução de força), e o nosso refaz a multiplicação.
-  Com 16 bytes é um deslocamento de bits, e nem o jogo reduz. Testei 960 formas
-  equivalentes do laço (decremento, tipo de laço, incremento, expressão do elemento),
-  as versões 1.2, 2.0 e DSi do compilador, opções de otimização e uma função auxiliar
-  inline: nenhuma deu os quatro casos. As duas cópias deste arquivo (`0x0200a1b0` e
-  `0x0200a258`) estão no fim do `.text`, no meio de outras cinco cópias de template que
-  batem; o trecho `0x0200a1b0-0x0200a308` (7 funções) continua do assembly, e o nosso `.o`
-  cobre o resto. Fica para quando aparecer outra pista.
-- **Erro nº 17: dois "acertos" que não eram.** Testando opções, `-O4,s` e `-ipa program`
-  deram "0 diferenças" no `DelIndex`. Era porque, com elas, a função nem saía no `.o`, e o
-  meu laço contava as linhas marcadas com `!!` de uma saída de erro. Os scripts de teste
-  agora escrevem `ERR` quando a comparação não roda.
-- **O alinhamento da `.data`.** Os nomes de classe e as strings saem no `.o` com
-  alinhamento 1, mas no jogo cada um começa num múltiplo de 4: o linker alinha. O
-  `nomes_do_fonte.py` agora conta assim, e pula as cópias multidef que ficaram em outro
-  arquivo e as que ninguém usa.
-- **Resultado:** ROM idêntica na primeira ligação. O arquivo vem do C++ com 45 funções,
-  o `__sinit`, a `.ctor`, a `.data` (typeinfos, vtables e 21 strings) e a `.bss`; o
-  `HashResourceName`, que estava isolado, entrou nele. 119 funções conferidas no CI
-  (eram 50) e o progresso foi de 13,76% para **14,32%**.
+## 26. The file system in C++ (Phase 3.3)
+- **What the file does.** `src/Aurora/CDSFileSystem.cpp` brings together four classes:
+  `CDSFileSystem` opens the cartridge files (NitroFS), counts how many times each was opened,
+  reads at once or in the background (a request queue, with state and a 60-frame timeout)
+  and decompresses LZ, RL and Huffman; `CErfTable` is a HERF pack (the 12-byte index per
+  resource, found by binary search on the hash); `CErfMan` opens `test.herf` and the one for
+  the console's language (French, Italian, German, Spanish; the rest use English); and
+  `CErfResource` is a resource requested by name, which looks up `name.small` (compressed)
+  when asked. They are 52 functions, 0x02008bb0-0x0200a308.
+- **Bugs in the game, kept as they are:** `CErfTable`'s destructor only deletes the index
+  when it is NULL (`==` instead of `!=`); `CErfTable::Open` doesn't delete the 8-byte header
+  it read; the 12 paths `Init` stores are never used.
+- **The templates.** The game has the copies of `CExoArrayList<T>` (the engine's list) and of
+  the inline constructors spread at the end of several files: each `.o` produces its own
+  "multidef" copy and the linker keeps the first one it sees. Of the 72 functions compared, 20
+  are copies the game kept in `main.cpp` and in `CExoString.cpp`, and all of them match. The
+  compiler puts **each function in its own section**, so our copy can give way to the game's
+  without a byte left over: `preparar_link.py`, which already did this with the libraries,
+  now does it with `src/` too, looking at the names of all the game's cut code (not only the
+  `_dsd_gap`s: `CDSFileSystem`'s destructor is in a `jogo/` piece, and the linker reported
+  "Multiply-defined" until that was fixed).
+- **`Singleton<T>` has an empty virtual destructor.** Three independent things show it, and
+  all three only match with it: (1) in the copied `Instance()`, only the first field's address
+  comes out as a ready-made constant (without a destructor in the base, the first two come
+  out); (2) in `CErfMan`'s constructor, the object's address is loaded before the vtable; (3)
+  in `.data`, typeinfos and vtables come out sorted by size, and the ties
+  (`CErfMan`/`CDSFileSystem`, `CDSFileSystem`'s name/`CErfTable`'s vtable) only fall in the
+  game's order with it. The `Singleton<T>` vtable this creates is used by nobody, and the
+  linker discards it, in the game and here.
+- **The NitroSDK's `FSFile`.** The game copies an `FSFile` word by word for the first 0x20
+  bytes and in two blocks after that (16 and 24 bytes): it is the SDK's layout, with `prop`
+  and `arg` as `union`s. `include/nitro.h` now declares it that way.
+- **The game's `memcpy` is the compiler's intrinsic.** With a small constant size it becomes
+  in-place byte copies (the HERF index fields, the 3-byte `"./"`); otherwise, a call. The game
+  has both forms, so `include/msl.h` sends `memcpy` to `__memcpy`. The 50 earlier functions
+  stay the same.
+- **`DelIndex` didn't match, and stayed in assembly.** `CExoArrayList<T>::DelIndex` (removes
+  an element and pulls the others back) exists in the game for several `T`s. Our template
+  reproduces byte for byte the copy for a 16-byte type (`0x0202d788`), but not those for the
+  0x18, 0x1c and 0x60-byte types: in them the game computes the next element's address as
+  "current offset + size" (strength reduction), and ours redoes the multiplication. With 16
+  bytes it is a bit shift, and not even the game reduces it. I tested 960 equivalent forms of
+  the loop (decrement, loop kind, increment, element expression), compiler versions 1.2, 2.0
+  and DSi, optimization options and an inline helper function: none gave all four cases. This
+  file's two copies (`0x0200a1b0` and `0x0200a258`) are at the end of `.text`, among five
+  other template copies that match; the stretch `0x0200a1b0-0x0200a308` (7 functions) still
+  comes from assembly, and our `.o` covers the rest. It waits until another clue shows up.
+- **Erro nº 17: two "matches" that weren't.** Testing options, `-O4,s` and `-ipa program`
+  gave "0 differences" in `DelIndex`. That was because, with them, the function didn't even
+  come out in the `.o`, and my loop counted the lines marked `!!` in an error output. The test
+  scripts now write `ERR` when the comparison doesn't run.
+- **`.data` alignment.** Class names and strings come out of the `.o` with alignment 1, but
+  in the game each one starts at a multiple of 4: the linker aligns them. `nomes_do_fonte.py`
+  now counts that way, and skips the multidef copies that stayed in another file and the ones
+  nobody uses.
+- **Result:** ROM identical on the first link. The file comes from C++ with 45 functions, the
+  `__sinit`, the `.ctor`, the `.data` (typeinfos, vtables and 21 strings) and the `.bss`;
+  `HashResourceName`, which was alone, went into it. 119 functions checked in CI (it was 50)
+  and progress went from 13.76% to **14.32%**.
 
-## 27. O C++ do jogo rodando sobre os dados da ROM (Fase 3)
-- **O teste.** A Fase 3 pede, para cada parte, um teste que leia dados reais. O mais forte
-  é rodar o próprio C++ que gera os bytes do jogo, sem reescrever nada: o
-  `decomp/tests/test_arquivos.cpp` compila `src/Aurora/Memory.cpp`, `CExoString.cpp` e
-  `CDSFileSystem.cpp` com o `g++`, junto com `decomp/tests/nitro_pc.cpp`, que faz para o PC
-  as funções do NitroSDK e do MSL que eles chamam (o cartucho vira a pasta
-  `work/extract/files`, sem diferenciar maiúsculas; as três descompressões da BIOS; o heap).
-  O `include/msl.h` ganhou um ramo para o PC, separado por `__MWERKS__` (o `mwccarm` o
-  define); os bytes do DS não mudam (119 de 119 no `conferir_sem_rom.py`).
-- **O que ele confere:** o `erf.dict` sai pela cadeia inteira do jogo (`CErfResource` →
-  `CErfMan` → `CErfTable` → `CDSFileSystem`); para cada um dos nomes, o hash confere, o
-  recurso é achado e lido, e os bytes batem com uma leitura do índice feita à parte; os
-  `.small` saem descomprimidos com o tamanho do cabeçalho; a leitura de um pedaço, a fila em
-  segundo plano (`ReadFileAsync`, `Update` e o callback) e o pacote de cada idioma do
-  console. Tudo com o alocador do jogo atendendo cada `new` e `delete`.
-- **Resultado:** os **8.689 recursos** do `test.herf` (5.111 `.small` em LZ, 200 sem
-  compressão) saem certos; os idiomas 0 a 6 abrem o pacote certo (inglês para japonês,
-  inglês e o resto). O `erf.dict` diz ter 8.691 nomes: os 2 últimos são entradas zeradas.
-- **Testado ao contrário:** três erros plantados no fonte (a posição dentro do índice, o
-  teste do tipo de compressão, a busca binária) foram todos pegos.
-- **Erro nº 18: o comentário do alocador estava errado.** Eu tinha escrito que um bloco
-  devolvido ao pool "nunca volta a ser usado". Rodando o código do jogo: o `Free` grava o
-  bloco na vaga seguinte da lista de livres, então ele é o **próximo** a sair; o que se
-  perde é o bloco que ocupava aquela vaga, e o contador só sobe, então o pool atende no
-  máximo `m_nCount` pedidos na vida do jogo. O teste agora confere isso (pede, devolve e
-  pede de novo: sai o mesmo bloco; o vizinho de cima nunca sai), e o comentário foi
-  corrigido.
-- **Um achado sobre o jogo.** Com o pool esgotado, devolver um bloco grava 2 bytes logo
-  depois do fim da lista de livres. No PC isso estragou o heap na saída do programa. No DS
-  é inofensivo por sorte: o heap do NitroSDK arredonda cada bloco para 32 bytes, e as
-  listas dos 5 pools têm de 8 a 24 bytes de folga. O `OS_AllocFromHeap` de PC passou a
-  arredondar do mesmo jeito.
-- **Como rodar:** `make -C decomp arquivos` depois do `montar_rom.sh`. O CI compila o
-  teste (assim pega se o C++ do jogo deixar de compilar fora do DS), mas não o roda: não
-  tem a ROM.
+## 27. The game's C++ running on the ROM's data (Phase 3)
+- **The test.** Phase 3 asks, for each part, for a test that reads real data. The strongest
+  is to run the very C++ that produces the game's bytes, without rewriting anything:
+  `decomp/tests/test_arquivos.cpp` compiles `src/Aurora/Memory.cpp`, `CExoString.cpp` and
+  `CDSFileSystem.cpp` with `g++`, together with `decomp/tests/nitro_pc.cpp`, which implements
+  for the PC the NitroSDK and MSL functions they call (the cartridge becomes the
+  `work/extract/files` folder, case-insensitive; the BIOS's three decompressions; the heap).
+  `include/msl.h` got a PC branch, separated by `__MWERKS__` (which `mwccarm` defines); the DS
+  bytes don't change (119 of 119 in `conferir_sem_rom.py`).
+- **What it checks:** `erf.dict` comes out through the game's whole chain (`CErfResource` →
+  `CErfMan` → `CErfTable` → `CDSFileSystem`); for each of the names, the hash checks, the
+  resource is found and read, and the bytes match a separate reading of the index; `.small`
+  files come out decompressed with the header's size; reading a piece, the background queue
+  (`ReadFileAsync`, `Update` and the callback) and each console language's pack. All with the
+  game's allocator serving every `new` and `delete`.
+- **Result:** the **8,689 resources** of `test.herf` (5,111 LZ `.small`, 200 uncompressed)
+  come out right; languages 0 to 6 open the right pack (English for Japanese, English and the
+  rest). `erf.dict` claims 8,691 names: the last 2 are zeroed entries.
+- **Tested the other way around:** three errors planted in the source (the position inside
+  the index, the compression type test, the binary search) were all caught.
+- **Erro nº 18: the allocator's comment was wrong.** I had written that a block returned to
+  the pool "is never used again". Running the game's code: `Free` writes the block into the
+  next slot of the free list, so it is the **next** to come out; what is lost is the block
+  that occupied that slot, and the counter only goes up, so the pool serves at most
+  `m_nCount` requests in the game's lifetime. The test now checks this (request, return and
+  request again: the same block comes out; the neighbor above never comes out), and the
+  comment was fixed.
+- **A finding about the game.** With the pool exhausted, returning a block writes 2 bytes
+  right after the end of the free list. On the PC that corrupted the heap at program exit. On
+  the DS it is harmless by luck: the NitroSDK heap rounds each block up to 32 bytes, and the 5
+  pools' lists have 8 to 24 bytes of slack. The PC `OS_AllocFromHeap` now rounds the same way.
+- **How to run it:** `make -C decomp arquivos` after `montar_rom.sh`. CI compiles the test (so
+  it catches the game's C++ no longer compiling outside the DS), but doesn't run it: it has no
+  ROM.
 
-## 28. A tabela de textos (`CTlkTable`, Fase 3.4): 12 de 13 funções
-- **O que o arquivo faz.** `CTlkTable` guarda a lista dos `.tlk` abertos (`strings.tlk` e
-  o do idioma) e, a cada pedido, procura o id em cada um, na ordem em que foram
-  acrescentados. Cada `.tlk` é um `CTlkFile` de 0x20 bytes: lê o cabeçalho na primeira
-  busca, calcula o hash de Wang do id e lê a tabela do cartucho 64 entradas (0x200 bytes)
-  por vez, com sondagem linear. O arquivo do jogo vai de `0x02098930` a `0x02098f24`:
-  construtor, dois destrutores, `Reset`, `GetString`, `AddFile`, o construtor de
-  `CTlkFile`, `Unknown2` e 5 cópias de `CExoArrayList<T>`.
-- **12 das 13 funções batem** (e o `__sinit`), em `src/Aurora/CTlkTable.cpp`, e entram no
-  `casos.txt`: o CI agora confere 132 funções (eram 119). Dois achados:
-  - **As cópias de template saem na ordem em que os métodos são declarados na classe**
-    (com uma segunda passada para os que só outro método do template pede). Aqui o
-    `Allocate` vem antes do `Add`, então a declaração em `include/Aurora/CExoArrayList.h`
-    mudou de lugar. O CDSFileSystem continua batendo e a ROM continua idêntica.
-  - **O elemento da lista é uma `struct` com o ponteiro**, não o ponteiro sozinho. Das 39
-    cópias do `Allocate` para elementos de 4 bytes no jogo, 38 copiam ponteiros (o laço
-    prepara a origem antes do destino) e só esta copia uma struct (o contrário).
-- **A busca, conferida com os dados reais.** Num script à parte (Python, fora do
-  repositório), fiz a busca como o jogo faz: posição = `wang(id) % n`, sondagem linear a
-  partir dali, parada no id `0xFFFFFFFF`, texto em `dados + posição`. No `strings.tlk`
-  (dados em `0x60`, tabela de 18.845 posições), ela acha os **14.134** ids, com até 75
-  passos, e o id `0x7FFFFFFF`, que não existe, para no primeiro passo. No francês, igual.
-  Um detalhe novo, agora no FORMATOS.md: **6.579 ids têm a posição do texto
-  `0xFFFFFFFF`** (sem texto neste idioma), e o código do jogo não trata esse caso (somaria
-  a posição aos dados do mesmo jeito).
-- **A `GetString` não bateu e continua do assembly.** São 0x394 bytes, e as instruções
-  são as mesmas do jogo; o que muda são os registradores e as posições na pilha (148
-  linhas diferentes na melhor forma). No jogo, `data` (o `m_dataOffset` lido a cada volta)
-  e `position` (a posição do texto) vão para a pilha (`[sp+0x28]` e `[sp+0x2c]`), e o
-  endereço do `CDSFileSystem` fica fixo em `r7` durante o laço. No nosso, uma das duas fica
-  em `r7`, e o endereço é relido da tabela de constantes a cada uso. A melhor forma do
-  laço (antes dele, a função lê o cabeçalho se preciso, calcula o hash e lê o primeiro
-  pedaço da tabela):
+## 28. The text table (`CTlkTable`, Phase 3.4): 12 of 13 functions
+- **What the file does.** `CTlkTable` keeps the list of open `.tlk` files (`strings.tlk` and
+  the language one) and, on each request, looks the id up in each, in the order they were
+  added. Each `.tlk` is a 0x20-byte `CTlkFile`: it reads the header on the first lookup,
+  computes the Wang hash of the id and reads the table from the cartridge 64 entries (0x200
+  bytes) at a time, with linear probing. The game file runs from `0x02098930` to
+  `0x02098f24`: constructor, two destructors, `Reset`, `GetString`, `AddFile`, the
+  `CTlkFile` constructor, `Unknown2` and 5 copies of `CExoArrayList<T>`.
+- **12 of the 13 functions match** (and the `__sinit`), in `src/Aurora/CTlkTable.cpp`, and
+  go into `casos.txt`: CI now checks 132 functions (it was 119). Two findings:
+  - **Template copies come out in the order the methods are declared in the class** (with a
+    second pass for the ones only another template method asks for). Here `Allocate` comes
+    before `Add`, so the declaration in `include/Aurora/CExoArrayList.h` moved. CDSFileSystem
+    still matches and the ROM is still identical.
+  - **The list element is a `struct` holding the pointer**, not the bare pointer. Of the 39
+    copies of `Allocate` for 4-byte elements in the game, 38 copy pointers (the loop sets up
+    the source before the destination) and only this one copies a struct (the other way
+    round).
+- **The lookup, checked against the real data.** In a separate script (Python, outside the
+  repository), I did the lookup the way the game does: slot = `wang(id) % n`, linear probing
+  from there, stop at id `0xFFFFFFFF`, text at `data + position`. In `strings.tlk` (data at
+  `0x60`, a table of 18,845 slots), it finds all **14,134** ids, in up to 75 steps, and id
+  `0x7FFFFFFF`, which doesn't exist, stops at the first step. In French, the same. One new
+  detail, now in FORMATOS.md: **6,579 ids have text position `0xFFFFFFFF`** (no text in this
+  language), and the game code doesn't handle that case (it would add the position to the
+  data just the same).
+- **`GetString` didn't match and stays in assembly.** It is 0x394 bytes, and the
+  instructions are the same as the game's; what changes is the registers and the stack
+  slots (148 different lines in the best version). In the game, `data` (the `m_dataOffset`
+  read on every iteration) and `position` (the text position) go to the stack (`[sp+0x28]`
+  and `[sp+0x2c]`), and the `CDSFileSystem` address stays fixed in `r7` during the loop. In
+  ours, one of the two stays in `r7`, and the address is reloaded from the constant pool on
+  every use. The best version of the loop (before it, the function reads the header if
+  needed, computes the hash and reads the first chunk of the table):
 
   ```cpp
   do {
@@ -710,166 +713,168 @@ usam strings. Testei cada pista contra o que já se sabe (os núcleos) antes de 
   } while (slot != start);
   ```
 
-  Testei cerca de 300 formas, a maioria por busca automática: as leituras da entrada em
-  seis formas (direto, `struct` copiada, ponteiro, acessores inline...) e em todas as
-  ordens; o lugar e o tipo das variáveis (`data` antes, depois, no topo; `i` e `slot`
-  `int` ou `u32`); o hash numa função inline; o `count` antes ou depois do hash; o caminho
-  do "achou" como outra função inline; a busca escrita direto no laço da `CTlkTable`; e a
-  `CTlkFile::GetString` sem `inline`, dentro da classe ou depois de quem a chama. Nenhuma
-  pôs `data` e `position` onde o jogo põe.
-- **O que aprendi tentando: como o compilador escolhe quem vai para a pilha.** Em Thumb,
-  só `r4`-`r7` sobrevivem a uma chamada. Com funções de teste pequenas (só chamadas e
-  variáveis, nada do jogo): quando faltam registradores, vão para a pilha os valores com
-  menos usos e, no empate, os mais novos; e **as posições na pilha seguem uma numeração
-  interna, não a ordem do fonte**. Numa função inline copiada, essa numeração põe primeiro
-  as variáveis da inline, depois os parâmetros dela (do último para o primeiro), depois as
-  variáveis da função de fora (da última declarada para a primeira). O jogo segue esse padrão na
-  `GetString` (`start`, a parte do hash tirada do laço, `count` | `outSize`, `out` | o `i`
-  de fora | `data`, `position`). O que ainda não entendi é o lugar de uma variável definida
-  dentro do laço da inline: com o resultado de uma chamada, ela vai para o fim; com uma
-  leitura de memória, vai para o começo. No jogo, `data` e `position` (leituras de
-  memória) estão no fim. As lições estão no COMPILADOR.md.
-- **Por que o arquivo não é ligado.** A `GetString` está no meio do `.text`, e o build
-  liga um arquivo inteiro (o `.o` ocupa a faixa toda). Dividir o fonte em dois `.cpp`, com
-  a `GetString` em assembly entre eles, não serve: cada `.cpp` ganha o seu `__sinit` (a
-  constante do `Comum.h`, DIARIO 24), e o arquivo do jogo só tem um. Então o arquivo todo
-  continua do assembly, e o fonte fica conferido função por função pelo CI. Quando a
-  `GetString` bater, ela entra entre `Reset` e `AddFile`, e o arquivo é ligado (com a
-  `.data`, a `.bss`, a `.init` e a `.ctor`, que ficam para esse dia). O progresso não muda:
-  **14,32%**.
-- **Outra coisa do plano:** `FileReference`, que faltava na Fase 3.3, deriva de
-  `CGameBaseComponent` (a árvore do RTTI em `hierarquia_classes.md`): é um componente de
-  objeto de jogo, e vai para a Fase 4.
+  I tried about 300 versions, most by automated search: the entry reads in six forms
+  (direct, copied `struct`, pointer, inline accessors...) and in every order; the place and
+  type of the variables (`data` before, after, at the top; `i` and `slot` as `int` or
+  `u32`); the hash in an inline function; `count` before or after the hash; the "found" path
+  as another inline function; the lookup written straight into the `CTlkTable` loop; and
+  `CTlkFile::GetString` without `inline`, inside the class or after its caller. None put
+  `data` and `position` where the game puts them.
+- **What I learned trying: how the compiler picks what goes to the stack.** In Thumb, only
+  `r4`-`r7` survive a call. With small test functions (only calls and variables, nothing
+  from the game): when registers run out, the values with the fewest uses go to the stack
+  and, on a tie, the newest ones; and **stack slots follow an internal numbering, not the
+  source order**. In an inlined function, that numbering puts the inline's variables first,
+  then its parameters (last to first), then the outer function's variables (last declared
+  to first). The game follows that pattern in `GetString` (`start`, the part of the hash
+  hoisted out of the loop, `count` | `outSize`, `out` | the outer `i` | `data`,
+  `position`). What I don't understand yet is where a variable defined inside the inline's
+  loop goes: holding the result of a call, it goes to the end; holding a memory read, it
+  goes to the start. In the game, `data` and `position` (memory reads) are at the end. The
+  lessons are in COMPILADOR.md.
+- **Why the file isn't linked.** `GetString` is in the middle of `.text`, and the build
+  links a whole file (the `.o` covers the whole range). Splitting the source into two
+  `.cpp` files, with `GetString` in assembly between them, doesn't work: each `.cpp` gets
+  its own `__sinit` (the `Comum.h` constant, DIARIO 24), and the game file has only one. So
+  the whole file stays in assembly, and the source is checked function by function by CI.
+  When `GetString` matches, it goes between `Reset` and `AddFile`, and the file is linked
+  (with the `.data`, `.bss`, `.init` and `.ctor`, which are left for that day). Progress
+  doesn't change: **14.32%**.
+- **Another plan item:** `FileReference`, which was missing in Phase 3.3, derives from
+  `CGameBaseComponent` (the RTTI tree in `hierarquia_classes.md`): it is a game object
+  component, and it moves to Phase 4.
 
-## 29. As tabelas GDA e a leitura de GFF4 (Fase 3.4)
-- **O que o arquivo tem.** `src/Aurora/G2DA.cpp` (`0x0201ae10-0x0201b918`) é a `G2DA`, a
-  tabela GDA (o nome vem do RTTI, como o da base, `C2DASource`): abre um `.gda` pelo nome,
-  confere o cabeçalho e lê células pela posição (linha, coluna) ou pela chave (o id da
-  linha, que é o valor da coluna 0, e o hash do nome da coluna), como texto, inteiro,
-  float, booleano ou ponto fixo. No fim do arquivo estão as 13 funções que leem GFF4
-  (`include/Aurora/GFF4.h`, nomes nossos): o arquivo, o modelo de uma struct (com a busca
-  binária do campo), a struct, a lista. **O jogo inteiro usa estas**: a busca do campo tem
-  50 chamadores, 41 de fora da `G2DA`. São 52 funções, mais o `__sinit`, a `.ctor` e a
-  `.data` (typeinfos, vtable de 21 entradas e um `""`).
-- **ROM idêntica na primeira ligação**, e o progresso foi de 14,32% para **14,60%** (o
-  código do jogo, de 1,00% para 1,34%). O CI confere 185 funções (eram 132), entre elas 4
-  cópias que o jogo guardou em outros arquivos: `IsLoaded` e `GetRowCount` (inline na
-  classe, `0x0200f800` e `0x0200c458`), `Get<int>` e a leitura de inteiro (`0x02019348`).
-- **O que fez bater** (o COMPILADOR.md tem as lições, que valem para o resto do jogo):
-  - toda struct ou lista nova recebe o arquivo **montado de novo**,
-    `GFF4File(dados, tamanho)`: o jogo lê o tamanho antes dos dados, porque os argumentos
-    são calculados da direita para a esquerda; uma cópia de struct lê na outra ordem;
-  - o índice do modelo (16 bits do tipo do campo) é **cortado dentro do construtor**, na
-    hora de gravar; cortado no argumento, o corte sai antes;
-  - os leitores de valor `Get<T>` são templates de função, e o compilador põe cada
-    instância **logo depois da primeira função que a usa**, e não no fim do arquivo como os
-    métodos de uma classe template;
-  - o `""` devolvido quando um texto falta está numa **função inline**: assim o compilador
-    lhe dá um nome, ele vai para o bloco das variáveis da `.data` (antes do marcador 2/π,
-    como no jogo) e o linker fica com uma cópia só; a de 16 bits é de outro arquivo
-    (`0x020f585c`) e é usada por três;
-  - o valor padrão do ponto fixo vai **por ponteiro**: a classe tem construtor de cópia;
-  - os acessores por rótulo (`cells.GetInt(10005 + coluna)`) são inline e mudam a ordem dos
-    temporários na pilha; com eles, 51 das 52 bateram. A `GetColumnType` só bateu com as
-    chamadas escritas direto e com o padrão `flag_found` do `parse_format` do MSL (uma
-    variável que vale 1 antes do `switch` e 0 no `default`). Achei o padrão procurando no
-    jogo a mesma sequência de instruções: ela só aparece nesta função e no `parse_format`,
-    cujo fonte é conhecido.
-- **Erro nº 19: um rótulo lido errado.** Escrevi 11000 para o rótulo do tipo de coluna; a
-  constante do jogo é `0x2af7`, 10999. A comparação mostrou a diferença no pool de
-  constantes (`0x2af8` contra `0x2af7`), e o número foi corrigido antes do commit.
-- **Teste com dados reais** (parte 5 do `test_arquivos.cpp`): cada um dos **229 `.gda`** do
-  `erf.dict` é aberto pelo nome com o nosso C++, e linhas, colunas, o hash e o tipo de cada
-  coluna, o id de cada linha e o valor de cada uma das **122.741 células** (9.560 linhas)
-  batem com uma leitura independente do GFF4 feita no teste (que procura os campos um por
-  um, sem a busca binária). Quatro erros plantados foram pegos. O primeiro, numa leitura de
-  float, não foi: **nenhuma tabela do jogo tem coluna float** (só inteiro, byte, ponto fixo
-  e texto ASCII por referência), e o teste passou a conferir essa leitura nas células de
-  32 bits.
-- **Dois achados sobre o jogo.** A `GetColumnType` devolve FALSE para as 17.556 células de
-  texto: o `switch` compara o tipo com as flags (`0x20000014`, texto por referência), e os
-  casos são 14 e 20, sem elas. E o caminho das tabelas "V0.2" nunca roda: ele confere a
-  versão no mesmo lugar onde a `Load` exige "V4.0".
+## 29. GDA tables and GFF4 reading (Phase 3.4)
+- **What the file has.** `src/Aurora/G2DA.cpp` (`0x0201ae10-0x0201b918`) is `G2DA`, the GDA
+  table (the name comes from the RTTI, like the base's, `C2DASource`): it opens a `.gda` by
+  name, checks the header and reads cells by position (row, column) or by key (the row id,
+  which is the value of column 0, and the hash of the column name), as text, integer,
+  float, boolean or fixed point. At the end of the file are the 13 functions that read GFF4
+  (`include/Aurora/GFF4.h`, our names): the file, a struct's template (with the binary
+  search for the field), the struct, the list. **The whole game uses these**: the field
+  search has 50 callers, 41 outside `G2DA`. That is 52 functions, plus the `__sinit`, the
+  `.ctor` and the `.data` (typeinfos, a 21-entry vtable and a `""`).
+- **Identical ROM on the first link**, and progress went from 14.32% to **14.60%** (game
+  code from 1.00% to 1.34%). CI checks 185 functions (it was 132), among them 4 copies the
+  game keeps in other files: `IsLoaded` and `GetRowCount` (inline in the class,
+  `0x0200f800` and `0x0200c458`), `Get<int>` and the integer read (`0x02019348`).
+- **What made it match** (COMPILADOR.md has the lessons, which hold for the rest of the
+  game):
+  - every new struct or list gets the file **built again**, `GFF4File(data, size)`: the game
+    reads the size before the data, because arguments are evaluated right to left; a struct
+    copy reads in the other order;
+  - the template index (16 bits of the field type) is **truncated inside the constructor**,
+    when storing it; truncated in the argument, the truncation comes out earlier;
+  - the value readers `Get<T>` are function templates, and the compiler places each
+    instance **right after the first function that uses it**, not at the end of the file
+    like a class template's methods;
+  - the `""` returned when a text is missing lives in an **inline function**: that way the
+    compiler gives it a name, it goes into the `.data` variables block (before the 2/π
+    marker, as in the game) and the linker keeps one copy; the 16-bit one is from another
+    file (`0x020f585c`) and is used by three;
+  - the fixed-point default value is passed **by pointer**: the class has a copy
+    constructor;
+  - the label accessors (`cells.GetInt(10005 + column)`) are inline and change the order of
+    the temporaries on the stack; with them, 51 of the 52 matched. `GetColumnType` only
+    matched with the calls written out directly and with the `flag_found` pattern from the
+    MSL's `parse_format` (a variable set to 1 before the `switch` and to 0 in `default`). I
+    found the pattern by searching the game for the same instruction sequence: it only
+    shows up in this function and in `parse_format`, whose source is known.
+- **Erro nº 19: a label read wrong.** I wrote 11000 for the column type label; the game's
+  constant is `0x2af7`, 10999. The comparison showed the difference in the constant pool
+  (`0x2af8` versus `0x2af7`), and the number was fixed before the commit.
+- **Test with real data** (part 5 of `test_arquivos.cpp`): each of the **229 `.gda`** files
+  in `erf.dict` is opened by name with our C++, and the rows, columns, the hash and type of
+  each column, each row's id and the value of each of the **122,741 cells** (9,560 rows)
+  match an independent GFF4 read done in the test (which looks the fields up one by one,
+  without the binary search). Four planted bugs were caught. The first, in a float read,
+  wasn't: **no game table has a float column** (only integer, byte, fixed point and ASCII
+  text by reference), and the test now checks that read on the 32-bit cells.
+- **Two findings about the game.** `GetColumnType` returns FALSE for the 17,556 text
+  cells: the `switch` compares the type including the flags (`0x20000014`, text by
+  reference), and the cases are 14 and 20, without them. And the "V0.2" tables path never
+  runs: it checks the version in the same place where `Load` requires "V4.0".
 
-## 30. As tabelas 2DA em texto (`C2DA`, Fase 3.4)
-- **O que o arquivo tem.** `src/Aurora/C2DA.cpp` (`0x02003fec-0x02004c1c`) é a `C2DA`, a
-  tabela 2DA em texto, o formato clássico da BioWare (os nomes `C2DA` e `I2DAProducer` vêm
-  do RTTI; os dos métodos seguem a C2DA do Neverwinter Nights, do mesmo motor). A `Load`
-  lê o recurso pelo nome; a `Parse` monta, numa C2DA temporária, uma `CExoString` por
-  célula; e a `CopyFrom` passa tudo para o jeito "compacto": um bloco só, com os ponteiros
-  dos nomes, a posição (u16) de cada célula e os textos. São 21 funções, mais o `__sinit`,
-  a `.ctor` e a `.data` (typeinfos, vtable de 9 entradas e as strings).
-- **ROM idêntica**, e o progresso foi de 14,60% para **14,91%** (o código do jogo, de
-  1,34% para 1,71%). O CI confere 207 funções (eram 185). Com isso, a Fase 3.4 está
-  completa, menos a `CTlkTable::GetString` (seção 28).
-- **O que fez bater** (o COMPILADOR.md tem as lições):
-  - o tamanho do bloco de `CExoString` é `linhas * colunas + colunas + linhas` (células,
-    nomes das colunas, nomes das linhas); o compilador o fatora em
-    `(linhas + 1) * colunas + linhas`, mas escrever a forma fatorada dá outra ordem de
-    operandos;
-  - a `CopyFrom` e a `Parse` foram escritas **no estilo C**: as variáveis no topo da função
-    e os mesmos contadores (`i`, `j`, `column`) em vários laços. Isso muda a numeração das
-    posições na pilha e mantém vivo um contador que só é incrementado (o `column++` do laço
-    dos nomes das colunas). Na `CopyFrom`, a expressão `labelText + position` aparece três
-    vezes **sem variável**: o compilador a guarda como temporário próprio, em outra posição
-    da pilha. Com uma variável `label`, as instruções eram as mesmas e só a pilha mudava;
-  - na `Parse`, as variáveis cujo endereço é passado (`&line`, `&lineLength`...) ficam na
-    pilha na ordem inversa da declaração: a ordem do jogo diz qual foi a do fonte;
-  - as virtuais inline `GetNumColumns` e `GetNumRows` saem no fim do `.o` na ordem
-    **inversa** da declaração na classe. Como a ordem na vtable vem da classe base
-    (`I2DAProducer`), a `C2DA` as declara invertidas sem mudar a vtable.
-- **Erro nº 20: a ferramenta escolhia o construtor errado, e a G2DA já tinha o problema.**
-  O `.o` tem o construtor duas vezes (`C2` e `C1`, mesmos bytes), mas entre eles o
-  compilador pôs o destrutor inline da base (`I2DAProducer::~I2DAProducer`). O
-  `nomes_do_fonte.py` só juntava as cópias quando estavam lado a lado: viu o `C2` sozinho e
-  deu a `0x02003fec` o nome dele. A nossa `LoadData` chama o `C1`; com os dois citados, o
-  linker guardou os dois, e o ARM9 cresceu 32 bytes. Quem acusou foi a montagem: a área
-  segura (`0x02000000-0x02004000`) mudou, porque a C2DA começa 20 bytes antes do fim dela.
-  O mapa do linker mostrou `C2DA::C2DA[base]` e `C2DA::C2DA` em `0x02003fec` e
-  `0x02004018`. A primeira correção juntava qualquer par de cópias iguais separado por
-  multidef, e a G2DA parou de encaixar: lá há templates multidef de bytes iguais que o jogo
-  guarda separados. Agora só o par C1/C2 (ou D1/D2) da mesma função pula as cópias multidef
-  do meio. Com isso, o construtor da G2DA (`0x0201ae10`) também passou de `C2` para `C1`.
-  O nome antigo funcionava, porque ninguém no `.o` dela chama o `C1`, mas estava errado:
-  quem cria um objeto chama o `C1`. Os outros quatro arquivos ligados foram encaixados de
-  novo com a ferramenta nova. Só mudaram os números das strings locais (`@671` virou
-  `@673`), porque a declaração de `sscanf` no `msl.h` andou a numeração do compilador.
-- **Teste com dados reais** (parte 6 do `test_arquivos.cpp`): **370 tabelas 2DA**, todas
-  "V2.0" (160 `.itm` e 116 `.spl`, mais 59 `.ITM` e 35 `.SPL`, no `test.herf`, sem
-  compressão), são abertas pelo nome com o nosso C++. Os nomes das colunas e das linhas, o
-  texto e o inteiro de cada uma das **12.376 células** (1.768 linhas) batem com uma leitura
-  independente do texto feita no teste. Quatro erros plantados foram pegos, cada um pela
-  conferência certa: sem o `strlwr` dos nomes das linhas, a posição da célula sem o
-  terminador, `"***"` no lugar de `"****"` e `%d` no lugar de `%i` (este, pelas células
-  em hexadecimal, `0x00000003`). O teste roda em 64 bits, onde um ponteiro tem 8 bytes; por
-  isso o bloco compacto é medido com `sizeof(char*)`, que no DS dá o mesmo código que o 4.
-- **Achados sobre o jogo.** O jogo só usa a `C2DA` para os itens e as magias. O nome do
-  arquivo está na coluna 5 de uma tabela GDA (a função em `0x02019f34`, que monta as regras,
-  ignora `****` e vazio), e os valores são lidos com `GetINTEntry`. Os arquivos marcam célula
-  vazia com `***` (três asteriscos), mas o leitor só reconhece `****`: essas células ficam
-  com o texto `"***"` e dão 0 como inteiro (com TRUE). O caminho binário ("V2.b") e a linha
-  `DEFAULT:` existem no código, mas nenhum arquivo da ROM os usa. A `Parse` tem um defeito
-  no `DEFAULT` sem dois-pontos: ela desconta o tamanho da linha sem avançar o texto.
+## 30. Text 2DA tables (`C2DA`, Phase 3.4)
+- **What the file has.** `src/Aurora/C2DA.cpp` (`0x02003fec-0x02004c1c`) is `C2DA`, the
+  text 2DA table, BioWare's classic format (the names `C2DA` and `I2DAProducer` come from
+  the RTTI; the method names follow Neverwinter Nights' C2DA, from the same engine). `Load`
+  reads the resource by name; `Parse` builds, in a temporary C2DA, one `CExoString` per
+  cell; and `CopyFrom` moves everything to the "compact" form: a single block, with the
+  name pointers, the position (u16) of each cell and the texts. That is 21 functions, plus
+  the `__sinit`, the `.ctor` and the `.data` (typeinfos, a 9-entry vtable and the strings).
+- **Identical ROM**, and progress went from 14.60% to **14.91%** (game code from 1.34% to
+  1.71%). CI checks 207 functions (it was 185). With this, Phase 3.4 is complete, except
+  `CTlkTable::GetString` (section 28).
+- **What made it match** (COMPILADOR.md has the lessons):
+  - the size of the `CExoString` block is `rows * columns + columns + rows` (cells, column
+    names, row names); the compiler factors it into `(rows + 1) * columns + rows`, but
+    writing the factored form gives a different operand order;
+  - `CopyFrom` and `Parse` were written **in C style**: variables at the top of the function
+    and the same counters (`i`, `j`, `column`) reused across loops. That changes the stack
+    slot numbering and keeps alive a counter that is only incremented (the `column++` of the
+    column-names loop). In `CopyFrom`, the expression `labelText + position` appears three
+    times **without a variable**: the compiler keeps it as its own temporary, in another
+    stack slot. With a `label` variable, the instructions were the same and only the stack
+    changed;
+  - in `Parse`, the variables whose address is passed (`&line`, `&lineLength`...) sit on the
+    stack in reverse declaration order: the game's order tells what the source's was;
+  - the inline virtuals `GetNumColumns` and `GetNumRows` come out at the end of the `.o` in
+    **reverse** declaration order in the class. Since the vtable order comes from the base
+    class (`I2DAProducer`), `C2DA` declares them reversed without changing the vtable.
+- **Erro nº 20: the tool picked the wrong constructor, and G2DA already had the problem.**
+  The `.o` has the constructor twice (`C2` and `C1`, same bytes), but between them the
+  compiler put the base's inline destructor (`I2DAProducer::~I2DAProducer`).
+  `nomes_do_fonte.py` only merged the copies when they were side by side: it saw `C2` alone
+  and gave its name to `0x02003fec`. Our `LoadData` calls `C1`; with both referenced, the
+  linker kept both, and the ARM9 grew by 32 bytes. The build caught it: the secure area
+  (`0x02000000-0x02004000`) changed, because C2DA starts 20 bytes before its end. The linker
+  map showed `C2DA::C2DA[base]` and `C2DA::C2DA` at `0x02003fec` and `0x02004018`. The first
+  fix merged any pair of identical copies separated by multidefs, and G2DA stopped fitting:
+  there are multidef templates with identical bytes there that the game keeps separate.
+  Now only the C1/C2 (or D1/D2) pair of the same function skips the multidef copies in
+  between. With that, the G2DA constructor (`0x0201ae10`) also went from `C2` to `C1`. The
+  old name worked, because nobody in its `.o` calls `C1`, but it was wrong: whoever creates
+  an object calls `C1`. The other four linked files were fitted again with the new tool.
+  Only the local string numbers changed (`@671` became `@673`), because the `sscanf`
+  declaration in `msl.h` moved the compiler's numbering.
+- **Test with real data** (part 6 of `test_arquivos.cpp`): **370 2DA tables**, all "V2.0"
+  (160 `.itm` and 116 `.spl`, plus 59 `.ITM` and 35 `.SPL`, in `test.herf`, uncompressed),
+  are opened by name with our C++. The column and row names, and the text and integer of
+  each of the **12,376 cells** (1,768 rows), match an independent read of the text done in
+  the test. Four planted bugs were caught, each by the right check: without the `strlwr` of
+  the row names, the cell position without the terminator, `"***"` instead of `"****"` and
+  `%d` instead of `%i` (that one by the hexadecimal cells, `0x00000003`). The test runs on
+  64 bits, where a pointer is 8 bytes; that's why the compact block is measured with
+  `sizeof(char*)`, which on the DS gives the same code as 4.
+- **Findings about the game.** The game only uses `C2DA` for items and spells. The file
+  name is in column 5 of a GDA table (the function at `0x02019f34`, which builds the rules,
+  ignores `****` and empty), and the values are read with `GetINTEntry`. The files mark an
+  empty cell with `***` (three asterisks), but the reader only recognizes `****`: those
+  cells keep the text `"***"` and give 0 as an integer (with TRUE). The binary path
+  ("V2.b") and the `DEFAULT:` line exist in the code, but no file in the ROM uses them.
+  `Parse` has a bug with `DEFAULT` without a colon: it subtracts the line length without
+  advancing the text.
 
-## 31. O `ResourcePool<T>` é do inventário (Fase 3.2)
-- **O que o jogo tem.** O RTTI tem uma instância só, `ResourcePool<InventoryData>`. A
-  vtable dela (`0x020fabac`, 2 entradas) aponta para as duas únicas funções compiladas do
-  template, os destrutores: o D1 (`0x02056a0c`) e o D0 (`0x020594fc`). Cada um destrói
-  duas listas de ponteiros (`CExoArrayList<T*>`, em `+0x10` e em `+4`, nessa ordem), e o
-  D0 ainda chama o `delete`. As duas cópias ficam em arquivos diferentes do modo de
-  inventário, como as cópias do destrutor das listas que elas chamam (`0x0201466c`,
-  `0x0205957c`).
-- **O resto é inline.** A função de `0x020565d8` (0x428 bytes) grava a vtable do pool e
-  monta as listas; o mesmo código cria os objetos `InventoryData` (0x94 bytes; pelo RTTI,
-  derivam de `ListData`, em `+0`, e de `Poolable`, em `+0xc`) e os põe nas listas.
-- **Decisão.** Como o `FileReference` (seção 28), o `ResourcePool<T>` sai da Fase 3: sem o
-  código do inventário não há como saber o papel de cada lista nem conferir o template.
-  Ele vai para a Fase 5, junto do modo de inventário. A Fase 3.2 fica com o alocador, o
-  `Singleton<T>` e a `CExoArrayList<T>`.
+## 31. `ResourcePool<T>` belongs to the inventory (Phase 3.2)
+- **What the game has.** The RTTI has a single instance, `ResourcePool<InventoryData>`. Its
+  vtable (`0x020fabac`, 2 entries) points to the only two compiled functions of the
+  template, the destructors: D1 (`0x02056a0c`) and D0 (`0x020594fc`). Each destroys two
+  pointer lists (`CExoArrayList<T*>`, at `+0x10` and at `+4`, in that order), and D0 also
+  calls `delete`. The two copies are in different files of the inventory mode, like the
+  copies of the list destructor they call (`0x0201466c`, `0x0205957c`).
+- **The rest is inline.** The function at `0x020565d8` (0x428 bytes) writes the pool's
+  vtable and builds the lists; the same code creates the `InventoryData` objects (0x94
+  bytes; per the RTTI, they derive from `ListData`, at `+0`, and from `Poolable`, at `+0xc`)
+  and puts them in the lists.
+- **Decision.** Like `FileReference` (section 28), `ResourcePool<T>` leaves Phase 3: without
+  the inventory code there is no way to know each list's role or to check the template. It
+  moves to Phase 5, together with the inventory mode. Phase 3.2 keeps the allocator,
+  `Singleton<T>` and `CExoArrayList<T>`.
 
-## O que ainda não sabemos
-Vídeos `.vx` (codec Actimagine), layout das telas `.gui`, paletas dos Chao, 311 nomes de
-colunas GDA, se um item novo numa loja funciona, os limites que o código impõe (número de
-itens, de personagens), o service pack exato do compilador (2.0 base ou sp1+) e as partes do combate listadas em
-[COMBATE.md](COMBATE.md#16-o-que-ainda-não-sabemos). Os próximos passos estão no
-[plano](PLANO-DECOMPILACAO.md).
+## What we don't know yet
+`.vx` videos (Actimagine codec), the layout of the `.gui` screens, the Chao palettes, 311
+GDA column names, whether a new item in a shop works, the limits the code imposes (number
+of items, of characters), the exact compiler service pack (2.0 base or sp1+) and the
+combat parts listed in [COMBATE.md](COMBATE.md#16-what-we-dont-know-yet). The next steps are
+in the [plan](PLANO-DECOMPILACAO.md).

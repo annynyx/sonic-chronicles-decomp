@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Sonic Chronicles: The Dark Brotherhood",
+  "wikidata": "Q546745",
+  "system": "NDS",
+  "type": "decomp",
+  "original": {
+    "region": "USA",
+    "revision": "1.0",
+    "serial": "NTR-YWSE-USA",
+    "sha1": "f4ff8291b38bf9a33ab280fb9f7625cf4d549473"
+  },
+  "project": "Sonic Chronicles: The Dark Brotherhood decompilation",
+  "status": "in-progress",
+  "toolchain": "dsd",
+  "approach": "Matching decompilation of the ARM9 (BioWare Aurora engine) with mwccarm 2.0 sp2, rebuilt byte-identical",
+  "maintainers": [{ "name": "annynyx", "link": "https://github.com/annynyx" }],
+  "help": [
+    "Matching C++ for the Aurora engine classes",
+    "Aurora GFF4 and map script formats"
+  ],
+  "tags": ["matching", "nitrosdk", "bioware", "aurora", "ai-assisted", "modding"],
+  "notes": "NitroSystem, most of NitroSDK and the MSL are compiled out of their own source; game code is starting (CExoString, allocator, file system, GDA/2DA/TLK tables). Every file counts only when the rebuild is byte-identical. AI-assisted: most matching work is done by a Claude Code agent and checked by the rebuild. Also ships sonic-mod, a spreadsheet-based modding tool. Progress: decomp/tools/progress_report.py."
+}

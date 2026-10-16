@@ -1,709 +1,710 @@
-# O combate por dentro
+# Combat from the inside
 
-Como o Sonic Chronicles decide quem age primeiro, quem acerta, quanto dano sai, como os
-golpes POW, os status, os itens e os Chao entram na conta. Tudo aqui saiu de duas fontes:
+How Sonic Chronicles decides who acts first, who hits, how much damage comes out, and how POW
+moves, status effects, items and Chao enter the calculation. Everything here came from two
+sources:
 
-- **o código do ARM9** (pseudo-C do Ghidra; funções pequenas executadas isoladas no
-  [Unicorn](https://www.unicorn-engine.org/) para conferir o que fazem);
-- **as tabelas do jogo** (GDA e os arquivos de efeito `.ITM`/`.SPL`), lidas com o
+- **the ARM9 code** (Ghidra pseudo-C; small functions run in isolation in
+  [Unicorn](https://www.unicorn-engine.org/) to check what they do);
+- **the game's tables** (GDA and the `.ITM`/`.SPL` effect files), read with
   `sonic-mod unpack`.
 
-> **Sem dados do jogo aqui além do necessário para explicar.** As tabelas completas
-> (todos os golpes, efeitos, itens e criaturas) são geradas a partir da sua cópia:
+> **No game data here beyond what is needed to explain.** The complete tables (every move,
+> effect, item and creature) are generated from your copy:
 > ```
-> sonic-mod unpack rom.nds meu_mod
-> python3 analise/tools/combate_tabelas.py meu_mod      # gera meu_mod/combate/*.md
+> sonic-mod unpack rom.nds my_mod
+> python3 analise/tools/combate_tabelas.py my_mod      # writes my_mod/combate/*.md
 > ```
 
-## Como ler este documento
+## How to read this document
 
-Cada afirmação tem um nível de confiança:
+Each statement has a confidence level:
 
-| Nível | Quer dizer |
+| Level | Means |
 |---|---|
-| **Alta** | li o código e ele bate com os dados (e, quando dava, executei a função no Unicorn) |
-| **Média** | li o código, mas um passo da interpretação é dedução (o nome de um campo, a unidade de um valor) |
-| **Baixa** | dedução a partir dos dados, dos nomes ou dos textos do jogo; o código ainda não foi lido |
+| **High** | I read the code and it matches the data (and, when possible, I ran the function in Unicorn) |
+| **Medium** | I read the code, but one step of the interpretation is a deduction (the name of a field, the unit of a value) |
+| **Low** | deduced from the data, the names or the game's texts; the code hasn't been read yet |
 
-Endereços são do ARM9 da versão americana (`YWSE`). "Regra N" é a linha N da tabela
-`CombatRules` (seção 14). `1dN` é um dado de N faces (`Rules_RollDice`, 0x02008550).
-Os nomes das funções estão em [`analise/symbols_manual.txt`](../analise/symbols_manual.txt).
+Addresses are from the ARM9 of the US version (`YWSE`). "Rule N" is row N of the
+`CombatRules` table (section 15). `1dN` is an N-sided die (`Rules_RollDice`, 0x02008550). The
+function names are in [`analise/symbols_manual.txt`](../analise/symbols_manual.txt).
 
-## Sumário
-1. [Uma batalha, do começo ao fim](#1-uma-batalha-do-começo-ao-fim)
-2. [Atributos](#2-atributos)
-3. [Ordem de ação (iniciativa)](#3-ordem-de-ação-iniciativa)
-4. [Emboscada](#4-emboscada)
-5. [Ataque básico](#5-ataque-básico)
-6. [Aplicação do dano, elementos e resistências](#6-aplicação-do-dano-elementos-e-resistências)
-7. [Defender](#7-defender)
-8. [Golpes POW](#8-golpes-pow)
-9. [O sistema de efeitos (.SPL e .ITM)](#9-o-sistema-de-efeitos-spl-e-itm)
-10. [Status (buffs e debuffs)](#10-status-buffs-e-debuffs)
-11. [Habilidades especiais](#11-habilidades-especiais)
-12. [Itens](#12-itens)
-13. [Inimigos](#13-inimigos)
-14. [Dificuldade dinâmica](#14-dificuldade-dinâmica)
-15. [CombatRules: as 74 regras](#15-combatrules-as-74-regras)
-16. [O que ainda não sabemos](#16-o-que-ainda-não-sabemos)
-17. [Como conferir](#17-como-conferir)
+## Contents
+1. [A battle, from start to end](#1-a-battle-from-start-to-end)
+2. [Attributes](#2-attributes)
+3. [Turn order (initiative)](#3-turn-order-initiative)
+4. [Ambush](#4-ambush)
+5. [Basic attack](#5-basic-attack)
+6. [Applying damage, elements and resistances](#6-applying-damage-elements-and-resistances)
+7. [Defend](#7-defend)
+8. [POW moves](#8-pow-moves)
+9. [The effect system (.SPL and .ITM)](#9-the-effect-system-spl-and-itm)
+10. [Status effects (buffs and debuffs)](#10-status-effects-buffs-and-debuffs)
+11. [Special abilities](#11-special-abilities)
+12. [Items](#12-items)
+13. [Enemies](#13-enemies)
+14. [Dynamic difficulty](#14-dynamic-difficulty)
+15. [CombatRules: the 74 rules](#15-combatrules-the-74-rules)
+16. [What we don't know yet](#16-what-we-dont-know-yet)
+17. [How to check](#17-how-to-check)
 
 ---
 
-## 1. Uma batalha, do começo ao fim
+## 1. A battle, from start to end
 
 ```
-encontro (exploração) ─► GameModeCombat vfunc02 (0x02039af4)
-   ├─ ajusta o nível de dificuldade dinâmica ............ seção 14
-   ├─ decide a emboscada (AmbushValue, Chao) ............. seção 4
-   └─ loop de rodadas
-        ├─ Combat_BuildTurnQueue (0x020448c0): fila por iniciativa ... seção 3
-        ├─ cada ação: Atacar / Defender / POW / Item / Fugir
-        │     ├─ Combat_ResolveAttack (0x0200f804) → acerto ......... seção 5
-        │     ├─ Combat_BasicAttackDamage / Combat_PowDamage ....... seções 5 e 8
-        │     └─ Combat_ApplyDamage (0x02011ac4) + resistências .... seção 6
-        └─ efeitos por rodada (veneno, regeneração, PP) ............. seções 9–11
-fim: XP e itens (squads, rewards, RandItems); ajuste da dificuldade
+encounter (exploration) ─► GameModeCombat vfunc02 (0x02039af4)
+   ├─ adjusts the dynamic difficulty level ............... section 14
+   ├─ decides the ambush (AmbushValue, Chao) .............. section 4
+   └─ round loop
+        ├─ Combat_BuildTurnQueue (0x020448c0): queue by initiative ... section 3
+        ├─ each action: Attack / Defend / POW / Item / Flee
+        │     ├─ Combat_ResolveAttack (0x0200f804) → hit ............. section 5
+        │     ├─ Combat_BasicAttackDamage / Combat_PowDamage ......... sections 5 and 8
+        │     └─ Combat_ApplyDamage (0x02011ac4) + resistances ....... section 6
+        └─ per-round effects (poison, regeneration, PP) .............. sections 9–11
+end: XP and items (squads, rewards, RandItems); difficulty adjustment
 ```
 
-## 2. Atributos
+## 2. Attributes
 
-Os atributos são números de uma tabela por criatura. O código não usa a coluna
-diretamente: chama `StatsRedirect_Map` (0x020083d0), que converte o **atributo
-lógico** *n* na coluna *n + 1* de `StatRedirect.gda`, e depois `Stats_GetInt`
-(0x02007ab0), cujo terceiro argumento escolhe o valor **base** (1) ou o **atual**, com
-bônus (0). **Confiança: alta.**
+Attributes are numbers in a per-creature table. The code doesn't use the column directly: it
+calls `StatsRedirect_Map` (0x020083d0), which converts **logical attribute** *n* into column
+*n + 1* of `StatRedirect.gda`, and then `Stats_GetInt` (0x02007ab0), whose third argument
+selects the **base** value (1) or the **current** one, with bonuses (0). **Confidence: high.**
 
-| Nº | Atributo | Para que serve |
+| No. | Attribute | What it is for |
 |---|---|---|
-| 0 | HP | vida atual |
-| 21 | Speed | iniciativa (seção 3), fuga e perseguição |
-| 22 | Attack | chance de acertar |
-| 23 | Defense | chance de ser errado |
-| 24 | HP máximo | |
-| 25 | Power | dano ("damage rating"; o jogo não mostra) |
-| 26 | Grit | armadura: subtraída do dano (o jogo não mostra) |
-| 27 | Luck | crítico, emboscada |
-| 28 | PP | "Fatigue" nas tabelas: os pontos para golpes POW |
-| 36 | PP máximo | |
-| 39–54 | marcas de status | atributo 39 + ID do status (seção 10) |
-| 70 | Classe | 0 e 4 = Power, 1 e 3 = Support, 2 = Shifter (`classes.gda`) |
-| 75–80 | resistência a Fogo, Água, Terra, Vento, Raio, Gelo | em %, seção 6 |
-| 90–121 | dano elemental | > 0 liga o elemento no ataque; 107–112 = os 6 elementos |
-| 122 | desconto no custo dos POW | item Economizer |
-| 123 | ações por rodada | `NumActions` de `creatures.gda` |
+| 0 | HP | current health |
+| 21 | Speed | initiative (section 3), fleeing and chasing |
+| 22 | Attack | chance to hit |
+| 23 | Defense | chance to be missed |
+| 24 | max HP | |
+| 25 | Power | damage ("damage rating"; the game doesn't show it) |
+| 26 | Grit | armor: subtracted from damage (the game doesn't show it) |
+| 27 | Luck | critical hits, ambush |
+| 28 | PP | "Fatigue" in the tables: the points for POW moves |
+| 36 | max PP | |
+| 39–54 | status marks | attribute 39 + status ID (section 10) |
+| 70 | Class | 0 and 4 = Power, 1 and 3 = Support, 2 = Shifter (`classes.gda`) |
+| 75–80 | Fire, Water, Earth, Wind, Lightning, Ice resistance | in %, section 6 |
+| 90–121 | elemental damage | > 0 turns the element on in the attack; 107–112 = the 6 elements |
+| 122 | POW cost discount | Economizer item |
+| 123 | actions per round | `NumActions` in `creatures.gda` |
 
-Os valores iniciais estão em `creatures.gda` (colunas `HitPoints`, `Speed`, `Attack`,
-`Defense`, `Health`, `Power`, `Grit`, `Luck`, `Fatigue`, `MaxFatigue`, `NumActions`) e
-crescem pelas curvas `Adv_<personagem>.gda` (30 linhas, uma por nível: `XP` acumulado
-para chegar ao nível, e os atributos). Exemplo, Sonic: nível 1 tem Speed 7, Attack 8,
-Defense 14, HP 33, Power 8, Grit 2, Luck 3, PP 7; nível 30 tem 65, 64, 57, 570, 57, 31, 38, 22.
-As colunas `PlayerChoice` e `Combat` das curvas ainda não têm significado confirmado
-(**baixa**: parecem pontos a distribuir e pontos de POW).
+The starting values are in `creatures.gda` (columns `HitPoints`, `Speed`, `Attack`,
+`Defense`, `Health`, `Power`, `Grit`, `Luck`, `Fatigue`, `MaxFatigue`, `NumActions`) and grow
+along the `Adv_<character>.gda` curves (30 rows, one per level: the cumulative `XP` to reach
+the level, and the attributes). Example, Sonic: level 1 has Speed 7, Attack 8, Defense 14, HP
+33, Power 8, Grit 2, Luck 3, PP 7; level 30 has 65, 64, 57, 570, 57, 31, 38, 22. The
+`PlayerChoice` and `Combat` columns of the curves don't have a confirmed meaning yet
+(**low**: they look like points to distribute and POW points).
 
-## 3. Ordem de ação (iniciativa)
+## 3. Turn order (initiative)
 
-`Combat_BuildTurnQueue` (0x020448c0). **Confiança: alta.**
+`Combat_BuildTurnQueue` (0x020448c0). **Confidence: high.**
 
-No começo de cada rodada, cada combatente vivo (até 4 por lado) recebe **uma entrada na
-fila por ação** que tem (atributo 123, ações por rodada). O "tempo" de cada entrada é:
+At the start of each round, each living combatant (up to 4 per side) gets **one queue entry
+per action** it has (attribute 123, actions per round). The "time" of each entry is:
 
 ```
-1ª ação:  t₁ = max(0, R1 − Speed × R3) + 1dR2
-ação n+1: tₙ₊₁ = tₙ + max(R1 / R33, R1 − Speed × R3) + 1dR2
-          R1 = regra 1 = 60   R2 = regra 2 = 2   R3 = regra 3 = 1   R33 = regra 33 = 4
+1st action:  t₁ = max(0, R1 − Speed × R3) + 1dR2
+action n+1:  tₙ₊₁ = tₙ + max(R1 / R33, R1 − Speed × R3) + 1dR2
+             R1 = rule 1 = 60   R2 = rule 2 = 2   R3 = rule 3 = 1   R33 = rule 33 = 4
 ```
 
-A fila é ordenada pelo tempo, do menor para o maior (`ActionQueue_InsertByTime`,
-0x0204516c). Como o grupo do jogador é inserido primeiro e um empate entra **depois** dos
-iguais, **o grupo vence os empates**.
+The queue is sorted by time, smallest to largest (`ActionQueue_InsertByTime`, 0x0204516c).
+Since the player's party is inserted first and a tie goes in **after** the equal ones, **the
+party wins ties**.
 
-O que isso significa na prática:
+What this means in practice:
 
-- Speed baixa espaça as ações: Sonic no nível 1 (Speed 7, 3 ações) age em ~54, ~107, ~160.
-- O espaço entre ações nunca é menor que 60/4 = 15: com Speed ≥ 45 todas as ações
-  ficam a 15 de distância, e um personagem rápido com várias ações age várias vezes
-  antes de um lento.
-- Na rodada de emboscada (seção 4), só o lado que emboscou age, e com **no máximo 1 ação**.
+- Low Speed spaces the actions out: Sonic at level 1 (Speed 7, 3 actions) acts at ~54, ~107,
+  ~160.
+- The gap between actions is never smaller than 60/4 = 15: with Speed ≥ 45 all actions are
+  15 apart, and a fast character with several actions acts several times before a slow one.
+- In the ambush round (section 4), only the side that ambushed acts, and with **at most 1
+  action**.
 
-## 4. Emboscada
+## 4. Ambush
 
-Em `GameModeCombat` vfunc02 (0x02039af4). **Confiança: média** (a fórmula é alta; a
-origem do valor do grupo do jogador ainda não foi achada).
+In `GameModeCombat` vfunc02 (0x02039af4). **Confidence: medium** (the formula is high; where
+the player party's value comes from hasn't been found yet).
 
-Cada esquadrão tem um valor de emboscada (`vfunc 0x12c`). Para os inimigos ele vem da
-coluna `AmbushValue` de `squads.gda`, que também força o resultado:
+Each squad has an ambush value (`vfunc 0x12c`). For enemies it comes from the `AmbushValue`
+column of `squads.gda`, which can also force the result:
 
-| AmbushValue | Resultado |
+| AmbushValue | Result |
 |---|---|
-| −1 | ninguém embosca (6 esquadrões) |
-| −2 | o jogador embosca |
-| −3 | os inimigos emboscam (3 esquadrões) |
-| outro | sorteio abaixo |
+| −1 | nobody ambushes (6 squads) |
+| −2 | the player ambushes |
+| −3 | the enemies ambush (3 squads) |
+| other | the roll below |
 
-O sorteio: o lado com o valor maior (*a*) tem chance de emboscar o outro (*b*):
-
-```
-a' = a × (100 + bônus de emboscada do lado a) / 100 × (100 − proteção do lado b) / 100
-embosca se  rand(0..R47) ≤ a' − b        R47 = regra 47 = 10
-```
-
-O bônus e a proteção são as habilidades especiais 21 e 22 (seção 11), somadas entre os
-membros do esquadrão (`Squad_SumAbility`, 0x02033df4); vêm dos Chao "Ambush". O diário
-do jogo diz que Luck também influencia a emboscada; isso deve estar no valor *a* do grupo,
-que ainda não rastreei.
-
-## 5. Ataque básico
-
-### 5.1 Acerto
-`Combat_ResolveAttack` (0x0200f804) e `Combat_RollToHit` (0x02013740). **Alta.**
+The roll: the side with the higher value (*a*) has a chance to ambush the other (*b*):
 
 ```
-acerta se  Defense_alvo ≤ Attack_atacante + 1d20
-```
-(sem alvo definido, usa Defense = Attack + 10.) Antes da rolagem, o ataque **erra
-sempre** se o alvo tem:
-
-- **Phased** (habilidade 25): nem ataques "Can't miss" acertam;
-- **Agile** (habilidade 26), a menos que o ataque seja **Inescapable** ("Can't miss").
-
-Um ataque Inescapable também ignora uma rolagem de acerto que falhou. Quando o ataque
-erra e o alvo tem a habilidade **contra-ataque** (2), ele revida (texto "Counter").
-
-### 5.2 Dano
-`Combat_BasicAttackDamage` (0x0200fcdc). **Alta.**
-
-```
-P = Power do atacante       A = Grit do alvo
-k = 110 (regra 44) para o grupo do jogador, 60 (regra 45) para inimigos
-
-normal:   dano = 0,9 × P  +  k/100 × (3dP / 3)  −  A
-crítico:  dano = P × (90 + k) / 100  −  A          se 1d100 < Luck do atacante
+a' = a × (100 + ambush bonus of side a) / 100 × (100 − protection of side b) / 100
+ambushes if  rand(0..R47) ≤ a' − b        R47 = rule 47 = 10
 ```
 
-- O termo `3dP / 3` é a média de três dados de *P* faces: varia entre 1 e *P*, com
-  média ≈ (P + 1)/2. Na média, um ataque do grupo dá ≈ **1,45 P − A** e o de um
-  inimigo ≈ **1,2 P − A**. O crítico usa o valor máximo: **2 P − A** para o grupo,
-  **1,5 P − A** para inimigos.
-- **Armor Piercing** (perfura-armadura): se A < 500, A = 0.
-- Só nos ataques do grupo: se 0 < dano < P/2, soma P/4 (um piso para ataques fracos).
-- **Dano mínimo 1.**
-- **KO instantâneo**: se a soma da habilidade 1 do atacante ≥ 1d100, o dano vira o HP
-  inteiro do alvo (texto "KO"). Vem dos Chao "instant KO" (5%, 7%, 10%).
-- **Blast**: os vizinhos do alvo levam `(dano − (A_vizinho − A_alvo)) / 2`, mínimo 1.
-- **Leech**: o atacante recupera vida (seção 6.1).
-- **Status ao acertar** (habilidade 13): até 4 efeitos guardados no valor (um por byte);
-  um é sorteado e aplicado.
+The bonus and the protection are special abilities 21 and 22 (section 11), summed over the
+squad's members (`Squad_SumAbility`, 0x02033df4); they come from the "Ambush" Chao. The
+game's journal says Luck also influences the ambush; that must be in the party's value *a*,
+which I haven't traced yet.
 
-Inimigos ainda recebem os ajustes da dificuldade dinâmica em Attack, Defense, Power e
-Grit (seção 14).
+## 5. Basic attack
 
-## 6. Aplicação do dano, elementos e resistências
-
-### 6.1 Depois da fórmula
-`Combat_ApplyDamage` (0x02011ac4). **Alta**, salvo onde indicado.
-
-1. **Redução do alvo** (habilidade 14, soma em %): `dano × (1 − soma/100)`, arredondado.
-   Se o alvo tiver essa habilidade e aliados vivos, o dano que sobra é **dividido em
-   partes iguais** entre ele e os aliados (cada aliado leva `dano / (aliados + 1)`; o
-   alvo leva o resto). Confere com a descrição da habilidade: "takes less damage ... and
-   spreads the remaining damage evenly among other team members".
-2. **Leech**: o atacante recupera `% × HP máximo do atacante` (é o que o código faz:
-   a base é o HP máximo, não o dano causado).
-3. **Drena PP** (habilidade 28 do alvo): se o atacante é do grupo do jogador, ele perde
-   `soma% × seu PP máximo` (no mínimo 1).
-4. O dano vira um **efeito** "HP − dano" (EffectId 1, seção 9) com a máscara de elementos
-   do ataque. A resistência é aplicada nesse efeito.
-
-### 6.2 Elementos
-Os seis elementos são Fogo, Água, Terra, Vento, Raio e Gelo. **Alta.**
-
-- **Ataque**: o código monta uma máscara de 32 bits com os atributos 90–121 maiores que
-  zero (bit *i* = atributo 90 + *i*). Os seis elementos usam os bits 17–22 (atributos
-  107–112). Um personagem ganha um elemento equipando um anel ou um Chao (+1 no
-  atributo); um POW o traz na coluna `ElementalDamage` (ex.: `1048576` = bit 20 = Vento).
-- **Defesa** (`Effect_ElementResistance`, 0x0200e4d0): para cada bit da máscara, lê a
-  resistência correspondente (bits 0–15 → atributos 3–18; bits 16–31 → atributos 74–89;
-  os elementos caem em 75–80) e calcula a **média** das resistências envolvidas:
+### 5.1 Hitting
+`Combat_ResolveAttack` (0x0200f804) and `Combat_RollToHit` (0x02013740). **High.**
 
 ```
-R = média(resistências) / 100
-dano final = dano × (1 − R)        (EffectFn_ModifyAttributeResist, 0x020065bc)
+hits if  Defense_target ≤ Attack_attacker + 1d20
+```
+(with no target set, it uses Defense = Attack + 10.) Before the roll, the attack **always
+misses** if the target has:
+
+- **Phased** (ability 25): not even "Can't miss" attacks hit;
+- **Agile** (ability 26), unless the attack is **Inescapable** ("Can't miss").
+
+An Inescapable attack also ignores a failed hit roll. When the attack misses and the target
+has the **counter-attack** ability (2), it strikes back (text "Counter").
+
+### 5.2 Damage
+`Combat_BasicAttackDamage` (0x0200fcdc). **High.**
+
+```
+P = attacker's Power       A = target's Grit
+k = 110 (rule 44) for the player's party, 60 (rule 45) for enemies
+
+normal:    damage = 0.9 × P  +  k/100 × (3dP / 3)  −  A
+critical:  damage = P × (90 + k) / 100  −  A          if 1d100 < attacker's Luck
 ```
 
-Resistência **negativa é fraqueza**: −75 multiplica o dano por 1,75; +25 por 0,75. A
-interface marca o golpe como fraco/resistido pelo sinal (campo `+0x159`: 1, 2 ou 3).
-Para outros tipos de efeito, há um modo em que R é a **chance de resistir por inteiro**
+- The `3dP / 3` term is the average of three *P*-sided dice: it ranges from 1 to *P*, with a
+  mean ≈ (P + 1)/2. On average, a party attack does ≈ **1.45 P − A** and an enemy's
+  ≈ **1.2 P − A**. The critical uses the maximum: **2 P − A** for the party, **1.5 P − A**
+  for enemies.
+- **Armor Piercing**: if A < 500, A = 0.
+- Party attacks only: if 0 < damage < P/2, add P/4 (a floor for weak attacks).
+- **Minimum damage 1.**
+- **Instant KO**: if the attacker's sum of ability 1 ≥ 1d100, the damage becomes the target's
+  whole HP (text "KO"). It comes from the "instant KO" Chao (5%, 7%, 10%).
+- **Blast**: the target's neighbors take `(damage − (A_neighbor − A_target)) / 2`, minimum 1.
+- **Leech**: the attacker recovers health (section 6.1).
+- **Status on hit** (ability 13): up to 4 effects stored in the value (one per byte); one is
+  drawn and applied.
+
+Enemies also get the dynamic difficulty adjustments to Attack, Defense, Power and Grit
+(section 14).
+
+## 6. Applying damage, elements and resistances
+
+### 6.1 After the formula
+`Combat_ApplyDamage` (0x02011ac4). **High**, except where noted.
+
+1. **Target's reduction** (ability 14, sum in %): `damage × (1 − sum/100)`, rounded. If the
+   target has this ability and living allies, the remaining damage is **split evenly**
+   between it and the allies (each ally takes `damage / (allies + 1)`; the target takes the
+   rest). It matches the ability's description: "takes less damage ... and spreads the
+   remaining damage evenly among other team members".
+2. **Leech**: the attacker recovers `% × the attacker's max HP` (that is what the code does:
+   the base is the max HP, not the damage dealt).
+3. **PP drain** (target's ability 28): if the attacker is in the player's party, it loses
+   `sum% × its max PP` (at least 1).
+4. The damage becomes an "HP − damage" **effect** (EffectId 1, section 9) with the attack's
+   element mask. Resistance is applied to that effect.
+
+### 6.2 Elements
+The six elements are Fire, Water, Earth, Wind, Lightning and Ice. **High.**
+
+- **Attack**: the code builds a 32-bit mask from attributes 90–121 greater than zero (bit *i*
+  = attribute 90 + *i*). The six elements use bits 17–22 (attributes 107–112). A character
+  gains an element by equipping a ring or a Chao (+1 to the attribute); a POW brings it in
+  the `ElementalDamage` column (e.g. `1048576` = bit 20 = Wind).
+- **Defense** (`Effect_ElementResistance`, 0x0200e4d0): for each bit of the mask, it reads
+  the matching resistance (bits 0–15 → attributes 3–18; bits 16–31 → attributes 74–89; the
+  elements fall in 75–80) and computes the **average** of the resistances involved:
+
+```
+R = average(resistances) / 100
+final damage = damage × (1 − R)        (EffectFn_ModifyAttributeResist, 0x020065bc)
+```
+
+A **negative** resistance is a **weakness**: −75 multiplies the damage by 1.75; +25 by 0.75.
+The interface marks the hit as weak/resisted by the sign (field `+0x159`: 1, 2 or 3). For
+other effect types, there is a mode in which R is the **chance to resist entirely**
 (`Effect_ApplyResistance`, 0x0200e640).
 
-### 6.3 Tipos de inimigo
-As resistências dos inimigos vêm dos efeitos permanentes `Spell_Int_*` (spells 121–129,
-148–149). Os valores, em %:
+### 6.3 Enemy types
+Enemy resistances come from the permanent `Spell_Int_*` effects (spells 121–129, 148–149).
+The values, in %:
 
-| Tipo | Fogo | Água | Terra | Vento | Raio | Gelo |
+| Type | Fire | Water | Earth | Wind | Lightning | Ice |
 |---|---|---|---|---|---|---|
-| Robô voador | +25 | **−75** | +10 | −25 | +10 | +25 |
-| Robô terrestre | +25 | **−75** | −25 | +10 | +10 | +25 |
-| Animal voador | −25 | +50 | +25 | −10 | −10 | −10 |
-| Animal terrestre | −25 | +50 | −10 | +25 | −10 | −10 |
+| Flying robot | +25 | **−75** | +10 | −25 | +10 | +25 |
+| Ground robot | +25 | **−75** | −25 | +10 | +10 | +25 |
+| Flying animal | −25 | +50 | +25 | −10 | −10 | −10 |
+| Ground animal | −25 | +50 | −10 | +25 | −10 | −10 |
 | Kron | +25 | −25 | **+75** | −25 | −10 | −10 |
 | N'rrgal | −25 | +50 | −10 | −10 | +50 | −25 |
 | Zoah | −10 | −10 | −25 | +25 | +50 | +10 |
 | Voxai | −25 | +10 | −25 | +50 | −10 | +25 |
 
-(A tabela do jogo diz que "Wind attacks are more deadly to flying enemies"; nos dados,
-Vento é −25 contra robôs voadores e −10 contra animais voadores, mas +10/+25 contra os
-terrestres.)
+(The game's table says "Wind attacks are more deadly to flying enemies"; in the data, Wind is
+−25 against flying robots and −10 against flying animals, but +10/+25 against the ground
+ones.)
 
-## 7. Defender
+## 7. Defend
 
-`GameAction_Defend` vfunc04 (0x02073590). **Alta** para as contas; **média** para a
-duração (o código guarda o quanto somou, para desfazer depois, mas não li onde desfaz).
+`GameAction_Defend` vfunc04 (0x02073590). **High** for the arithmetic; **medium** for the
+duration (the code stores how much it added, to undo it later, but I haven't read where it
+undoes it).
 
 ```
-Defense += Defense × R7 / 10      R7 = regra 7 = 7   → +70%
-Grit    += Grit × R8 / 10         R8 = regra 8 = 20  → +200% (Grit triplica)
-se regra 11 > 0 e PP < PP máximo:  recupera PP
+Defense += Defense × R7 / 10      R7 = rule 7 = 7   → +70%
+Grit    += Grit × R8 / 10         R8 = rule 8 = 20  → +200% (Grit triples)
+if rule 11 > 0 and PP < max PP:   recovers PP
 ```
 
-Quanto PP volta depende da **classe** (atributo 70), para personagens do grupo:
+How much PP comes back depends on the **class** (attribute 70), for party characters:
 
-| Classe | Personagens | PP por Defender |
+| Class | Characters | PP per Defend |
 |---|---|---|
-| 1 e 3 (Support) | Tails, Big, Cream | 3 |
+| 1 and 3 (Support) | Tails, Big, Cream | 3 |
 | 2 (Shifter) | Amy, Rouge, Eggman | 2 |
-| 0 e 4 (Power) e inimigos | Sonic, Knuckles, Omega, Shadow | 1 |
+| 0 and 4 (Power) and enemies | Sonic, Knuckles, Omega, Shadow | 1 |
 
-O diário do jogo confirma: "You can regain PP by defending".
+The game's journal confirms: "You can regain PP by defending".
 
-## 8. Golpes POW
+## 8. POW moves
 
-Os golpes ficam em `combo.gda` (155 linhas; as 60 primeiras são do grupo do jogador). A
-ligação de cada personagem aos golpes fica em `creatures.gda` (`Combo1`…`Combo10`).
-O dono e os parceiros são IDs de criatura; a criatura 10 é um espaço vazio que os golpes
-usam para a **Shade** (membro 10 de `party.gda`, cuja criatura de verdade é a 27).
+The moves are in `combo.gda` (155 rows; the first 60 belong to the player's party). The link
+from each character to its moves is in `creatures.gda` (`Combo1`…`Combo10`). The owner and
+the partners are creature IDs; creature 10 is an empty slot the moves use for **Shade**
+(member 10 of `party.gda`, whose real creature is 27).
 
-### 8.1 Colunas de `combo.gda`
-Várias colunas não têm o nome original (só o CRC32); o significado abaixo vem do código
-(`Combat_PowDamage`, 0x02010810, que lê as colunas por posição) e dos dados.
+### 8.1 `combo.gda` columns
+Several columns don't have their original name (only the CRC32); the meaning below comes from
+the code (`Combat_PowDamage`, 0x02010810, which reads the columns by position) and the data.
 
-| Posição | Coluna | Significado | Confiança |
+| Position | Column | Meaning | Confidence |
 |---|---|---|---|
-| 1 | `col_a66f4be0` | número de participantes (1–4) | média |
-| 2 | `col_64834397` | dono (ID de criatura; 10 = Shade) | alta (bate com os nomes) |
-| 3–5 | `col_4fae1054`, `col_56b52115`, `col_19f4b7d2` | parceiros do golpe em equipe | alta |
-| 11 | `Cost` | custo em PP | alta |
-| 12–14 | `Damage1`…`Damage3` | dano em % por nível do golpe | alta |
-| 24–26 | `RewardItem1`…`3` | itens roubados (Plunder), dois IDs por valor | alta |
-| 27–29 | `Spell1`…`Spell3` | efeito aplicado por nível (linha de `spells.gda`) | alta |
-| 30–32 | `col_a9e4c4fc`, `GUITypeAggressive`, `col_9bd2a67e` | chance do efeito por nível (0,3 = 30%) | alta |
-| 45 | `ArmorPiercing` | ignora o Grit | alta |
-| 46 | `col_8b96e6f9` | chance de KO instantâneo (0,5 = 50%) | alta |
-| 47 | `Inescapable` | "Can't miss" | alta |
-| 48 | `Blast` | atinge os vizinhos | alta |
-| 49 | `Scatter` | "Full Auto": muitos golpes pequenos | média |
-| 50 | `Leech` | % de vida devolvida | alta |
-| 51 | `ElementalDamage` | máscara de elementos (seção 6.2) | alta |
-| 52 | `col_46eddb98` | atinge todos do lado | alta |
-| 54 | `col_6f47ed9a` | gravado em `GameModeCombat+0x7c8` (provavelmente nº de alvos do minijogo) | baixa |
-| 55 | `EarlyFailure` | o minijogo pode falhar no começo | baixa |
+| 1 | `col_a66f4be0` | number of participants (1–4) | medium |
+| 2 | `col_64834397` | owner (creature ID; 10 = Shade) | high (matches the names) |
+| 3–5 | `col_4fae1054`, `col_56b52115`, `col_19f4b7d2` | partners in a team move | high |
+| 11 | `Cost` | PP cost | high |
+| 12–14 | `Damage1`…`Damage3` | damage in % per move level | high |
+| 24–26 | `RewardItem1`…`3` | stolen items (Plunder), two IDs per value | high |
+| 27–29 | `Spell1`…`Spell3` | effect applied per level (row of `spells.gda`) | high |
+| 30–32 | `col_a9e4c4fc`, `GUITypeAggressive`, `col_9bd2a67e` | effect chance per level (0.3 = 30%) | high |
+| 45 | `ArmorPiercing` | ignores Grit | high |
+| 46 | `col_8b96e6f9` | instant KO chance (0.5 = 50%) | high |
+| 47 | `Inescapable` | "Can't miss" | high |
+| 48 | `Blast` | hits the neighbors | high |
+| 49 | `Scatter` | "Full Auto": many small hits | medium |
+| 50 | `Leech` | % of health returned | high |
+| 51 | `ElementalDamage` | element mask (section 6.2) | high |
+| 52 | `col_46eddb98` | hits the whole side | high |
+| 54 | `col_6f47ed9a` | written to `GameModeCombat+0x7c8` (probably the minigame's number of targets) | low |
+| 55 | `EarlyFailure` | the minigame can fail at the start | low |
 
-`GUITypeAggressive` é o nome que o dicionário do xoreos dá para esse CRC32, mas o
-conteúdo (0,5 nas chances do nível 2) mostra que é a chance do status: o nome é uma
-colisão ou foi reaproveitado.
+`GUITypeAggressive` is the name xoreos' dictionary gives to that CRC32, but the content (0.5
+in the level 2 chances) shows it is the status chance: the name is a collision or was reused.
 
-### 8.2 Dano de um POW
-`Combat_PowDamage` (0x02010810). **Alta.**
+### 8.2 POW damage
+`Combat_PowDamage` (0x02010810). **High.**
 
 ```
-dano = P × Damage%/100 × (90 + k/2)/100 × (1 ± desempenho) − A
-       k = 110 (grupo) ou 60 (inimigo)   →   fator 1,45 (grupo) ou 1,2 (inimigo)
+damage = P × Damage%/100 × (90 + k/2)/100 × (1 ± performance) − A
+         k = 110 (party) or 60 (enemy)   →   factor 1.45 (party) or 1.2 (enemy)
 ```
 
-- **Desempenho** é o resultado do minijogo de toque (0 a 1). Em golpe do jogador ele
-  **soma** (`1 + desempenho`); em golpe inimigo, o desempenho é a defesa do jogador e
-  **subtrai** (`1 − desempenho`).
-- Golpe inimigo com defesa perfeita (desempenho 1,0) **erra**, salvo se for Inescapable.
-- Dano mínimo 1 (0 se `Damage%` for 0, como nos golpes de suporte).
-- Comparando com a seção 5: um POW com `Damage%` = 100 dá o mesmo que um ataque básico
-  médio, antes do bônus do minijogo.
+- **Performance** is the result of the touch minigame (0 to 1). In a player move it **adds**
+  (`1 + performance`); in an enemy move, the performance is the player's defense and it
+  **subtracts** (`1 − performance`).
+- An enemy move against a perfect defense (performance 1.0) **misses**, unless it is
+  Inescapable.
+- Minimum damage 1 (0 if `Damage%` is 0, as in support moves).
+- Compared with section 5: a POW with `Damage%` = 100 does the same as an average basic
+  attack, before the minigame bonus.
 
-**O nível do golpe** (1, 2 ou 3) escolhe a coluna de dano, o efeito e a chance. A
-`GameAction_Combo` vfunc04 (0x020702d8) também escolhe as regras 71/72/73
-(0,90 / 0,95 / 1,00) pelo nível e as passa ao relógio do minijogo (**média**: parece a
-escala de tempo do minijogo; o nível 1 seria mais lento).
+**The move level** (1, 2 or 3) picks the damage column, the effect and the chance.
+`GameAction_Combo` vfunc04 (0x020702d8) also picks rules 71/72/73 (0.90 / 0.95 / 1.00) by
+level and passes them to the minigame's clock (**medium**: it looks like the minigame's time
+scale; level 1 would be slower).
 
-**Status de um POW**: golpe do jogador só aplica o efeito com **minijogo perfeito e**
-`rolagem < chance`; golpe inimigo aplica se a defesa **não** foi perfeita. **Alta.**
-Uma chance negativa (−1) nunca é atingida: o Echidna Rush tem efeitos cadastrados que
-nunca são aplicados.
+**POW status**: a player move only applies the effect with a **perfect minigame and**
+`roll < chance`; an enemy move applies it if the defense was **not** perfect. **High.** A
+negative chance (−1) is never reached: Echidna Rush has effects registered that are never
+applied.
 
-**Custo**: o atributo 122 (Economizer) reduz o custo (**média**: li o uso, não a conta).
+**Cost**: attribute 122 (Economizer) reduces the cost (**medium**: I read the use, not the
+arithmetic).
 
-### 8.3 Os golpes do grupo
-Dano em % por nível; "efeito" = status (nível) e chance por nível do golpe.
+### 8.3 The party's moves
+Damage in % per level; "effect" = status (level) and chance per move level.
 
-| Golpe | Dono | Parceiros | PP | Dano % | Efeito | Marcas |
+| Move | Owner | Partners | PP | Damage % | Effect | Flags |
 |---|---|---|---|---|---|---|
 | Axe Kick | Sonic | | 4 | 75/88/100 | | |
-| Whirlwind | Sonic | | 6 | 50/55/63 | | Inescapable, todos, Vento |
+| Whirlwind | Sonic | | 6 | 50/55/63 | | Inescapable, all, Wind |
 | Blue Bomber | Sonic | Tails | 4 | 100/113/125 | Weakened 1/2/3 (30/50/80%) | |
 | Fastball | Sonic | Amy | 5 | 88/100/113 | Sluggish 1/2/3 (30/50/80%) | |
-| Triple Tornado | Sonic | Knuckles, Tails | 5 | 75/88/113 | Sluggish 1/2/3 (30/50/80%) | Inescapable, todos, Vento |
+| Triple Tornado | Sonic | Knuckles, Tails | 5 | 75/88/113 | Sluggish 1/2/3 (30/50/80%) | Inescapable, all, Wind |
 | Hail Storm | Sonic | Knuckles, Tails, Amy | 6 | 88/100/113 | Stunned (20/30/40%) | |
 | Uppercut | Knuckles | | 4 | 68/75/88 | | Armor Piercing |
-| Quake Punch | Knuckles | | 6 | 33/40/50 | Stunned (30/40/50%) | Inescapable, todos, Terra |
+| Quake Punch | Knuckles | | 6 | 33/40/50 | Stunned (30/40/50%) | Inescapable, all, Earth |
 | Revolver Slam | Knuckles | Sonic | 4 | 100/113/125 | Vulnerable 1/2/3 (30/50/80%) | Armor Piercing |
-| Knuckles Express | Knuckles | Shadow | 5 | 75/113/125 | Distracted 1/2/3 (20/30/40%) | todos |
+| Knuckles Express | Knuckles | Shadow | 5 | 75/113/125 | Distracted 1/2/3 (20/30/40%) | all |
 | Knuckles Sandwich | Knuckles | Sonic, Amy | 5 | 63/75/88 | Stunned (30/50/80%) | |
 | Hard Line | Knuckles | Shadow, Shade | 5 | 150/163/175 | Distracted 1/2/3 (50/60/70%) | |
 | Chaos Spear | Shadow | | 4 | 50/63/75 | | Armor Piercing, Scatter |
 | Chaos Rift | Shadow | | 8 | 0 | Distracted 1 (40/50/60%) | KO 50% |
 | Chaos Blast | Shadow | | 6 | 75/80/85 | Weakened 1 (20/30/40%) | Blast |
-| Atomic Strike | Shadow | Sonic | 4 | 100/113/125 | | Inescapable, todos, Raio |
+| Atomic Strike | Shadow | Sonic | 4 | 100/113/125 | | Inescapable, all, Lightning |
 | Focus Field | Shadow | Omega | 4 | 113/125/138 | Vulnerable 1 (30/40/50%) | |
 | Metal Storm | Shadow | Rouge, Omega | 5 | 150/163/175 | Stunned (20/30/40%) | |
-| Scan | Tails | | 4 | 0 | Grit −25/−50/−75% (sempre) | |
-| Tinker | Tails | | 4 | 0 | Tinkered 1/2/3 (sempre) | |
-| Medi Bot | Tails | | 5 | 0 | cura por 3 rodadas (sempre) | |
-| Shield Bot | Tails | | 5 | 0 | Fortified 1/2/3 (sempre) | |
-| Flash Bang | Tails | | 5 | 0 | Sluggish + Cursed 1/2/3 (sempre) | |
-| Adrenaline Rush | Tails | | 5 | 0 | Hyper 1/2/3 e +1 ação (sempre) | |
-| Refresh | Cream | | 8 | 0 | PP +5/+10/+15 em todos | |
-| Demoralize | Cream | | 5 | 0 | Distracted 1/2/3 em todos os inimigos | |
-| Cure | Cream | | 4 | 0 | remove debuffs de todos | |
-| Revive | Cream | | 5 | 0 | revive com 1 HP / 50% / 100% | |
-| Heal | Cream | | 6 | 0 | HP +50/+100/+150 em todos | |
+| Scan | Tails | | 4 | 0 | Grit −25/−50/−75% (always) | |
+| Tinker | Tails | | 4 | 0 | Tinkered 1/2/3 (always) | |
+| Medi Bot | Tails | | 5 | 0 | heals for 3 rounds (always) | |
+| Shield Bot | Tails | | 5 | 0 | Fortified 1/2/3 (always) | |
+| Flash Bang | Tails | | 5 | 0 | Sluggish + Cursed 1/2/3 (always) | |
+| Adrenaline Rush | Tails | | 5 | 0 | Hyper 1/2/3 and +1 action (always) | |
+| Refresh | Cream | | 8 | 0 | PP +5/+10/+15 on everyone | |
+| Demoralize | Cream | | 5 | 0 | Distracted 1/2/3 on all enemies | |
+| Cure | Cream | | 4 | 0 | removes everyone's debuffs | |
+| Revive | Cream | | 5 | 0 | revives with 1 HP / 50% / 100% | |
+| Heal | Cream | | 6 | 0 | HP +50/+100/+150 on everyone | |
 | Tough | Cream | | 5 | 0 | Fortified 1/2/3 | |
 | Lure Whip | Big | | 4 | 25/38/50 | Stunned (60/70/80%) | |
 | Battering Ram | Big | | 5 | 70/80/90 | Distracted 1 (30/50/80%) | |
-| Taunt | Big | | 6 | 0 | atrai os ataques + Fortified 1/2/3 | |
-| Froggy Poison | Big | | 5 | 25/38/50 | Poisoned (sempre) | |
-| Feel No Pain | Big | | 5 | 0 | regenera 30/40/50% do HP por rodada | |
-| Froggy Rain | Big | | 6 | 60/70/80 | | Inescapable, todos |
-| Flamethrower | Omega | | 4 | 50/65/75 | | todos, Fogo |
+| Taunt | Big | | 6 | 0 | draws the attacks + Fortified 1/2/3 | |
+| Froggy Poison | Big | | 5 | 25/38/50 | Poisoned (always) | |
+| Feel No Pain | Big | | 5 | 0 | regenerates 30/40/50% of HP per round | |
+| Froggy Rain | Big | | 6 | 60/70/80 | | Inescapable, all |
+| Flamethrower | Omega | | 4 | 50/65/75 | | all, Fire |
 | Beam Cannon | Omega | | 5 | 125/138/150 | Vulnerable 1 (50/70/100%) | Armor Piercing |
-| Blazing Tornado | Omega | Rouge | 4 | 100/113/125 | | Blast, Fogo |
+| Blazing Tornado | Omega | Rouge | 4 | 100/113/125 | | Blast, Fire |
 | Wrecking Ball | Omega | Big | 5 | 100/113/125 | Distracted 1 (30/50/80%) | Blast |
-| Temporal Field | Omega | | 5 | 0 | Hyper + Phased por 2/3/4 rodadas | |
+| Temporal Field | Omega | | 5 | 0 | Hyper + Phased for 2/3/4 rounds | |
 | Machine Gunner | Omega | | 6 | 13/25/38 | | Scatter |
-| Tornado Kick | Rouge | | 4 | 63/68/73 | | Vento |
-| Jewel Storm | Rouge | | 5 | 38/50/63 | | Armor Piercing, todos |
+| Tornado Kick | Rouge | | 4 | 63/68/73 | | Wind |
+| Jewel Storm | Rouge | | 5 | 38/50/63 | | Armor Piercing, all |
 | Rising Knuckle | Rouge | Knuckles | 5 | 88/100/113 | Stunned (20/30/50%) | |
-| Plunder | Rouge | | 4 | 0 | rouba itens (seção 12.5) | |
+| Plunder | Rouge | | 4 | 0 | steals items (section 12.5) | |
 | Distract | Rouge | | 4 | 0 | Distracted 1/2/3 | |
 | Shriek | Rouge | | 4 | 0 | Sluggish 1/2/3 | |
 | Low Blow | Amy | | 4 | 63/75/88 | Vulnerable 1 (30/50/80%) | |
 | Spin Cycle | Amy | Cream | 4 | 75/88/100 | | Inescapable, Blast |
 | Tantrum | Amy | | 5 | 50/63/75 | Sluggish 1 (20/30/40%) | |
-| Blow Kiss | Amy | | 4 | 0 | Empowered 1/2/3 num aliado | |
+| Blow Kiss | Amy | | 4 | 0 | Empowered 1/2/3 on an ally | |
 | Tarot Draw | Amy | | 4 | 0 | Cursed 1/2/3 | |
 | Flower Power | Amy | Big, Cream | 5 | 150/163/175 | Stunned (40/50/60%) | |
-| Cloak | Shade | | 4 | 0 | Hyper 1/2/3 em si mesma | |
+| Cloak | Shade | | 4 | 0 | Hyper 1/2/3 on herself | |
 | Blade Rush | Shade | | 5 | 75/88/100 | | Leech 10% |
-| Echidna Rush | Shade | Knuckles | 5 | 100/113/125 | Distracted (chance −1: nunca) | Armor Piercing |
+| Echidna Rush | Shade | Knuckles | 5 | 100/113/125 | Distracted (chance −1: never) | Armor Piercing |
 | Blade Drop | Shade | Sonic | 5 | 100/113/125 | | Armor Piercing, Leech 15% |
-| Bombardment | Eggman | | 5 | 100/113/125 | Sluggish 1 (50%) | Inescapable, todos |
+| Bombardment | Eggman | | 5 | 100/113/125 | Sluggish 1 (50%) | Inescapable, all |
 | Sabotage | Eggman | Tails | 6 | 0 | HP −100% (80/90/100%) | |
 
-Nos golpes de suporte (dano 0), o efeito é aplicado sempre (chance 1,0). Os golpes 60
-em diante são dos inimigos: um só nível, custo 0, dano de até 400%.
+In support moves (damage 0), the effect is always applied (chance 1.0). Moves 60 and up
+belong to enemies: a single level, cost 0, damage up to 400%.
 
-## 9. O sistema de efeitos (.SPL e .ITM)
+## 9. The effect system (.SPL and .ITM)
 
-Golpes, itens, status e habilidades usam o mesmo mecanismo: um **arquivo de efeito** em
-texto 2DA (`.SPL` para os de `spells.gda`, `.ITM` para os de `Items.gda`, coluna
-`BaseItem1`). Cada linha tem `rótulo, ID, EffectId, Data, SData1, SData2, SData3, Pulse`.
+Moves, items, status effects and abilities use the same mechanism: an **effect file** in 2DA
+text (`.SPL` for those in `spells.gda`, `.ITM` for those in `Items.gda`, column `BaseItem1`).
+Each row has `label, ID, EffectId, Data, SData1, SData2, SData3, Pulse`.
 
-### 9.1 Cabeçalho
-- **`SpellData`**: o `EffectId` dessa linha é o **alvo**. **Alta** (bate com todos os itens).
+### 9.1 Header
+- **`SpellData`**: that row's `EffectId` is the **target**. **High** (matches every item).
 
-  | Valor | Alvo |
+  | Value | Target |
   |---|---|
-  | 0 | um inimigo |
-  | 1 | um aliado |
-  | 2 | todos os inimigos |
-  | 3 | todos os aliados |
-  | 5 | o próprio usuário |
-  | 6 | um aliado nocauteado |
+  | 0 | one enemy |
+  | 1 | one ally |
+  | 2 | all enemies |
+  | 3 | all allies |
+  | 5 | the user |
+  | 6 | a knocked-out ally |
 
-- **`CollectionData`** (nos itens, `CollectionData_Equip` e `CollectionData_Use`):
-  `Data` = **duração**, `SData1` = **categoria**, `SData2` = tempo.
+- **`CollectionData`** (in items, `CollectionData_Equip` and `CollectionData_Use`): `Data` =
+  **duration**, `SData1` = **category**, `SData2` = time.
 
-  | Data | Duração | Confiança |
+  | Data | Duration | Confidence |
   |---|---|---|
-  | 0 | instantâneo | alta |
-  | 1 | permanente | alta |
-  | 2 | enquanto equipado | média |
-  | 3 | temporário, `SData2` milésimos de rodada (3000 = 3 rodadas) | média |
+  | 0 | instant | high |
+  | 1 | permanent | high |
+  | 2 | while equipped | medium |
+  | 3 | temporary, `SData2` thousandths of a round (3000 = 3 rounds) | medium |
 
-  A **categoria** é uma máscara: bit *n* = status *n* − 1 para os debuffs (Poisoned = 8,
-  Weakened = 16, Vulnerable = 32, Distracted = 64, Sluggish = 128, Cursed = 256,
-  Stunned = 512, Tinkered = 4) e bit = status para os buffs (Empowered = 1024,
-  Fortified = 2048, Focused = 4096, Hyper = 8192, Lucky = 16384). É ela que o
-  "remover status" procura. **Alta** (Iron Tonic remove 32 = Vulnerable, Rock Salt 16 =
-  Weakened, Prune Juice 64 = Distracted, Psychic Water 128 = Sluggish, os pares do diário
-  do jogo).
+  The **category** is a mask: bit *n* = status *n* − 1 for debuffs (Poisoned = 8, Weakened =
+  16, Vulnerable = 32, Distracted = 64, Sluggish = 128, Cursed = 256, Stunned = 512, Tinkered
+  = 4) and bit = status for buffs (Empowered = 1024, Fortified = 2048, Focused = 4096, Hyper =
+  8192, Lucky = 16384). It is what "remove status" looks for. **High** (Iron Tonic removes 32
+  = Vulnerable, Rock Salt 16 = Weakened, Prune Juice 64 = Distracted, Psychic Water 128 =
+  Sluggish, the pairs in the game's journal).
 
-### 9.2 Tipos de efeito (EffectId)
-O código tem uma tabela com 11 tipos (`CGameEffectFunctions`, 0x02005cec), cada um com
-funções de aplicar, remover, repetir e resistir.
+### 9.2 Effect types (EffectId)
+The code has a table with 11 types (`CGameEffectFunctions`, 0x02005cec), each with apply,
+remove, repeat and resist functions.
 
-| EffectId | O que faz | Campos | Confiança |
+| EffectId | What it does | Fields | Confidence |
 |---|---|---|---|
-| 0 | dados da coleção (cabeçalho) | | alta |
-| 1 | muda um atributo | `Data` = quantidade, `SData1` = atributo, `SData2` = flags, `Pulse` 1000 = repete a cada rodada | alta |
-| 5 | efeito visual | `Data` = VFX | alta |
-| 6 | revive | | alta |
-| 7 | remove status | `Data` = máscara de categorias (1022 = todos os debuffs; 131070 = todos) | alta |
-| 8 | atrai os ataques (Taunt) | | média |
-| 9 | aplica outro efeito | `Data` = linha de `spells.gda` | alta |
-| 10 | concede uma habilidade especial | `Data` = código (seção 11) | média |
+| 0 | collection data (header) | | high |
+| 1 | changes an attribute | `Data` = amount, `SData1` = attribute, `SData2` = flags, `Pulse` 1000 = repeats every round | high |
+| 5 | visual effect | `Data` = VFX | high |
+| 6 | revive | | high |
+| 7 | removes status | `Data` = category mask (1022 = all debuffs; 131070 = all) | high |
+| 8 | draws the attacks (Taunt) | | medium |
+| 9 | applies another effect | `Data` = row of `spells.gda` | high |
+| 10 | grants a special ability | `Data` = code (section 11) | medium |
 
-### 9.3 As flags do EffectId 1
-`EffectFn_ModifyAttribute` (0x02005fcc). **Alta.**
+### 9.3 The flags of EffectId 1
+`EffectFn_ModifyAttribute` (0x02005fcc). **High.**
 
 ```
-bit 0      : 0 = soma ao valor atual;  1 = define (substitui)
-bits 1–2   : base da quantidade
-             0 = valor absoluto
-             1 = % do valor BASE do próprio atributo
-             2 = % do HP máximo
-             3 = % do PP máximo
+bit 0      : 0 = add to the current value;  1 = set (replace)
+bits 1–2   : base of the amount
+             0 = absolute value
+             1 = % of the attribute's own BASE value
+             2 = % of max HP
+             3 = % of max PP
 ```
 
-| SData2 | Lê-se | Exemplo |
+| SData2 | Reads as | Example |
 |---|---|---|
-| 0 | soma absoluta | Weakened: Power −10 |
-| 2 | soma % do valor base | Scan: Grit −25% |
-| 3 | define em % do valor base | Heal1: Attack, Defense, Power, Grit, Luck = 100% da base (desfaz debuffs) |
-| 4 | soma % do HP máximo | Poisoned: HP −10% do máximo por rodada |
-| 5 | define em % do HP máximo | Revival Ring: HP = 10% do máximo |
+| 0 | absolute add | Weakened: Power −10 |
+| 2 | add % of the base value | Scan: Grit −25% |
+| 3 | set to % of the base value | Heal1: Attack, Defense, Power, Grit, Luck = 100% of base (undoes debuffs) |
+| 4 | add % of max HP | Poisoned: HP −10% of max per round |
+| 5 | set to % of max HP | Revival Ring: HP = 10% of max |
 
-## 10. Status (buffs e debuffs)
+## 10. Status effects (buffs and debuffs)
 
-`Statuses.gda` tem 16 status. A coluna `CanAct` = 0 impede de agir; `Priority` ordena os
-ícones. Um status ativo é o atributo `39 + ID` > 0, e os efeitos que o causam somam +1
-nele. Os nomes internos (`ATKdown`…) diferem dos nomes do diário do jogo; os valores são
-de `Spell_<Status>.spl`, `_2` e `_3`. **Alta.**
+`Statuses.gda` has 16 statuses. The `CanAct` = 0 column prevents acting; `Priority` orders the
+icons. An active status is attribute `39 + ID` > 0, and the effects that cause it add +1 to
+it. The internal names (`ATKdown`…) differ from the names in the game's journal; the values
+are from `Spell_<Status>.spl`, `_2` and `_3`. **High.**
 
-| ID | Interno | Nome no jogo | Efeito (nível 1 / 2 / 3) | Duração | Cura |
+| ID | Internal | In-game name | Effect (level 1 / 2 / 3) | Duration | Cure |
 |---|---|---|---|---|---|
-| 0 | Dead | K.O. | não age | | Revival Ring, Ring of Life, Revive |
-| 1 | Tinkered | (Tinker) | Power e Defense −5 / −10 / −15 | 3 | Antidote |
-| 2 | Poisoned | Poisoned | HP −10% do máximo por rodada | 3 | Antidote |
+| 0 | Dead | K.O. | can't act | | Revival Ring, Ring of Life, Revive |
+| 1 | Tinkered | (Tinker) | Power and Defense −5 / −10 / −15 | 3 | Antidote |
+| 2 | Poisoned | Poisoned | HP −10% of max per round | 3 | Antidote |
 | 3 | ATKdown | Weakened | Power −10 / −15 / −20 | 3 | Rock Salt, Antidote |
 | 4 | DEFdown | Vulnerable | Grit −5 / −10 / −15 | 3 | Iron Tonic, Antidote |
 | 5 | ACCdown | Distracted | Attack −10 / −15 / −20 | 3 | Prune Juice, Antidote |
 | 6 | EVAdown | Sluggish | Defense −10 / −15 / −20 | 3 | Psychic Water, Antidote |
-| 7 | LCKdown | Cursed | Luck e Attack −10 / −15 / −20 | 3 | Antidote (o diário cita Clover Juice) |
-| 8 | Paralyzed | Stunned | **não age**; Defense −20 | 2 | Antidote |
-| 9 | (sem nome) | ? | dado pelo item Crazy Beans | | |
+| 7 | LCKdown | Cursed | Luck and Attack −10 / −15 / −20 | 3 | Antidote (the journal cites Clover Juice) |
+| 8 | Paralyzed | Stunned | **can't act**; Defense −20 | 2 | Antidote |
+| 9 | (no name) | ? | given by the Crazy Beans item | | |
 | 10 | ATKup | Empowered | Power +10 / +15 / +20 | 3 | |
 | 11 | DEFup | Fortified | Grit +10 / +15 / +20 | 3 | |
 | 12 | ACCup | Focused | Attack +10 / +15 | 3 | |
-| 13 | EVAup | Hyper | Speed e Defense +10 / +15 / +20 | 3 | |
+| 13 | EVAup | Hyper | Speed and Defense +10 / +15 / +20 | 3 | |
 | 14 | LCKup | Lucky | Luck +10 / +15 / +20 | 3 | |
-| 15 | (sem nome) | Bug Spray | Grit −10, Defense −10, Speed −6, Power −3 | | |
+| 15 | (no name) | Bug Spray | Grit −10, Defense −10, Speed −6, Power −3 | | |
 
-Os números são absolutos (não %): no nível 1 um personagem tem Power ~10 e no 30 ~60,
-então o mesmo Weakened pesa muito mais no começo do jogo. Detalhe: os nomes internos
-estão "trocados" em relação ao que o jogo mostra porque, no código, **Attack** é a
-precisão (o "ACC") e **Power** é o dano (o "ATK").
+The numbers are absolute (not %): at level 1 a character has Power ~10 and at 30 ~60, so the
+same Weakened weighs much more at the start of the game. Detail: the internal names are
+"swapped" relative to what the game shows because, in the code, **Attack** is accuracy (the
+"ACC") and **Power** is damage (the "ATK").
 
-## 11. Habilidades especiais
+## 11. Special abilities
 
-Efeitos que não são números num atributo: o código pergunta "quanto desta habilidade a
-criatura tem?" (`vfunc 0xbc`, somando todos os efeitos ativos do tipo). Elas vêm de duas
-colunas de `Items.gda` (`col_ab33ab1a` = código, `col_dee49bb0` = valor; e
-`col_801ef8d9`/`col_f5c9c873` para uma segunda) e do EffectId 10. Os significados vêm das
-descrições dos itens (Chao e equipamentos) e, quando marcado, do código. **Média**, salvo
-indicação.
+Effects that are not numbers in an attribute: the code asks "how much of this ability does
+the creature have?" (`vfunc 0xbc`, summing every active effect of that type). They come from
+two columns of `Items.gda` (`col_ab33ab1a` = code, `col_dee49bb0` = value; and
+`col_801ef8d9`/`col_f5c9c873` for a second one) and from EffectId 10. The meanings come from
+the item descriptions (Chao and equipment) and, where marked, from the code. **Medium**,
+unless noted.
 
-| Código | Habilidade | Valor | No código |
+| Code | Ability | Value | In the code |
 |---|---|---|---|
-| 0 | POW sempre perfeito (Chao 38) | | |
-| 1 | KO instantâneo no ataque básico (Chao 40) | % | **alta**: soma ≥ 1d100 |
-| 2 | contra-ataque (Chao 213) | | **alta**: revida quando é errado |
-| 3 | revive 1× por batalha (Angel Amulet, Chao 39) | % do HP | |
-| 4 | evitado pelos inimigos, salvo se for o último (Chao 214) | | |
-| 5 | atrai um inimigo (Chao 35) | nº de inimigos | |
-| 6 | esquiva alguns ataques básicos por rodada (Chao 215) | | |
-| 7 | regenera HP do time no começo da rodada (Chao 21) | % | |
-| 9 | regenera HP (Replenisher, Chao 1) | % | |
-| 10 | recupera PP no fim da rodada (Refresher) | | |
-| 11 | sorte do time (Cheese) | | |
-| 12 | XP extra (Chao 37) | % | |
-| 13 | status aleatório ao acertar | até 4 efeitos, 1 por byte | **alta** |
-| 14 | reduz o dano recebido e divide com o time | % | **alta** (seção 6.1) |
-| 15 | fuga/perseguição (Nrrgal Module, Chao 33) | | |
-| 18 | inimigos fogem mais (Spooky Charm, Chao 29) | | |
-| 19 | Chao raros nos ovos (Chao 34) | | |
-| 21 | chance de emboscar (Chao 30) | % | **alta** (seção 4) |
-| 22 | reduz chance de ser emboscado (Chao 31) | % | **alta** (seção 4) |
-| 23 | item extra na recompensa (Chao 32) | 2 IDs de item | |
-| 25 | **Phased**: imune a dano | | **alta** (seção 5.1) |
-| 26 | **Agile** ("Evading") | | **alta** (seção 5.1) |
-| 27 | auto-reparo (inimigos) | % | |
-| 28 | drena PP de quem ataca (inimigos) | % | **alta** (seção 6.1) |
-| 29 | regenera PP do time (Chao 22) | | |
-| 30 | regenera PP (Chao 2) | | |
-| 31 | imunidade (inimigos) | | |
+| 0 | POW always perfect (Chao 38) | | |
+| 1 | instant KO on the basic attack (Chao 40) | % | **high**: sum ≥ 1d100 |
+| 2 | counter-attack (Chao 213) | | **high**: strikes back when missed |
+| 3 | revives once per battle (Angel Amulet, Chao 39) | % of HP | |
+| 4 | avoided by enemies, unless it is the last one (Chao 214) | | |
+| 5 | lures an enemy (Chao 35) | no. of enemies | |
+| 6 | dodges some basic attacks per round (Chao 215) | | |
+| 7 | regenerates the team's HP at the start of the round (Chao 21) | % | |
+| 9 | regenerates HP (Replenisher, Chao 1) | % | |
+| 10 | recovers PP at the end of the round (Refresher) | | |
+| 11 | team luck (Cheese) | | |
+| 12 | extra XP (Chao 37) | % | |
+| 13 | random status on hit | up to 4 effects, 1 per byte | **high** |
+| 14 | reduces damage taken and shares it with the team | % | **high** (section 6.1) |
+| 15 | fleeing/chasing (Nrrgal Module, Chao 33) | | |
+| 18 | enemies flee more (Spooky Charm, Chao 29) | | |
+| 19 | rare Chao in the eggs (Chao 34) | | |
+| 21 | chance to ambush (Chao 30) | % | **high** (section 4) |
+| 22 | reduces the chance of being ambushed (Chao 31) | % | **high** (section 4) |
+| 23 | extra item in the reward (Chao 32) | 2 item IDs | |
+| 25 | **Phased**: immune to damage | | **high** (section 5.1) |
+| 26 | **Agile** ("Evading") | | **high** (section 5.1) |
+| 27 | self-repair (enemies) | % | |
+| 28 | drains PP from attackers (enemies) | % | **high** (section 6.1) |
+| 29 | regenerates the team's PP (Chao 22) | | |
+| 30 | regenerates PP (Chao 2) | | |
+| 31 | immunity (enemies) | | |
 
-Os itens 211–230 e 277–285 não aparecem no inventário: são as habilidades dos inimigos,
-equipadas neles.
+Items 211–230 and 277–285 don't appear in the inventory: they are the enemies' abilities,
+equipped on them.
 
-## 12. Itens
+## 12. Items
 
-`Items.gda` (288 linhas) + um `.ITM` por item. **Alta**, salvo indicação.
+`Items.gda` (288 rows) + one `.ITM` per item. **High**, unless noted.
 
-### 12.1 Tipos e slots
+### 12.1 Types and slots
 
-| Type | Tipo | EquipSlot |
+| Type | Kind | EquipSlot |
 |---|---|---|
-| 0 | consumível (`SubType` 0 HP, 1 PP, 2 reviver, 3 curar status, 4 especial) | −1 |
-| 1 | equipamento | 0 = pés, 1 = mãos, 2 = acessório |
-| 2 | item de história (esmeraldas, objetos de missão) | −1 |
+| 0 | consumable (`SubType` 0 HP, 1 PP, 2 revive, 3 cure status, 4 special) | −1 |
+| 1 | equipment | 0 = feet, 1 = hands, 2 = accessory |
+| 2 | story item (emeralds, quest objects) | −1 |
 | 3 | Chao | 4 |
 
-**Quem pode equipar** é a máscara `AllowEquip`: bit *i* = personagem *i* de
-`creatures.gda` (0 Sonic, 1 Knuckles, 2 Tails, 3 Amy, 4 Shadow, 5 Rouge, 6 Big, 7 Cream,
-8 Omega, 9 Eggman). Exemplos: `21` (bits 0, 2, 4) = tênis do Sonic, Tails e Shadow; `200`
-= sapatilhas de Amy, Big e Cream; `256` = só Omega (hidráulicos e garras); `136` = vestidos
-de Amy e Cream. O bit 27, presente em vários valores, ainda não tem significado (**baixa**).
+**Who can equip** is the `AllowEquip` mask: bit *i* = character *i* of `creatures.gda` (0
+Sonic, 1 Knuckles, 2 Tails, 3 Amy, 4 Shadow, 5 Rouge, 6 Big, 7 Cream, 8 Omega, 9 Eggman).
+Examples: `21` (bits 0, 2, 4) = sneakers for Sonic, Tails and Shadow; `200` = shoes for Amy,
+Big and Cream; `256` = Omega only (hydraulics and claws); `136` = dresses for Amy and Cream.
+Bit 27, present in several values, has no meaning yet (**low**).
 
-### 12.2 Consumíveis
+### 12.2 Consumables
 
-| Item | Alvo | Efeito |
+| Item | Target | Effect |
 |---|---|---|
-| Health Seed / Leaf / Root | aliado | HP +50 / +100 / +250 |
-| Med Emitter | todos aliados | HP +250 |
-| POW Candy / Gum / Drink | aliado | PP +5 / +10 / +50 |
-| Refresher Wave | todos aliados | PP +50 |
-| Revival Ring / Ring of Life | nocauteado | revive com 10% / 100% do HP e limpa os status |
-| Antidote / Cure All Spray / Immunity Booster | aliado / todos | remove os debuffs (máscara 1022) |
-| Iron Tonic, Rock Salt, Prune Juice, Psychic Water | aliado | buff +10 e remove o debuff oposto |
-| Clover Juice | aliado | Lucky (+10 Luck); o diário diz que cura Cursed, mas o `.ITM` não tem a linha de remoção |
-| Speed Bar | aliado | Speed +10 |
-| Bug Spray | todos inimigos | status 15: Grit −10, Defense −10, Speed −6, Power −3 |
+| Health Seed / Leaf / Root | ally | HP +50 / +100 / +250 |
+| Med Emitter | all allies | HP +250 |
+| POW Candy / Gum / Drink | ally | PP +5 / +10 / +50 |
+| Refresher Wave | all allies | PP +50 |
+| Revival Ring / Ring of Life | knocked out | revives with 10% / 100% of HP and clears the statuses |
+| Antidote / Cure All Spray / Immunity Booster | ally / all | removes the debuffs (mask 1022) |
+| Iron Tonic, Rock Salt, Prune Juice, Psychic Water | ally | buff +10 and removes the opposite debuff |
+| Clover Juice | ally | Lucky (+10 Luck); the journal says it cures Cursed, but the `.ITM` has no removal row |
+| Speed Bar | ally | Speed +10 |
+| Bug Spray | all enemies | status 15: Grit −10, Defense −10, Speed −6, Power −3 |
 
-### 12.3 Equipamentos
-Os bônus são pequenos e absolutos (+1 a +6), sempre "enquanto equipado":
+### 12.3 Equipment
+The bonuses are small and absolute (+1 to +6), always "while equipped":
 
-- **Pés** (sapatilhas, tênis, botas, hidráulicos): Defense e Grit, às vezes Speed ou Power.
-- **Mãos** (luvas, garras): Attack e Power. As "Cursed" dão Power +6 com Attack e
+- **Feet** (shoes, sneakers, boots, hydraulics): Defense and Grit, sometimes Speed or Power.
+- **Hands** (gloves, claws): Attack and Power. The "Cursed" ones give Power +6 with Attack and
   Defense −2.
-- **Acessórios**: anéis elementais (+1 no dano elemental, seção 6.2), Economizer (atributo
+- **Accessories**: elemental rings (+1 elemental damage, section 6.2), Economizer (attribute
   122), Kron Hammer (Power +5), Zoah Shield (Grit +4), Nocturne Blade (Attack +4), Voxai
-  Teleporter (Defense +4), e os de habilidade (Refresher, Replenisher, Nrrgal Module,
-  Angel Amulet, Spooky Charm, Immunity Idol).
-- O item 82 (sem nome) dá +999 em tudo: um item de teste que ficou no jogo.
+  Teleporter (Defense +4), and the ability ones (Refresher, Replenisher, Nrrgal Module, Angel
+  Amulet, Spooky Charm, Immunity Idol).
+- Item 82 (no name) gives +999 to everything: a test item left in the game.
 
 ### 12.4 Chao
-Equipados no slot 4. Os de 1 a 20 dão atributos (HP máx +10%, PP máx +2, +1 em Attack,
-Defense, Power, Grit ou Luck, um elemento no ataque, ou resistência +50 a um elemento);
-os de 21 em diante dão habilidades especiais (seção 11). O mesmo Chao aparece em três
-graus (IDs 91–130, 131–170, 171–210) com valores maiores: por exemplo, o Chao 39 revive
-com 10%, 50% e 100% do HP.
+Equipped in slot 4. Those from 1 to 20 give attributes (max HP +10%, max PP +2, +1 to Attack,
+Defense, Power, Grit or Luck, an element in the attack, or resistance +50 to an element);
+those from 21 on give special abilities (section 11). The same Chao appears in three grades
+(IDs 91–130, 131–170, 171–210) with larger values: for example, Chao 39 revives with 10%, 50%
+and 100% of HP.
 
-### 12.5 Itens aleatórios, roubo e lojas
-- **Itens aleatórios**: a coluna `Random` > 0 transforma o item num sorteio na linha
-  correspondente de `RandItems.gda` (até 8 pares peso/item). Os itens 258–276 e 287 são
-  esses "envelopes"; um sorteio pode cair noutro envelope (o item 275 aparece na linha 2).
-  `Random` = −2 em alguns itens comuns (Health Root, Speed Bar, ...): significado
-  desconhecido (**baixa**).
-- **Plunder** (Rouge): `RewardItem1..3` guarda dois IDs por valor (16 bits cada):
-  nível 1 = `3` (POW Candy ou Health Seed), nível 2 = `0x40007` (POW Gum ou Health Leaf),
-  nível 3 = `0x50008` (Health Root ou POW Drink). Bate com o diário do jogo. O mesmo
-  formato aparece no Chao "item extra" (código 23).
-- **Lojas**: `stores.gda` aponta as 5 tabelas `Store1`…`Store5`, com 3 colunas sem nome:
-  item, preço de compra e preço de venda (**média**: Health Seed custa 6 e vende por 3,
-  igual ao `MinimumCost`).
-- **Recompensas**: `rewards.gda` (70 linhas: missões) dá `XP` e até 6 itens; as colunas
-  `Copper`, `Silver`, `Gold` ainda não foram ligadas ao código (**baixa**).
+### 12.5 Random items, stealing and shops
+- **Random items**: a `Random` column > 0 turns the item into a draw on the matching row of
+  `RandItems.gda` (up to 8 weight/item pairs). Items 258–276 and 287 are these "envelopes"; a
+  draw can land on another envelope (item 275 appears on row 2). `Random` = −2 on some common
+  items (Health Root, Speed Bar, ...): meaning unknown (**low**).
+- **Plunder** (Rouge): `RewardItem1..3` stores two IDs per value (16 bits each): level 1 = `3`
+  (POW Candy or Health Seed), level 2 = `0x40007` (POW Gum or Health Leaf), level 3 =
+  `0x50008` (Health Root or POW Drink). It matches the game's journal. The same format appears
+  in the "extra item" Chao (code 23).
+- **Shops**: `stores.gda` points to the 5 tables `Store1`…`Store5`, with 3 unnamed columns:
+  item, buy price and sell price (**medium**: Health Seed costs 6 and sells for 3, the same as
+  `MinimumCost`).
+- **Rewards**: `rewards.gda` (70 rows: missions) gives `XP` and up to 6 items; the `Copper`,
+  `Silver`, `Gold` columns haven't been tied to the code yet (**low**).
 
-## 13. Inimigos
+## 13. Enemies
 
-- **`creatures.gda`** (128 linhas; 0–9 são o grupo): atributos base, `Type`, `Level`,
-  `Combo1..10`, `FleeProbability` (0,05 para quase todos), e as marcas do ataque básico
-  (`AttackArmorPiercing`, `AttackInescapable`, `AttackBlast`, `AttackScatter`,
-  `AttackLeech`), que entram nas mesmas fórmulas da seção 5.
-- **`squads.gda`** (332 esquadrões): até 4 membros (`Member1..4`), `XPValue`, `Level`,
-  `RewardItem`, `AmbushValue` (seção 4), `CanFlee` (89 podem fugir), `FleeTable`/
-  `ChaseTable` (minijogos de fuga e perseguição), `CombatRoundLimit` (2 batalhas com
-  limite de rodadas), `NoticeDistance`.
-- **`CombatAI.gda`** (14 perfis): pesos, que somam 100, para Atacar, Defender e
-  `Combo1..10`. Ex.: perfil 6 = 85% ataque e 15% defesa; perfil 11 = só defende. **Média**:
-  a ligação do perfil a cada criatura ainda não foi rastreada.
-- **Fraquezas**: seção 6.3.
+- **`creatures.gda`** (128 rows; 0–9 are the party): base attributes, `Type`, `Level`,
+  `Combo1..10`, `FleeProbability` (0.05 for almost all), and the basic attack flags
+  (`AttackArmorPiercing`, `AttackInescapable`, `AttackBlast`, `AttackScatter`, `AttackLeech`),
+  which go into the same formulas as section 5.
+- **`squads.gda`** (332 squads): up to 4 members (`Member1..4`), `XPValue`, `Level`,
+  `RewardItem`, `AmbushValue` (section 4), `CanFlee` (89 can flee), `FleeTable`/`ChaseTable`
+  (flee and chase minigames), `CombatRoundLimit` (2 battles with a round limit),
+  `NoticeDistance`.
+- **`CombatAI.gda`** (14 profiles): weights, summing to 100, for Attack, Defend and
+  `Combo1..10`. E.g.: profile 6 = 85% attack and 15% defense; profile 11 = only defends.
+  **Medium**: the link from a profile to each creature hasn't been traced yet.
+- **Weaknesses**: section 6.3.
 
-## 14. Dificuldade dinâmica
+## 14. Dynamic difficulty
 
-O jogo ajusta os inimigos conforme o jogador vai bem ou mal. **Média**: as contas são
-alta; o que exatamente conta como "ir bem" é dedução.
+The game adjusts the enemies as the player does well or badly. **Medium**: the arithmetic is
+high; what exactly counts as "doing well" is a deduction.
 
-- O nível de ajuste fica em `DAT_02160e54` e vai de **−4 a +6** (regras 64 e 63). Ele só
-  liga em certas condições (plot 0x1cc == 1 e um contador do esquadrão ≥ 4).
-- No fim da batalha (`GameModeCombat+0x13c0`, o contador de rodadas): batalha com
-  6 rodadas ou mais → nível −1; batalha curta (3 a 5 rodadas) → nível +1.
-- Cada atributo de inimigo recebe `regra × (nível ÷ divisor)`, com divisão inteira
-  (níveis ±1 não mudam nada) e piso 0:
+- The adjustment level is in `DAT_02160e54` and goes from **−4 to +6** (rules 64 and 63). It
+  only turns on under certain conditions (plot 0x1cc == 1 and a squad counter ≥ 4).
+- At the end of the battle (`GameModeCombat+0x13c0`, the round counter): a battle of 6 rounds
+  or more → level −1; a short battle (3 to 5 rounds) → level +1.
+- Each enemy attribute gets `rule × (level ÷ divisor)`, with integer division (levels ±1
+  change nothing) and a floor of 0:
 
-| Atributo | Função | Nível > 0 (÷ regra 62 = 2) | Nível < 0 (÷ regra 65 = 2) |
+| Attribute | Function | Level > 0 (÷ rule 62 = 2) | Level < 0 (÷ rule 65 = 2) |
 |---|---|---|---|
-| Power | 0x02019414 | +3 (regra 58) | +5 (regra 67) |
-| Defense | 0x02019468 | +0 (regra 57) | +2 (regra 66) |
-| Attack | 0x020194bc | +1 (regra 59) | +2 (regra 68) |
-| Grit | 0x02019510 | +0 (regra 60) | +5 (regra 69) |
-| HP máximo | 0x02019564 | +20 (regra 61) | +0 (regra 70) |
+| Power | 0x02019414 | +3 (rule 58) | +5 (rule 67) |
+| Defense | 0x02019468 | +0 (rule 57) | +2 (rule 66) |
+| Attack | 0x020194bc | +1 (rule 59) | +2 (rule 68) |
+| Grit | 0x02019510 | +0 (rule 60) | +5 (rule 69) |
+| max HP | 0x02019564 | +20 (rule 61) | +0 (rule 70) |
 
-  No nível +6: Power +9, Attack +3, HP máximo +60. No nível −4: Power −10, Defense −4,
-  Attack −4, Grit −10.
+  At level +6: Power +9, Attack +3, max HP +60. At level −4: Power −10, Defense −4, Attack −4,
+  Grit −10.
 
-## 15. CombatRules: as 74 regras
+## 15. CombatRules: the 74 rules
 
-`CRules_LoadCombatRules` (0x0201f270) copia cada linha para uma variável global. A lista
-completa, com valores, sai de `combate_tabelas.py` (`regras.md`). As conhecidas:
+`CRules_LoadCombatRules` (0x0201f270) copies each row into a global variable. The complete
+list, with values, comes from `combate_tabelas.py` (`regras.md`). The known ones:
 
-| Regras | Uso | Onde |
+| Rules | Use | Where |
 |---|---|---|
-| 0 | não usada no código (90) | |
-| 1, 2, 3, 33 | iniciativa (60, 1d2, ×1, ÷4) | 0x020448c0 |
-| 4 | 0x020451c4 (não analisada) | |
-| 5, 6, 15–32, 48–50 | minijogo de toque e câmera dos POW | 0x02047a14, 0x02047f70, 0x02039af4 |
-| 7, 8, 11 | Defender (+70% Defense, +200% Grit, PP) | 0x02073590 |
-| 10, 12, 13, 14 | 0x02043ea8, 0x020436e4, 0x020441cc, 0x02042034 (não analisadas) | |
-| 34, 53 | exploração (início do combate a partir do mapa) | GameModeExplore |
-| 35, 38 | interface do combate em tempo real | CombatRealTimeGui |
-| 36, 37 | 0x02069d88 (não analisada) | |
-| 39 | dano básico (100) | 0x0200fcdc |
-| 40–42 | desempenho do minijogo POW | 0x02070928 |
-| 43, 44, 45 | dano: 90 fixo, k = 110 (grupo), k = 60 (inimigo) | 0x0200fcdc, 0x02010810 |
-| 47 | dado da emboscada (10) | 0x02039af4 |
-| 55, 56 | 0x0203d274 (não analisada) | |
-| 57–70 | dificuldade dinâmica | seção 14 |
-| 71–73 | escala do minijogo por nível do golpe (0,90 / 0,95 / 1,00) | 0x020702d8 |
+| 0 | not used in the code (90) | |
+| 1, 2, 3, 33 | initiative (60, 1d2, ×1, ÷4) | 0x020448c0 |
+| 4 | 0x020451c4 (not analyzed) | |
+| 5, 6, 15–32, 48–50 | POW touch minigame and camera | 0x02047a14, 0x02047f70, 0x02039af4 |
+| 7, 8, 11 | Defend (+70% Defense, +200% Grit, PP) | 0x02073590 |
+| 10, 12, 13, 14 | 0x02043ea8, 0x020436e4, 0x020441cc, 0x02042034 (not analyzed) | |
+| 34, 53 | exploration (starting combat from the map) | GameModeExplore |
+| 35, 38 | real-time combat interface | CombatRealTimeGui |
+| 36, 37 | 0x02069d88 (not analyzed) | |
+| 39 | basic damage (100) | 0x0200fcdc |
+| 40–42 | POW minigame performance | 0x02070928 |
+| 43, 44, 45 | damage: fixed 90, k = 110 (party), k = 60 (enemy) | 0x0200fcdc, 0x02010810 |
+| 47 | ambush die (10) | 0x02039af4 |
+| 55, 56 | 0x0203d274 (not analyzed) | |
+| 57–70 | dynamic difficulty | section 14 |
+| 71–73 | minigame scale by move level (0.90 / 0.95 / 1.00) | 0x020702d8 |
 
-## 16. O que ainda não sabemos
+## 16. What we don't know yet
 
-- **Fuga e perseguição**: a fórmula que usa `FleeProbability`, Speed e as habilidades 15
-  e 18; os minijogos `Flee*`/`Chase*`.
-- **De onde vem o valor de emboscada do grupo** (e onde entra a Luck).
-- **XP**: como `XPValue` é dividido e onde entra o bônus do Chao 37.
-- **O minijogo de toque**: o significado exato das regras 15–32 e 48–50 e da tabela
-  `realtime.gda` (65 elementos de toque), e como o desempenho (0 a 1) é calculado.
-- **Quando os efeitos do Defender são desfeitos** e a ordem em que os efeitos por rodada
-  (veneno, regeneração) são aplicados.
-- A ligação de `CombatAI.gda` às criaturas; o status 9; o bit 27 de `AllowEquip`;
+- **Fleeing and chasing**: the formula that uses `FleeProbability`, Speed and abilities 15
+  and 18; the `Flee*`/`Chase*` minigames.
+- **Where the party's ambush value comes from** (and where Luck goes in).
+- **XP**: how `XPValue` is divided and where Chao 37's bonus goes in.
+- **The touch minigame**: the exact meaning of rules 15–32 and 48–50 and of the
+  `realtime.gda` table (65 touch elements), and how the performance (0 to 1) is computed.
+- **When Defend's effects are undone** and the order in which the per-round effects (poison,
+  regeneration) are applied.
+- The link from `CombatAI.gda` to the creatures; status 9; bit 27 of `AllowEquip`;
   `Random` = −2.
 
-## 17. Como conferir
+## 17. How to check
 
-| Para conferir | Faça |
+| To check | Do |
 |---|---|
-| uma fórmula | leia a função no pseudo-C (`analise/run_all.sh` gera em `work/`) pelo endereço citado |
-| uma função auxiliar | execute-a isolada com o Unicorn: carregue `arm9.bin` em 0x02000000, ponha os argumentos em r0–r3 e um endereço de retorno em lr (funções Thumb: endereço \| 1) |
-| um valor de tabela | `sonic-mod unpack` e abra a planilha; `combate_tabelas.py` decodifica os `.SPL`/`.ITM` |
-| no jogo | mude um valor (ex.: regra 44, o k do grupo) com o `sonic-mod pack` e compare o dano no emulador |
+| a formula | read the function in the pseudo-C (`analise/run_all.sh` generates it in `work/`) by the address cited |
+| a helper function | run it in isolation with Unicorn: load `arm9.bin` at 0x02000000, put the arguments in r0–r3 and a return address in lr (Thumb functions: address \| 1) |
+| a table value | `sonic-mod unpack` and open the spreadsheet; `combate_tabelas.py` decodes the `.SPL`/`.ITM` files |
+| in the game | change a value (e.g. rule 44, the party's k) with `sonic-mod pack` and compare the damage in the emulator |
 
-A história de como cada parte foi descoberta está no [diário](DIARIO.md#11-o-combate).
+The story of how each part was found is in the [journal](DIARIO.md#11-combat).

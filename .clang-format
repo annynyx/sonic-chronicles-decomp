@@ -1,0 +1,18 @@
+# The style the code in src/ and include/ already follows (WebKit: 4 spaces, a function's
+# brace on its own line, the others on the same line, `char* p`). CI checks only the lines
+# a pull request changes (git clang-format), so older files are not rewritten.
+BasedOnStyle: WebKit
+# the compiler is C++98: `> >` stays, `>>` would not compile
+Standard: c++03
+# include order can change what the compiler emits; keep it as written
+SortIncludes: Never
+# no line limit: long lines are not reflowed
+ColumnLimit: 0
+AlignAfterOpenBracket: Align
+AlignTrailingComments:
+  Kind: Leave
+AllowShortFunctionsOnASingleLine: All
+AlwaysBreakTemplateDeclarations: No
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: CurrentLine
+SpaceInEmptyBlock: false

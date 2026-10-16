@@ -1,27 +1,8 @@
 # CI: builds and tests everything that does not need the game image.
-# (The round-trip tests against the real game run locally: SONIC_ROM=rom.nds cargo test.)
+# (The tests against the real game files run locally: make -C decomp test / arquivos.)
 name: ci
 on: [push, pull_request]
 jobs:
-  rust:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      # pinned version: the same Rust used in development (new lints don't break CI by surprise)
-      - uses: dtolnay/rust-toolchain@master
-        with: { toolchain: "1.97.0", components: clippy }
-      - name: build (engine)
-        working-directory: engine
-        run: cargo build --release --locked
-      - name: clippy (engine)
-        working-directory: engine
-        run: cargo clippy --release -- -D warnings
-      - name: tests (engine)
-        working-directory: engine
-        run: cargo test --release
-      - name: minimal example
-        working-directory: exemplos/rust-minimo
-        run: cargo test --release
   c-and-python:
     runs-on: ubuntu-24.04
     steps:

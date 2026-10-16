@@ -17,8 +17,8 @@ Dragon Age), adapted to the DS and written in C++ (CodeWarrior, with RTTI and ex
 ```
 
 The game is **data-driven**: items, creatures, shops, chapters, dialogs, areas and screens
-are tables and GFF4 files inside `test.herf`. That is what makes data modding (`sonic-mod`)
-possible before the decompilation is finished.
+are tables and GFF4 files inside `test.herf`. The engine code that reads them (Phase 3 of
+the plan) is the first part of the game being decompiled.
 
 How a resource is loaded: the code asks for a name (e.g. `"Items.GDA"`); `CErfMan` computes
 `HashResourceName` (DJB2), looks up `name.small` and then `name` in the HERF's sorted index
@@ -28,36 +28,30 @@ How a resource is loaded: the code asks for a name (e.g. `"Items.GDA"`); `CErfMa
 ## This repository
 
 ```
-engine/                       Rust (workspace): what you use day to day
-  crates/sonic-formats/       library: every format, reading AND writing
-  crates/sonic-dump/          CLI: extracts assets to PNG/CSV/JSON
-  crates/sonic-mod/           CLI: unpack (editable project) / pack (modified game)
 analise/                      reverse-engineering pipeline
-  run_all.sh                  ROM -> functions, names, assembly, data, pseudo-C
-  tools/                      Python: RTTI, xrefs, HERF, GFF4, GDA, dialogs, emulator
+  run_all.sh                  ROM -> functions, names, assembly, pseudo-C
+  tools/                      Python: RTTI, xrefs, HERF, GFF4
   ghidra_scripts/             Ghidra setup + bulk decompilation
   symbols_manual.txt          names given by hand, with the evidence
 decomp/                       matching-decompilation tools, C rewrites + tests against the game
 src/, include/                the game's matching C++
 config/YWSE/                  dsd configuration (file splits, symbols, relocations)
-exemplos/rust-minimo/         minimal didactic version (HERF + LZ10)
 docs/                         this documentation
 work/                         (not versioned) everything generated from the ROM
 ```
 
 ### Principles
 1. **Nothing from the game in the repository.** Everything is generated from the user's ROM.
-2. **Every writer is proven by a round trip.** Reading and writing without changing anything
-   must give the original file byte for byte (`engine/crates/sonic-formats/tests`).
+2. **Matching code counts only when the rebuilt game is identical** (SHA-1
+   `f4ff8291b38bf9a33ab280fb9f7625cf4d549473`, [BUILD.md](BUILD.md)).
 3. **Every finding is validated against the game**, never only against the hypothesis:
-   recomputed hashes, backgrounds measured by their edges, mods tested in the emulator.
-4. **The library knows nothing about disks or CLIs.** That way a future executable (viewer,
-   port) reuses the same readers.
+   recomputed hashes, backgrounds measured by their edges, the engine's C++ run on the real
+   game files.
 
 ### Tests
 ```
-cd engine && cargo test --release                                 # unit tests
-SONIC_ROM=rom.nds cargo test --release -- --nocapture             # round trip with the real ROM
-make -C decomp test MANIFEST=$PWD/saida/herf/_manifesto.json        # C functions against the game
-SDL_VIDEODRIVER=dummy python3 analise/tools/emu_run.py rom.nds out "w 600; s tela"   # in the emulator
+python3 decomp/tools/conferir_sem_rom.py           # decompiled functions match (no ROM needed)
+decomp/tools/montar_rom.sh rom.nds                 # the rebuilt game is identical
+make -C decomp test HERF_DIR=$PWD/work/herf        # C functions against the game (after run_all.sh)
+make -C decomp arquivos                            # the engine's C++ on the game files (after montar_rom.sh)
 ```

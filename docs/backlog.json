@@ -16,7 +16,7 @@
  {"phase":"Phase 3: Aurora core", "title":"3.4 GFF4, GDA, 2DA and CTlkTable readers", "done_when":"match + test with real data"},
  {"phase":"Phase 3: Aurora core", "title":"3.5 CRules, StatInfos, StatRedirect", "done_when":"match"},
  {"phase":"Phase 4: game objects", "title":"4.1 CGameObject (51 virtual methods)", "done_when":"match"},
- {"phase":"Phase 4: game objects", "title":"4.2 CGameItem + InventoryData (item limits)", "done_when":"match + limits documented for modding"},
+ {"phase":"Phase 4: game objects", "title":"4.2 CGameItem + InventoryData (item limits)", "done_when":"match + limits documented"},
  {"phase":"Phase 4: game objects", "title":"4.3 CGameCreature, CGamePlayerCreature, CGameSquad", "done_when":"match + party limits documented"},
  {"phase":"Phase 4: game objects", "title":"4.4 Placeable and Puzzles", "done_when":"match"},
  {"phase":"Phase 5: game modes", "title":"5.1 GameMode base + GameModeExplore", "done_when":"match"},
@@ -28,9 +28,5 @@
  {"phase":"Phase 6: graphics and sound", "title":"6.3 CMoviePlayer (VX) and sound", "done_when":"match"},
  {"phase":"Phase 7: PC port", "title":"7.1 Build for x86-64 with the SDK stubbed", "done_when":"links"},
  {"phase":"Phase 7: PC port", "title":"7.2 Platform layer (libntr or Rust)", "done_when":"title screen on PC"},
- {"phase":"Phase 7: PC port", "title":"7.3 Input, audio and saves", "done_when":"playable start to finish"},
- {"phase":"Modding", "title":"Test a new item in a shop in the emulator", "done_when":"the item shows up and works in the shop"},
- {"phase":"Modding", "title":"Find the unnamed columns of Store*.gda", "done_when":"names/semantics documented"},
- {"phase":"Modding", "title":"PNG -> NCGR/NCLR for new icons and portraits", "done_when":"a new icon shows up in the game"},
- {"phase":"Modding", "title":"Edit dialogs (.dlg) via sonic-mod", "done_when":"generic GFF4 writer with an identical round trip"}
+ {"phase":"Phase 7: PC port", "title":"7.3 Input, audio and saves", "done_when":"playable start to finish"}
 ]

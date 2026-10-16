@@ -20,7 +20,7 @@ parallel, and incrementally forever.
 | Classes | 290, with inheritance (`docs/hierarquia_classes.md`) |
 | Pseudo-C | Ghidra headless (`analise/ghidra_scripts/`) for every function |
 | Functions already rewritten | `HashResourceName`, all of `CExoString` (33 functions), choice of TLK by language (`src/`), validated against the game |
-| Data formats | all the main ones read **and written** byte for byte (`engine/`) |
+| Data formats | all the main ones documented ([FORMATOS.md](FORMATOS.md)) and read by `analise/tools/` |
 | Embedded libraries | NitroSDK 4.2 (`0x04027531`), NitroSystem (`NNS_Tga`, `G3D`), Metrowerks MSL C++ (iostreams) |
 | Compiler | CodeWarrior for DS, **mwccarm 2.0 sp2, `-O4,p`, Thumb, RTTI on, exceptions off** ([COMPILADOR.md](COMPILADOR.md)) |
 | Matching build | ✅ ROM rebuilt identical (SHA-1) from the assembly and the C++ in `src/` ([BUILD.md](BUILD.md)) |
@@ -120,8 +120,8 @@ functions are called everywhere.
 | 3.1 Strings | `CExoString` ✅ (33 functions, `src/Aurora/CExoString.cpp`); `CResRef` does not exist in this version of the engine (resources are found by the hash of their name) | used everywhere |
 | 3.2 Memory and singletons | ✅ allocator ✅ (`new`/`delete` with 5 pools and `NitroStartUp`, `src/Aurora/Memory.cpp`), `Singleton<T>` ✅ (`include/Aurora/Singleton.h`, with a virtual destructor: DIARIO 26), `CExoArrayList<T>` ✅ (except `DelIndex` for elements whose size is not a power of 2); `ResourcePool<T>` only exists as `ResourcePool<InventoryData>`, built inline in the inventory mode, and moved to Phase 5 (DIARIO 31) | a pattern repeated in hundreds of functions |
 | 3.3 Files | 🟡 `CDSFileSystem`, `CErfMan`, `CErfTable` and `.small` reading ✅ (`src/Aurora/CDSFileSystem.cpp`, 45 functions, with `.data`, `.bss` and `__sinit`; the 7 template copies at the end stay in assembly, DIARIO 26); test with real data ✅ (`decomp/tests/test_arquivos.cpp`: the 8,689 resources of `test.herf` read by our C++, DIARIO 27); `FileReference` derives from `CGameBaseComponent` and moved to Phase 4 (DIARIO 28) | the format is already 100% documented |
-| 3.4 Data | 🟡 GDA ✅ and GFF4 reading ✅ (`src/Aurora/G2DA.cpp`, 52 functions with `.data` and `__sinit`; the GFF4 functions in `include/Aurora/GFF4.h` are the ones the whole game uses; test with the 229 tables, DIARIO 29); text 2DA ✅ (`src/Aurora/C2DA.cpp`, 21 functions with `.data` and `__sinit`; test with the 370 item and spell tables, DIARIO 30); `CTlkTable`: 12 of 13 functions match and are checked in CI (`src/Aurora/CTlkTable.cpp`), `GetString` didn't match and the file still comes from assembly (DIARIO 28) | we already have the specs and the writers |
-| 3.5 Rules | `CRules`, `StatInfos`, `StatRedirect` | bridge to advanced modding |
+| 3.4 Data | 🟡 GDA ✅ and GFF4 reading ✅ (`src/Aurora/G2DA.cpp`, 52 functions with `.data` and `__sinit`; the GFF4 functions in `include/Aurora/GFF4.h` are the ones the whole game uses; test with the 229 tables, DIARIO 29); text 2DA ✅ (`src/Aurora/C2DA.cpp`, 21 functions with `.data` and `__sinit`; test with the 370 item and spell tables, DIARIO 30); `CTlkTable`: 12 of 13 functions match and are checked in CI (`src/Aurora/CTlkTable.cpp`), `GetString` didn't match and the file still comes from assembly (DIARIO 28) | the formats are already documented |
+| 3.5 Rules | `CRules`, `StatInfos`, `StatRedirect` | the game rules the objects of Phase 4 read |
 
 **Done when:** each part compiles with a match and has a test that reads real data. The test
 is `decomp/tests/test_arquivos.cpp` (DIARIO 27): the C++ of `src/Aurora`, unchanged, compiled
@@ -134,11 +134,7 @@ tables and the 370 2DA tables); the next parts go into it.
 `CGameBaseComponent → CGameObject → CGameCreature / CGameItem / CGameSquad / CGameTrigger /
 Placeable`, `ActionQueue`, `CGameEffect`, `InventoryData`, `CPlotManager`, `FileReference`
 (came from Phase 3.3). The vtables are already mapped: each slot is a method to write.
-Suggested order: `CGameObject` (base with 51 methods) → `CGameItem` (items, the biggest
-interest for mods) → `CGameCreature` → `Placeable` / `Puzzle`.
-
-**Unlocks for modding:** understanding the limits the code imposes (how many items, party
-members, slots), and so adding truly playable characters.
+Suggested order: `CGameObject` (base with 51 methods) → `CGameItem` (items) → `CGameCreature` → `Placeable` / `Puzzle`.
 
 ## Phase 5: game modes and interface (weeks 15 to 22)
 
@@ -161,8 +157,7 @@ implements them on the PC.
 - **7.1** Compile the decompiled C for x86-64 with Clang/GCC, with the SDK replaced by
   *stubs*. **Done when:** it links, even if it doesn't run.
 - **7.2** Platform layer: evaluate using `libntr` (it already translates the DS's 3D to
-  OpenGL and emulates the 2D) or writing our own in Rust. This repository's `sonic-formats`
-  already reads every asset and can feed that layer.
+  OpenGL and emulates the 2D) or writing our own.
 - **7.3** Input (mouse = touch screen), audio, saves.
 - **Done when:** `sonic-chronicles.exe` reaches the title screen.
 

@@ -4,12 +4,8 @@
 work/
 saida/
 dump/
-modproj/
 # builds
 build/
-target/
-rust/target/
-engine/target/
 __pycache__/
 *.pyc
 bin/

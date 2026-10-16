@@ -4,7 +4,9 @@ The story of the project, in order, with the hypotheses that worked and the ones
 Each entry says **how** the thing was found and **how** it was confirmed.
 
 (*Diário* is Portuguese for journal; the file keeps its original name because other
-documents and tools point to it. Mistakes are numbered "Erro nº N", mistake no. N.)
+documents and tools point to it. Mistakes are numbered "Erro nº N", mistake no. N.
+Sections 9 to 13, with mistakes 5 and 6, were about modding, the emulator, combat and
+cheats, which are not part of the decompilation; they stay in the Git history.)
 
 ---
 
@@ -52,7 +54,7 @@ ldrsb r5, [r0, r1]         ; c = (signed char)*s   <- SIGNED!
 ldrb  r5, [r0, r5]         ; if 0<=c<0x80: c = lowercase_table[c]
 lsl   r7, r4, #5 ; add r4, r7 ; add r4, r5, r4      ; hash = hash*33 + c
 ```
-Rewritten in C (`decomp/src/resource_hash.c`) and in Rust. A detail only the assembly
+Rewritten in C (`decomp/src/resource_hash.c`). A detail only the assembly
 reveals: the character is read **signed**. The C test recomputes every name in the game.
 
 **Erro nº 3:** the C test caught **4 false names** the dictionary attack had accepted: hash
@@ -95,58 +97,6 @@ still gets things wrong; the official source, when there is one, is worth more.
 Tails' palette**. Fix: the tables give each character's palette (`creatures.gda`:
 `PRTL_TAILS` → `PRTL_Tal.nclr`), and the `.gui` screens give each element's. 1,747 images now
 have their palette confirmed by the game.
-
-## 9. Writing back: the road to modding
-To modify, you need to **write** the formats. The criterion was to read and rewrite without
-changes and get the original file byte for byte:
-- GDA: 137 of 229 on the first try. The padding between texts is `0xFF`, not zero. After
-  that, 229 of 229.
-- HERF: the end of the file had to be aligned too. After that, 6 of 6 (including the 49 MB
-  one).
-- **TLK: it is a hash table.** Of the 18,845 entries, 4,711 were empty (id `0xFFFFFFFF`) and
-  the ids had no order. Common hashes didn't explain the positions. I went to **the game's
-  code**: function `0x020989fc` (the text lookup) showed the formula, a variant of Thomas
-  Wang's integer hash, with linear probing. Checked: 14,134 of 14,134 positions right.
-  Without it, a new text would land in a position where the game would never look for it.
-- LZ10 compressor **without distance-1 references**: the BIOS routine that writes to VRAM
-  writes 16 bits at a time and would break with them.
-
-## 10. In the emulator
-- DeSmuME runs without a window (`py-desmume` with `SDL_VIDEODRIVER=dummy`) at ~110 fps. A
-  script of touches reaches the title screen and the opening quote.
-- Test 1: change the quote's text (TLK). It worked.
-- Test 2, through `sonic-mod`: edit the `Chapter0` table to point to a **new text** (id
-  990001) that didn't exist. The screen showed the new text. That proves the table edit, the
-  insertion into the TLK hash table and writing a larger file at the end of the cartridge,
-  all at once.
-
-## 11. Combat
-The result is in [`COMBATE.md`](COMBATE.md). The road:
-
-- **From the rules to the code.** `combatrules.gda` has 74 unnamed numbers. The function
-  that loads it (0x0201f270) copies each row into a global variable; cross-referencing each
-  global with the functions that read it, each rule got an "owner" (e.g. rules 7, 8 and 11
-  only appear in `Defend`). That is how the formulas were found: through the numbers they
-  use, not through names.
-- **Small functions actually executed.** The damage uses software floating point
-  (`0x020ea840`, `0x020ea8d0`...). Instead of guessing by name, each one was run in Unicorn
-  with known inputs (`3 → 3.0`, `6.0 / 4.0 → 1.5`). The same for `RollDice` (0x02008550).
-- **Erro nº 5:** Ghidra showed `func_020d5cfc(x)` with **one** argument and I treated it as a
-  one-input function (square root? inverse?). In Unicorn it hung. The assembly showed it is
-  the DS's **hardware divider** (registers 0x4000280) and that the second argument (`r1 =
-  0x64000`, or 100.0 in fixed point) exists, Ghidra just lost it. Lesson: when the pseudo-C
-  looks odd, the assembly decides.
-- **Column names lie sometimes.** The `GUITypeAggressive` column of `combo.gda` (a name from
-  xoreos' dictionary) holds 0.3/0.5/0.8: the status chance per level.
-- **The game's own text as proof.** Special abilities only have a numeric code. The
-  descriptions of the Chao and accessories ("Increases the team's chances of Ambushing...")
-  gave each code's meaning, and the ambush code confirmed numbers 21 and 22. The game's rules
-  journal (`journalrules.gda`) confirmed the link between Armor/Grit, Power/damage and the
-  pairs of statuses and cures.
-- **A finding that contradicts the text.** The game's journal says Clover Juice cures
-  Cursed; its `.ITM` has no removal row. It was recorded as it is.
-- The generator `analise/tools/combate_tabelas.py` turns the tables and the effect files into
-  readable Markdown, so you can check all of this on your copy.
 
 ## 14. The rebuilt ROM (Phase 0)
 The guide is in [`BUILD.md`](BUILD.md). The road:
@@ -874,7 +824,6 @@ it:
 
 ## What we don't know yet
 `.vx` videos (Actimagine codec), the layout of the `.gui` screens, the Chao palettes, 311
-GDA column names, whether a new item in a shop works, the limits the code imposes (number
-of items, of characters), the exact compiler service pack (2.0 base or sp1+) and the
-combat parts listed in [COMBATE.md](COMBATE.md#16-what-we-dont-know-yet). The next steps are
+GDA column names, the limits the code imposes (number of items, of characters) and the
+exact compiler service pack (2.0 base or sp1+). The next steps are
 in the [plan](PLANO-DECOMPILACAO.md).

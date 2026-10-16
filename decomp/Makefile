@@ -7,7 +7,6 @@ CFLAGS = -std=c99 -Wall -Wextra -O2 -Iinclude
 CXXFLAGS = -std=gnu++11 -O1 -w -fpermissive -fno-strict-aliasing -I../include
 AURORA = ../src/Aurora/Memory.cpp ../src/Aurora/CExoString.cpp ../src/Aurora/CDSFileSystem.cpp ../src/Aurora/G2DA.cpp ../src/Aurora/C2DA.cpp
 # make test HERF_DIR=work/herf            (saída do run_all.sh)
-# make test MANIFEST=saida/herf/_manifesto.json   (saída do sonic-dump)
 MANIFEST ?= $(HERF_DIR)/_manifest.json
 
 test: build/test_hash build/test_language

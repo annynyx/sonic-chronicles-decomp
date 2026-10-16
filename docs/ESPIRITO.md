@@ -12,13 +12,12 @@ part, that is a bug in the documentation.
 ## 2. Nothing counts until it is checked against the game
 A hypothesis that "looks right" is not a finding. Examples of what that means here:
 
-- **Formats:** every writer must reproduce the original file **byte for byte** when nothing
-  changes (229 tables, 5 TLKs, 6 packs: all identical).
+- **Formats:** every reader is run on all the real files (229 GDA tables, 370 2DA tables,
+  5 TLKs, 8,689 pack resources) and compared with an independent reading.
 - **Rewritten functions:** `HashResourceName` in C recomputes the game's 8,690 names and gets
   all of them right.
 - **Images:** the tile order of the backgrounds was chosen by *measuring* edge continuity
   (4.8 against 35 to 56 for the other hypotheses), not by eye.
-- **Mods:** opened in the emulator and checked by screenshot.
 - **Matching decompilation:** a file counts as decompiled only when the whole game, rebuilt
   with it, is byte-identical to the original.
 
@@ -31,7 +30,7 @@ right the first time.
 
 ## 4. Honesty about what doesn't work
 The README and the documents say clearly what is done, what is experimental and what is only
-a plan. "Tested in the emulator" means it was tested in the emulator. "Not tested" is written
+a plan. "Rebuilt identical" means the SHA-1 of the whole game matched. "Not tested" is written
 down.
 
 ## 5. Nothing from the game in the repository
@@ -42,9 +41,9 @@ stays out of Git (`work/`, `saida/`, `.gitignore`). This is the same stance as p
 [pret](https://github.com/pret).
 
 ## 6. Reusable tools
-The `sonic-formats` library knows nothing about disks or command lines: it only reads and
-writes formats. That way the same pieces serve the extractor, the modding tools and, one day,
-a native executable of the game.
+The engine's C++ in `src/` compiles unchanged for the DS and for the PC
+(`decomp/tests/test_arquivos.cpp`). That way the same code serves the matching build, the
+tests on the real game files and, one day, a native executable of the game.
 
 ## 7. Small, verifiable steps
 The [decompilation plan](PLANO-DECOMPILACAO.md) is split into parts of 1 to 5 days, each

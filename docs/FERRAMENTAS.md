@@ -2,7 +2,6 @@
 
 The tools come in these groups:
 
-- **`engine/`** (Rust): what you use day to day. Fast and tested, with binaries for Windows and Linux.
 - **`analise/`** (Python, Java/Ghidra, shell): the reverse-engineering pipeline. This is where
   the findings were made.
 - **`decomp/`** (C): rewritten game functions and the tests that validate them, plus
@@ -10,90 +9,12 @@ The tools come in these groups:
 - **`src/`, `include/`, `config/`** (C++ and `dsd` configuration): the *matching*
   decompilation, which compiles to the game's exact bytes.
 
-General requirements: Rust 1.80+ (`cargo`), Python 3.10+ (`pip install ndspy capstone pillow`),
-a C compiler. Optional: Ghidra 11.x (`GHIDRA_HOME`), `py-desmume` (emulator).
+General requirements: Python 3.10+ (`pip install ndspy capstone pyelftools`), a C and C++
+compiler, and the tools `decomp/tools/ferramentas.sh` downloads (dsd, wibo, mwccarm). Optional:
+Ghidra 11.x (`GHIDRA_HOME`).
 
 Command-line flags and output folder names are still in Portuguese; the translations are
 given next to them.
-
----
-
-## `sonic-mod`: modding
-
-```
-sonic-mod unpack <rom.nds> <project>
-sonic-mod pack   <rom.nds> <project> <output.nds>
-```
-
-**unpack** creates an editable project:
-
-| Output | Source |
-|---|---|
-| `tabelas/<pack>/<Table>.csv` (tables) | every GDA in the HERF packs (229), with column names |
-| `textos/<language>.csv` (`id,text`) (texts) | the 5 TLKs (`en`, `fr`, `de`, `es`, `it`) |
-| `arquivos/<pack>/*` (files) | 2DA text tables (`.ITM` item effects, `.SPL` moves...) |
-| `LEIA-ME.md` (read me) | the [modding guide](MODDING.md) |
-
-**pack**, inside, in order:
-1. Reads the original ROM and recovers the resource names (`erf.dict`).
-2. For each spreadsheet: reads the original table to know **each column's type**, converts
-   the cells (with a clear file/row/column error), builds the GDA and compares it with the
-   original. The writers are exact, so "equal" means you didn't touch it.
-3. Files in `arquivos/`: the same name replaces the original; a new name **adds** the
-   resource to the pack (with the right hash, at the right place in the sorted index, and in
-   `erf.dict`).
-4. Texts: changes the existing ids and **inserts new ids into the TLK's hash table**, with
-   the game's own hash function.
-5. Repacks the changed HERFs, recompressing with LZ10 what was `.small`.
-6. Writes the files into the ROM: in their original place if they fit, otherwise at the end
-   of the cartridge; updates the FAT, the used size and the header CRC16.
-7. **Reopens the generated ROM** and checks that every written file comes back identical.
-
-With no changes, `pack` says "nothing changed" and generates nothing. That is also the test
-that `unpack` loses no information.
-
-## `sonic-dump`: asset extractor
-
-```
-sonic-dump <rom.nds> <output> [--sem-imagens] [--sem-cenarios] [--sem-json] [--sem-bruto]
-```
-(`--sem-X` = without X: images, backgrounds, JSON, raw files.)
-
-| Output | Contents |
-|---|---|
-| `bruto/` (raw) | original NitroFS files + `arm9.bin`, `arm7.bin` |
-| `herf/<pack>/` | 8,901 decompressed, named resources + `_manifesto.json` |
-| `textos/` (texts) | `textos_5_idiomas.csv` and `roteiro_<language>.txt` (dialog script, with character and emotion) |
-| `tabelas/gda/`, `tabelas/2da/` (tables) | 229 binary and 431 text tables, as CSV |
-| `json/` | every GFF4 (dialogs, areas, screens, plots) as JSON |
-| `imagens/sprites/` (images) | 3,444 NCGR as PNG; `imagens/_paletas.json` gives the palette and the method used |
-| `imagens/montadas/` (assembled) | 342 portraits/icons (4 pieces of 64×64 assembled into 128×128) |
-| `imagens/cenarios/` (backgrounds) | 62 complete areas + `_profundidade.png` (depth) |
-
-Palette of each sprite, in order of confidence: `gui` (the screens say), `tabela` (a GDA row
-cites it), `mesmo_nome` (same name), `prefixo` (prefix, a guess), `cinza` (gray, unknown).
-Runs in parallel (`rayon`): about 7 seconds for everything.
-
-## `sonic-formats`: the library
-
-The base of both tools above and of a future executable. Does no disk I/O.
-
-| Module | Read | Write | Highlight |
-|---|---|---|---|
-| `nds` | `Rom::parse`, NitroFS | `replace_file`, `header_crc16` | swaps files with the fewest changes |
-| `herf` | `Herf`, `parse_name_dict`, `recover_names` | `write`, `write_name_dict` | dictionary attack + `erf.dict` |
-| `compression` | `lz10_decompress`, `open_small` | `lz10_compress`, `make_small` | no distance 1 (VRAM-safe) |
-| `gff4` | `Gff4::root()` → JSON | (planned) | types 18 and 20, unique to Sonic |
-| `tlk` | `Tlk::parse`, `get`, `texts` | `set`, `remove`, `to_bytes` | the game's hash table (`slot_hash`) |
-| `gda` | `Gda::parse`, `cell_to_text` | `to_bytes`, `cell_from_text` | typed per column |
-| `twoda` | `read` | (plain text) | |
-| `nitro` | `Palette`, `Tiles::render` | | NCLR/NCGR |
-| `background` | `render`, `render_depth` | | `.cbgt` backgrounds |
-| `image`, `csv` | utilities | | PNG, CSV with `,` or `;` |
-
-Tests: `cargo test` (unit) and `SONIC_ROM=rom.nds cargo test` (round trip with the real ROM:
-5 TLKs, 6 HERFs, 229 GDAs identical; 400 files recompressed with LZ10 without loss).
-API documentation: `cd engine && cargo doc --open`.
 
 ---
 
@@ -109,27 +30,17 @@ API documentation: `cd engine && cargo doc --open`.
 | 3b | `tools/apply_names.py` | applies `symbols_manual.txt` (names given by hand, with the evidence) |
 | 4 | `dsd dis` | full assembly with the names |
 | 5 | `tools/herf.py` | extracts HERF packs (`erf.dict` + dictionary attack) |
-| 6 | `tools/dump_dialogs.py`, `tools/gda.py` | readable script and tables |
-| 7 | `make -C decomp test` | validates the C functions against the game |
-| 8 | `cargo test` (engine) | library tests |
-| 9 | Ghidra headless | `ghidra_scripts/SetupSonic.java` creates ITCM/DTCM, marks code read-only (so the decompiler shows constants) and creates the functions; `DecompileAll.java` writes one `.c` per class |
+| 6 | `make -C decomp test` | validates the C functions against the game |
+| 7 | Ghidra headless | `ghidra_scripts/SetupSonic.java` creates ITCM/DTCM, marks code read-only (so the decompiler shows constants) and creates the functions; `DecompileAll.java` writes one `.c` per class |
 
 Other tools:
 
 | Tool | Use |
 |---|---|
 | `tools/xref.py arm9.bin symbols.txt relocs.txt out.json` | which functions use which strings (through the literal pool relocations) |
-| `tools/gff4.py file [out.json]` | any GFF4 → JSON (Python reference of the Rust reader) |
-| `tools/emu_run.py rom.nds folder "script"` | runs the ROM in DeSmuME without a window and performs actions: `w N` wait, `p KEY` press, `t X Y` touch the screen, `s name` screenshot, `save`/`load` state. Needs `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` |
+| `tools/gff4.py file [out.json]` | any GFF4 → JSON (reference reader for the format) |
 | `tools/ghidra_symbols.py` | converts dsd symbols for Ghidra |
 | `tools/manifest_pairs.py` | lists hash/name pairs of a manifest (for the C tests) |
-| `tools/combate_tabelas.py project [out]` | reads a `sonic-mod unpack` project and writes the moves, effects (`.SPL`), items (`.ITM`), creatures and combat rules, already decoded, as Markdown (see [COMBATE.md](COMBATE.md)) |
-
-Example of a mod test in the emulator (reaches the opening quote screen):
-```
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python3 analise/tools/emu_run.py rom_mod.nds shots \
-  "w 400; t 128 96; w 200; t 128 96; w 200; t 128 96; w 240; t 128 96; w 240; t 128 140; w 240; t 128 96; w 300; s citacao"
-```
 
 ## `decomp/`: functions rewritten in C
 
@@ -141,7 +52,6 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python3 analise/tools/emu_run.py rom
 
 ```
 make -C decomp test HERF_DIR=$PWD/work/herf/test          # output of run_all.sh
-make -C decomp test MANIFEST=$PWD/saida/herf/_manifesto.json   # output of sonic-dump
 ```
 These are *non-matching* decompilations (same behavior, not the same bytes), easy to test on
 the PC. The *matching* versions (the game's exact bytes) live in `src/`.
@@ -173,28 +83,3 @@ the PC. The *matching* versions (the game's exact bytes) live in `src/`.
 
 The step by step and the reason for each stage: [`BUILD.md`](BUILD.md). The compiler:
 [`COMPILADOR.md`](COMPILADOR.md).
-
-## `exemplos/rust-minimo/`
-
-A ~150-line crate with the essentials (hash, HERF, LZ10) and a `herf list/get` CLI. It is the
-best starting point for someone learning Rust who wants to see the whole format at once,
-without the structure of the full library.
-
-## Publishing a version
-
-```
-git tag v0.3.0 && git push origin v0.3.0
-```
-or, without a command line: **Actions → release → Run workflow** tab, giving the version. The
-`.github/workflows/release.yml` workflow builds on Windows and Linux (GitHub machines), runs
-the tests and publishes the release with `sonic-tools-windows.zip` and
-`sonic-tools-linux.tar.gz`. The normal CI (`ci.yml`) runs on every push.
-
-## Building for Windows from Linux
-
-```
-pip install ziglang cargo-zigbuild
-rustup target add x86_64-pc-windows-gnu
-cd engine && cargo zigbuild --release --target x86_64-pc-windows-gnu -p sonic-mod -p sonic-dump
-```
-The `.exe` files only depend on system DLLs (Windows 10/11).

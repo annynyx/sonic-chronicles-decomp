@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pipeline completo: ROM -> análise -> nomes -> assembly -> pseudo-C -> dados legíveis.
+# Pipeline completo: ROM -> análise -> nomes -> assembly -> pseudo-C.
 # Uso: ./run_all.sh caminho/para/rom.nds [--sem-ghidra]
 #
 # Requisitos: python3 (+ pip: ndspy capstone), cargo (Rust), cc (para os testes)
@@ -47,19 +47,11 @@ echo "== 5. extrair o pacote HERF (8691 arquivos; nomes pelo erf.dict oficial + 
 python3 "$T/herf.py" "$WORK/extracted/files/test.herf" "$WORK/herf" \
         "$WORK/extracted/arm9.bin" "$WORK/extracted/files"
 
-echo "== 6. dados legíveis"
-mkdir -p "$WORK/output"
-python3 "$T/dump_dialogs.py" "$WORK/herf" "$WORK/extracted/files/strings.tlk" "$WORK/output/roteiro_en.txt"
-python3 "$T/gda.py" "$WORK/herf" "$WORK/output/tabelas" "$WORK/extracted/arm9.bin" "$WORK"/extracted/files/*.2da
-
-echo "== 7. validar a decompilação manual contra o jogo (C)"
+echo "== 6. validar a decompilação manual contra o jogo (C)"
 make -C "$REPO/decomp" test HERF_DIR="$WORK/herf"
 
-echo "== 8. testes da biblioteca Rust (engine/)"
-(cd "$REPO/engine" && cargo test --release -q)
-
 if [ "$SKIP_GHIDRA" != "--sem-ghidra" ] && [ -n "${GHIDRA_HOME:-}" ]; then
-    echo "== 9. pseudo-C de todas as funções (Ghidra headless, ~15-20 min)"
+    echo "== 7. pseudo-C de todas as funções (Ghidra headless, ~15-20 min)"
     python3 "$T/ghidra_symbols.py" "$WORK/config" > "$WORK/ghidra_syms.tsv"
     rm -rf "$WORK/ghidra_proj" "$WORK/decomp_c"; mkdir -p "$WORK/ghidra_proj"
     "$GHIDRA_HOME/support/analyzeHeadless" "$WORK/ghidra_proj" sonic \
@@ -68,6 +60,6 @@ if [ "$SKIP_GHIDRA" != "--sem-ghidra" ] && [ -n "${GHIDRA_HOME:-}" ]; then
         -preScript SetupSonic.java "$WORK/ghidra_syms.tsv" \
         -postScript DecompileAll.java "$WORK/decomp_c" -analysisTimeoutPerFile 3600
 else
-    echo "== 9. (pulado) defina GHIDRA_HOME para gerar o pseudo-C"
+    echo "== 7. (pulado) defina GHIDRA_HOME para gerar o pseudo-C"
 fi
 echo "Pronto. Resultados em $WORK"
